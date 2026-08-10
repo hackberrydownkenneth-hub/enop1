@@ -3,6 +3,22 @@
 {% block content %}
 <h1>打刻画面 <small>{{ today }}</small></h1>
 
+{% if restriction_enabled %}
+  {% if can_punch %}
+    <div class="net-banner net-ok">✅ 会社ネットワークに接続中です。打刻できます。</div>
+  {% else %}
+    <div class="net-banner net-ng">
+      🚫 会社の Wi-Fi に接続していないため打刻できません。
+      <small>(接続元 IP: {{ client_ip }})</small>
+    </div>
+  {% endif %}
+{% else %}
+  <div class="net-banner net-off">
+    ⚠ ネットワーク制限は未設定です(どこからでも打刻できます)。
+    <small>環境変数 TIMECARD_ALLOWED_NETWORKS で会社ネットワークを設定してください。</small>
+  </div>
+{% endif %}
+
 {% if not cards %}
   <p class="empty">社員が登録されていません。下のフォームから登録してください。</p>
 {% endif %}
@@ -28,17 +44,18 @@
 
     <div class="actions">
       <form method="post" action="{{ url_for('punch_form', employee_id=card.employee.id) }}">
+        {% set disabled = 'disabled' if not can_punch else '' %}
         {% if 'in' in card.allowed %}
-          <button name="punch_type" value="in" class="btn btn-in">出勤</button>
+          <button name="punch_type" value="in" class="btn btn-in" {{ disabled }}>出勤</button>
         {% endif %}
         {% if 'break_in' in card.allowed %}
-          <button name="punch_type" value="break_in" class="btn btn-break">休憩開始</button>
+          <button name="punch_type" value="break_in" class="btn btn-break" {{ disabled }}>休憩開始</button>
         {% endif %}
         {% if 'break_out' in card.allowed %}
-          <button name="punch_type" value="break_out" class="btn btn-break">休憩終了</button>
+          <button name="punch_type" value="break_out" class="btn btn-break" {{ disabled }}>休憩終了</button>
         {% endif %}
         {% if 'out' in card.allowed %}
-          <button name="punch_type" value="out" class="btn btn-out">退勤</button>
+          <button name="punch_type" value="out" class="btn btn-out" {{ disabled }}>退勤</button>
         {% endif %}
       </form>
       <form method="post" action="{{ url_for('delete_employee_form', employee_id=card.employee.id) }}"
@@ -55,6 +72,7 @@
   <form method="post" action="{{ url_for('add_employee_form') }}" class="inline-form">
     <input name="code" placeholder="社員コード (例: E001)" required>
     <input name="name" placeholder="氏名" required>
+    <input name="hourly_wage" type="number" min="0" placeholder="時給(円)" value="0">
     <button class="btn btn-primary">登録</button>
   </form>
 </section>

@@ -13,10 +13,23 @@
 </form>
 
 <div class="summary-row">
-  <div class="stat"><span class="stat-label">合計実働</span><span class="stat-value">{{ total_work_hours }}h</span></div>
-  <div class="stat"><span class="stat-label">合計残業</span><span class="stat-value">{{ total_overtime_hours }}h</span></div>
-  <div class="stat"><span class="stat-label">出勤日数</span><span class="stat-value">{{ days|length }}日</span></div>
+  <div class="stat"><span class="stat-label">出勤日数</span><span class="stat-value">{{ pay.work_days }}日</span></div>
+  <div class="stat"><span class="stat-label">合計実働</span><span class="stat-value">{{ pay.work_hours }}h</span></div>
+  <div class="stat"><span class="stat-label">合計残業</span><span class="stat-value">{{ pay.overtime_hours }}h</span></div>
+  <div class="stat"><span class="stat-label">時給</span><span class="stat-value">¥{{ "{:,}".format(pay.hourly_wage) }}</span></div>
+  <div class="stat stat-total"><span class="stat-label">支給額合計</span><span class="stat-value">¥{{ "{:,}".format(pay.total_pay) }}</span></div>
 </div>
+
+<div class="pay-breakdown">
+  基本給 ¥{{ "{:,}".format(pay.base_pay) }} + 残業手当 ¥{{ "{:,}".format(pay.overtime_pay) }}
+  (残業割増率 {{ pay.overtime_rate }}倍)
+  {% if pay.has_incomplete %}<span class="warn-text">※ 打刻漏れの日があります。金額は暫定です。</span>{% endif %}
+</div>
+
+<form method="post" action="{{ url_for('update_wage_form', employee_id=employee.id) }}" class="inline-form" style="margin-top:1rem;">
+  <label>時給変更 <input name="hourly_wage" type="number" min="0" value="{{ employee.hourly_wage }}"></label>
+  <button class="btn btn-primary">更新</button>
+</form>
 
 <h2>日別集計</h2>
 {% if not days %}

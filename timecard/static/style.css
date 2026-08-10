@@ -127,3 +127,33 @@ h2 { font-size: 1.15rem; margin-top: 2rem; }
 .warn-text { color: var(--break); font-size: 0.8rem; }
 
 a { color: var(--primary); }
+
+/* ナビ */
+.nav { display: flex; gap: 1rem; margin-left: auto; margin-right: 1.5rem; }
+.nav a { color: #cbd2d9; text-decoration: none; font-size: 0.95rem; }
+.nav a:hover { color: #fff; }
+
+/* フラッシュメッセージ */
+.flash { padding: 0.7rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.9rem; }
+.flash-error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+.flash-info, .flash-message { background: #dbeafe; color: #1e40af; }
+
+/* ネットワーク制限バナー */
+.net-banner { padding: 0.7rem 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.95rem; }
+.net-ok { background: #dcfce7; color: #15803d; }
+.net-ng { background: #fee2e2; color: #b91c1c; font-weight: 700; }
+.net-off { background: #fef3c7; color: #92400e; }
+.net-banner small { font-weight: 400; opacity: 0.85; }
+
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* 管理画面 */
+.toolbar { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+.toolbar .btn { text-decoration: none; }
+.stat-total .stat-value { color: var(--in); }
+.cell-total { font-weight: 700; color: var(--in); }
+.pay-breakdown { color: var(--muted); margin: 0.5rem 0; font-size: 0.9rem; }
+.note { color: var(--muted); font-size: 0.85rem; margin-top: 0.8rem; }
+.wage-form { display: flex; gap: 0.3rem; }
+.wage-form input { width: 90px; padding: 0.3rem; border: 1px solid var(--border); border-radius: 4px; }
+.data-table tfoot td { background: #f0f3f6; }

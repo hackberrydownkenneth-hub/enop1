@@ -9,10 +9,11 @@ from .attendance import Punch
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS employees (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,
-    code        TEXT    NOT NULL UNIQUE,
-    name        TEXT    NOT NULL,
-    created_at  TEXT    NOT NULL
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    code         TEXT    NOT NULL UNIQUE,
+    name         TEXT    NOT NULL,
+    hourly_wage  INTEGER NOT NULL DEFAULT 0,
+    created_at   TEXT    NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS punches (
@@ -39,19 +40,40 @@ def connect(db_path: str) -> sqlite3.Connection:
 
 def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
+    _migrate(conn)
     conn.commit()
+
+
+def _migrate(conn: sqlite3.Connection) -> None:
+    """既存 DB に不足しているカラムを追加する簡易マイグレーション。"""
+    cols = {row["name"] for row in conn.execute("PRAGMA table_info(employees)")}
+    if "hourly_wage" not in cols:
+        conn.execute(
+            "ALTER TABLE employees ADD COLUMN hourly_wage INTEGER NOT NULL DEFAULT 0"
+        )
 
 
 # ---- 社員 ------------------------------------------------------------------
 
-def create_employee(conn: sqlite3.Connection, code: str, name: str) -> int:
+def create_employee(
+    conn: sqlite3.Connection, code: str, name: str, hourly_wage: int = 0
+) -> int:
     now = datetime.now().isoformat(timespec="seconds")
     cur = conn.execute(
-        "INSERT INTO employees (code, name, created_at) VALUES (?, ?, ?)",
-        (code, name, now),
+        "INSERT INTO employees (code, name, hourly_wage, created_at) "
+        "VALUES (?, ?, ?, ?)",
+        (code, name, hourly_wage, now),
     )
     conn.commit()
     return int(cur.lastrowid)
+
+
+def update_wage(conn: sqlite3.Connection, employee_id: int, hourly_wage: int) -> None:
+    conn.execute(
+        "UPDATE employees SET hourly_wage = ? WHERE id = ?",
+        (hourly_wage, employee_id),
+    )
+    conn.commit()
 
 
 def list_employees(conn: sqlite3.Connection) -> list[sqlite3.Row]:

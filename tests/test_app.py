@@ -2,7 +2,7 @@
 
 import pytest
 
-from timecard import create_app
+from timecard import create_app, network
 
 
 @pytest.fixture()
@@ -10,6 +10,17 @@ def client(tmp_path):
     db_path = tmp_path / "test.db"
     app = create_app(db_path=str(db_path))
     app.config.update(TESTING=True)
+    with app.test_client() as client:
+        yield client
+
+
+@pytest.fixture()
+def restricted_client(tmp_path):
+    """会社ネットワークを 10.9.9.0/24 に限定したアプリ。"""
+    db_path = tmp_path / "restricted.db"
+    app = create_app(db_path=str(db_path))
+    app.config.update(TESTING=True)
+    app.config["ALLOWED_NETWORKS"] = network.parse_networks("10.9.9.0/24")
     with app.test_client() as client:
         yield client
 
@@ -126,3 +137,95 @@ def test_web_forms(client):
 def test_employee_detail_not_found(client):
     resp = client.get("/employee/999")
     assert resp.status_code == 404
+
+
+# ---- 時給・給与計算 --------------------------------------------------------
+
+def test_create_employee_with_wage(client):
+    resp = client.post("/api/employees", json={"code": "E001", "name": "山田", "hourly_wage": 1500})
+    assert resp.status_code == 201
+    assert resp.get_json()["hourly_wage"] == 1500
+
+
+def test_update_wage_api(client):
+    emp_id = _create_employee(client)
+    resp = client.patch(f"/api/employees/{emp_id}", json={"hourly_wage": 2000})
+    assert resp.status_code == 200
+    assert resp.get_json()["hourly_wage"] == 2000
+    # 一覧にも反映される
+    assert client.get("/api/employees").get_json()[0]["hourly_wage"] == 2000
+
+
+def test_update_wage_unknown_employee(client):
+    resp = client.patch("/api/employees/999", json={"hourly_wage": 100})
+    assert resp.status_code == 404
+
+
+def test_payroll_api(client):
+    emp_id = _create_employee(client)
+    client.patch(f"/api/employees/{emp_id}", json={"hourly_wage": 1000})
+    resp = client.get("/api/payroll")
+    assert resp.status_code == 200
+    data = resp.get_json()
+    assert "employees" in data
+    assert data["employees"][0]["hourly_wage"] == 1000
+    assert "grand_total" in data
+
+
+def test_admin_page(client):
+    _create_employee(client)
+    resp = client.get("/admin")
+    assert resp.status_code == 200
+    assert "給与".encode() in resp.data
+
+
+def test_payroll_csv_download(client):
+    _create_employee(client, name="佐藤")
+    resp = client.get("/admin/payroll.csv")
+    assert resp.status_code == 200
+    assert "text/csv" in resp.headers["Content-Type"]
+    assert "attachment" in resp.headers["Content-Disposition"]
+    assert "佐藤" in resp.data.decode("utf-8")
+
+
+# ---- ネットワーク(会社 Wi-Fi)制限 ---------------------------------------
+
+def test_punch_blocked_outside_company_network(restricted_client):
+    _create_employee(restricted_client)
+    # 既定の test client は 127.0.0.1 → 許可範囲外
+    resp = restricted_client.post(
+        "/api/employees/1/punch", json={"punch_type": "in"}
+    )
+    assert resp.status_code == 403
+    assert "client_ip" in resp.get_json()
+
+
+def test_punch_allowed_inside_company_network(restricted_client):
+    _create_employee(restricted_client)
+    resp = restricted_client.post(
+        "/api/employees/1/punch",
+        json={"punch_type": "in"},
+        environ_base={"REMOTE_ADDR": "10.9.9.50"},
+    )
+    assert resp.status_code == 201
+    assert resp.get_json()["status"] == "working"
+
+
+def test_form_punch_blocked_shows_flash(restricted_client):
+    _create_employee(restricted_client)
+    resp = restricted_client.post(
+        "/employee/1/punch", data={"punch_type": "in"}, follow_redirects=True
+    )
+    assert resp.status_code == 200
+    assert "会社の Wi-Fi".encode() in resp.data
+
+
+def test_no_restriction_allows_any_ip(client):
+    # ALLOWED_NETWORKS 未設定なら任意の IP から打刻可
+    _create_employee(client)
+    resp = client.post(
+        "/api/employees/1/punch",
+        json={"punch_type": "in"},
+        environ_base={"REMOTE_ADDR": "8.8.8.8"},
+    )
+    assert resp.status_code == 201

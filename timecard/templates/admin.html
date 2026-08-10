@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}一括管理・給与計算{% endblock %}
+{% block content %}
+<h1>一括管理・給与計算 <small>{{ month }}</small></h1>
+
+<div class="toolbar">
+  <form method="get" class="inline-form">
+    <label>対象月 <input type="month" name="month" value="{{ month }}"></label>
+    <button class="btn btn-primary">表示</button>
+  </form>
+  <a class="btn btn-primary" href="{{ url_for('admin_csv', month=month) }}">CSV ダウンロード</a>
+</div>
+
+<div class="summary-row">
+  <div class="stat"><span class="stat-label">社員数</span><span class="stat-value">{{ report|length }}名</span></div>
+  <div class="stat stat-total"><span class="stat-label">支給額合計(全社員)</span><span class="stat-value">¥{{ "{:,}".format(grand_total) }}</span></div>
+</div>
+
+{% if not report %}
+  <p class="empty">社員が登録されていません。</p>
+{% else %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>社員コード</th><th>氏名</th><th>出勤日数</th><th>実労働</th><th>残業</th>
+      <th>時給</th><th>基本給</th><th>残業手当</th><th>支給額合計</th><th>時給変更</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for r in report %}
+    {% set emp = r.employee %}{% set pay = r.pay %}
+    <tr class="{{ 'row-warn' if pay.has_incomplete else '' }}">
+      <td>{{ emp.code }}</td>
+      <td><a href="{{ url_for('employee_detail', employee_id=emp.id, month=month) }}">{{ emp.name }}</a>
+          {% if pay.has_incomplete %}<span class="warn-text" title="打刻漏れあり">⚠</span>{% endif %}</td>
+      <td>{{ pay.work_days }}日</td>
+      <td>{{ pay.work_hours }}h</td>
+      <td>{{ pay.overtime_hours }}h</td>
+      <td>¥{{ "{:,}".format(pay.hourly_wage) }}</td>
+      <td>¥{{ "{:,}".format(pay.base_pay) }}</td>
+      <td>¥{{ "{:,}".format(pay.overtime_pay) }}</td>
+      <td class="cell-total">¥{{ "{:,}".format(pay.total_pay) }}</td>
+      <td>
+        <form method="post" action="{{ url_for('update_wage_form', employee_id=emp.id) }}" class="wage-form">
+          <input name="hourly_wage" type="number" min="0" value="{{ emp.hourly_wage }}">
+          <button class="btn btn-ghost">保存</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="8" style="text-align:right;font-weight:700;">合計</td>
+      <td class="cell-total">¥{{ "{:,}".format(grand_total) }}</td>
+      <td></td>
+    </tr>
+  </tfoot>
+</table>
+<p class="note">残業割増率 {{ overtime_rate }}倍。所定労働 1 日 8 時間を超えた分を残業として計算します。</p>
+{% endif %}
+{% endblock %}

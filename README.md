@@ -6,10 +6,29 @@ Python (Flask) + SQLite で動作し、Web 画面と REST API の両方を備え
 ## 主な機能
 
 - **打刻** — 出勤 / 退勤 / 休憩開始 / 休憩終了。状態遷移を検証し、不正な打刻(未出勤での退勤など)は拒否します。
+- **会社 Wi-Fi 制限** — 打刻は会社ネットワーク(許可 IP / CIDR)からのみ可能。社外からの打刻はブロックします。
 - **リアルタイム表示** — 打刻画面に社員ごとの現在の状態(未出勤 / 勤務中 / 休憩中)と本日の実働時間を表示。
 - **月次集計** — 社員ごとに日別の実働・休憩・残業時間を集計。中抜け(1 日複数回の出退勤)にも対応。
 - **残業計算** — 所定労働時間(既定 8 時間/日)を超えた分を自動的に残業として算出。
+- **一括管理・給与計算** — 管理画面で全社員の月次勤怠・給与を一覧表示。時給と残業割増から支給額を自動計算し、CSV 出力も可能。
 - **REST API** — 打刻機や外部システムから利用できる JSON API。
+
+## 会社 Wi-Fi のみで打刻できる仕組み
+
+打刻はサーバーがリクエスト元 IP アドレスを確認し、**許可されたネットワークからのアクセスのみ**受け付けます。
+
+- 社内 LAN にサーバーを置く場合 → LAN のサブネット(例 `192.168.10.0/24`)を許可
+- クラウド運用の場合 → オフィスから出ていく固定グローバル IP(例 `203.0.113.5`)を許可
+
+`TIMECARD_ALLOWED_NETWORKS` にカンマ区切りで設定します。未設定の場合は制限なし(どこからでも打刻可)で、画面に警告が表示されます。リバースプロキシ配下では `TIMECARD_TRUST_PROXY=1` を設定すると `X-Forwarded-For` の元 IP で判定します。
+
+```bash
+# 例: 社内 LAN と拠点の固定 IP からのみ打刻を許可
+export TIMECARD_ALLOWED_NETWORKS="192.168.10.0/24,203.0.113.5"
+python run.py
+```
+
+> 注: IP アドレスによる制限はサーバー側で打刻を管理する運用における標準的な手法です。社内 VPN 経由のアクセスなどは許可 IP に含まれれば通過します。より厳密な端末認証が必要な場合はクライアント証明書等との併用を検討してください。
 
 ## セットアップ
 
@@ -30,6 +49,10 @@ python run.py
 | `TIMECARD_DB` | `timecard.db` | SQLite データベースのパス |
 | `HOST` | `127.0.0.1` | バインドするホスト |
 | `PORT` | `5000` | ポート番号 |
+| `TIMECARD_ALLOWED_NETWORKS` | (なし) | 打刻を許可するネットワーク。カンマ区切りの CIDR / IP |
+| `TIMECARD_TRUST_PROXY` | `0` | `1` にするとプロキシの `X-Forwarded-For` で IP 判定 |
+| `TIMECARD_OVERTIME_RATE` | `1.25` | 残業割増率 |
+| `TIMECARD_SECRET` | `dev-timecard-secret` | セッション用シークレット(本番は必ず変更) |
 
 ## 使い方(Web UI)
 
@@ -45,9 +68,13 @@ python run.py
 | メソッド | パス | 説明 |
 |----------|------|------|
 | `GET`  | `/api/employees` | 社員一覧と現在の状態 |
-| `POST` | `/api/employees` | 社員登録 `{"code","name"}` |
-| `POST` | `/api/employees/<id>/punch` | 打刻 `{"punch_type"}` (`in`/`out`/`break_in`/`break_out`) |
+| `POST` | `/api/employees` | 社員登録 `{"code","name","hourly_wage"}` |
+| `PATCH`| `/api/employees/<id>` | 時給変更 `{"hourly_wage"}` |
+| `POST` | `/api/employees/<id>/punch` | 打刻 `{"punch_type"}` (`in`/`out`/`break_in`/`break_out`)。会社ネットワーク外は 403 |
 | `GET`  | `/api/employees/<id>/summary?date=YYYY-MM-DD` | 指定日の勤怠集計 |
+| `GET`  | `/api/payroll?month=YYYY-MM` | 全社員の月次給与レポート |
+
+画面: `/`(打刻)、`/employee/<id>`(社員別 月次勤怠・給与)、`/admin`(一括管理・給与計算)、`/admin/payroll.csv`(CSV 出力)
 
 ### 例
 
@@ -76,6 +103,8 @@ curl localhost:5000/api/employees/1/summary
 │   ├── __init__.py
 │   ├── app.py              # Flask アプリ(画面 + API)
 │   ├── attendance.py       # 勤怠計算ロジック(DB 非依存の純粋関数)
+│   ├── payroll.py          # 給与計算ロジック(DB 非依存の純粋関数)
+│   ├── network.py          # 会社 Wi-Fi(許可 IP)判定ロジック
 │   ├── db.py               # SQLite データアクセス層
 │   ├── templates/          # HTML テンプレート
 │   └── static/             # CSS / JavaScript
@@ -88,8 +117,9 @@ curl localhost:5000/api/employees/1/summary
 python -m pytest
 ```
 
-勤怠計算ロジック(`tests/test_attendance.py`)と API/画面(`tests/test_app.py`)を
-カバーする 24 件のテストが含まれています。
+勤怠計算・給与計算・ネットワーク判定の各ロジックと、API / 画面をカバーする
+49 件のテストが含まれています(`tests/test_attendance.py`, `test_payroll.py`,
+`test_network.py`, `test_app.py`)。
 
 ## 設計上のポイント
 
