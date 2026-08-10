@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}タイムカード - 打刻{% endblock %}
+{% block content %}
+<h1>打刻画面 <small>{{ today }}</small></h1>
+
+{% if not cards %}
+  <p class="empty">社員が登録されていません。下のフォームから登録してください。</p>
+{% endif %}
+
+<div class="card-grid">
+  {% for card in cards %}
+  <div class="card status-{{ card.status }}">
+    <div class="card-head">
+      <div>
+        <span class="emp-code">{{ card.employee.code }}</span>
+        <a class="emp-name" href="{{ url_for('employee_detail', employee_id=card.employee.id) }}">
+          {{ card.employee.name }}
+        </a>
+      </div>
+      <span class="badge badge-{{ card.status }}">{{ card.status_label }}</span>
+    </div>
+
+    <div class="times">
+      <span>出勤: {{ card.summary.clock_in.strftime('%H:%M') if card.summary.clock_in else '--:--' }}</span>
+      <span>退勤: {{ card.summary.clock_out.strftime('%H:%M') if card.summary.clock_out else '--:--' }}</span>
+      <span>実働: {{ card.summary.work_hours }}h</span>
+    </div>
+
+    <div class="actions">
+      <form method="post" action="{{ url_for('punch_form', employee_id=card.employee.id) }}">
+        {% if 'in' in card.allowed %}
+          <button name="punch_type" value="in" class="btn btn-in">出勤</button>
+        {% endif %}
+        {% if 'break_in' in card.allowed %}
+          <button name="punch_type" value="break_in" class="btn btn-break">休憩開始</button>
+        {% endif %}
+        {% if 'break_out' in card.allowed %}
+          <button name="punch_type" value="break_out" class="btn btn-break">休憩終了</button>
+        {% endif %}
+        {% if 'out' in card.allowed %}
+          <button name="punch_type" value="out" class="btn btn-out">退勤</button>
+        {% endif %}
+      </form>
+      <form method="post" action="{{ url_for('delete_employee_form', employee_id=card.employee.id) }}"
+            onsubmit="return confirm('{{ card.employee.name }} を削除しますか?打刻履歴もすべて削除されます。');">
+        <button class="btn btn-ghost">削除</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<section class="panel">
+  <h2>社員を登録</h2>
+  <form method="post" action="{{ url_for('add_employee_form') }}" class="inline-form">
+    <input name="code" placeholder="社員コード (例: E001)" required>
+    <input name="name" placeholder="氏名" required>
+    <button class="btn btn-primary">登録</button>
+  </form>
+</section>
+{% endblock %}

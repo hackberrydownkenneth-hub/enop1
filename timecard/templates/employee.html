@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ employee.name }} - 月次勤怠{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('index') }}">← 打刻画面へ戻る</a></p>
+
+<h1>{{ employee.name }} <small>({{ employee.code }})</small></h1>
+
+<form method="get" class="inline-form">
+  <label>対象月
+    <input type="month" name="month" value="{{ month }}">
+  </label>
+  <button class="btn btn-primary">表示</button>
+</form>
+
+<div class="summary-row">
+  <div class="stat"><span class="stat-label">合計実働</span><span class="stat-value">{{ total_work_hours }}h</span></div>
+  <div class="stat"><span class="stat-label">合計残業</span><span class="stat-value">{{ total_overtime_hours }}h</span></div>
+  <div class="stat"><span class="stat-label">出勤日数</span><span class="stat-value">{{ days|length }}日</span></div>
+</div>
+
+<h2>日別集計</h2>
+{% if not days %}
+  <p class="empty">この月の打刻記録はありません。</p>
+{% else %}
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>日付</th><th>出勤</th><th>退勤</th><th>実働</th><th>休憩</th><th>残業</th><th>備考</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for d in days %}
+    <tr class="{{ 'row-warn' if d.summary.incomplete else '' }}">
+      <td>{{ d.date }}</td>
+      <td>{{ d.summary.clock_in.strftime('%H:%M') if d.summary.clock_in else '-' }}</td>
+      <td>{{ d.summary.clock_out.strftime('%H:%M') if d.summary.clock_out else '-' }}</td>
+      <td>{{ d.summary.work_hours }}h</td>
+      <td>{{ d.summary.break_hours }}h</td>
+      <td>{{ d.summary.overtime_hours }}h</td>
+      <td class="warn-text">{{ d.summary.warnings|join(' / ') }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+<h2>打刻履歴</h2>
+{% if not rows %}
+  <p class="empty">打刻記録はありません。</p>
+{% else %}
+<table class="data-table">
+  <thead><tr><th>日時</th><th>種別</th></tr></thead>
+  <tbody>
+    {% for r in rows %}
+    <tr>
+      <td>{{ r['punched_at'].replace('T', ' ') }}</td>
+      <td>{{ {'in':'出勤','out':'退勤','break_in':'休憩開始','break_out':'休憩終了'}[r['punch_type']] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+{% endblock %}
