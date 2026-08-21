@@ -8,6 +8,7 @@
   var TOTALS = [30, 60, 80, 100, 120, 150, 200];
   var ADD_ONS = [5, 7, 10];
   var STATE_KEY = "colormix.state.v1";
+  var ADDON_KEY = "colormix.addon.v1";
   var RECIPE_KEY = "colormix.recipes.v1";
 
   var $ = function (id) {
@@ -65,9 +66,6 @@
       oxRatio: 1,
       total: 100,
       step: 1,
-      // 追い足し（合計量に対して数％の1剤を足す最近の塗り方）
-      addOn: false,
-      addOnPercent: 5,
       items: [
         { name: "", parts: 1, grams: 30 },
         { name: "", parts: 1, grams: 30 },
@@ -84,8 +82,6 @@
       oxRatio: num(saved.oxRatio, 1),
       total: num(saved.total, 100),
       step: saved.step === 0.1 ? 0.1 : 1,
-      addOn: saved.addOn === true,
-      addOnPercent: Math.min(num(saved.addOnPercent, 5), 100),
       items: items.slice(0, 12).map(function (item) {
         return {
           name: typeof item.name === "string" ? item.name.slice(0, 40) : "",
@@ -106,8 +102,18 @@
     return isFinite(parsed) && parsed >= 0 ? parsed : 0;
   }
 
+  /* 追い足し計算は上の配合計算とは別枠。状態も別に持つ */
+  function sanitizeAddOn(saved) {
+    if (!saved || typeof saved !== "object") return { remain: 40, percent: 5 };
+    return {
+      remain: num(saved.remain, 40),
+      percent: Math.min(num(saved.percent, 5), 100),
+    };
+  }
+
   var state = sanitize(readStore(STATE_KEY, null));
   if (state.items.length === 0) state.items = defaultState().items;
+  var addOn = sanitizeAddOn(readStore(ADDON_KEY, null));
   var recipes = readStore(RECIPE_KEY, []) || [];
   var rows = [];
 
@@ -124,11 +130,10 @@
   var itemsTitle = $("items-title");
   var itemsHint = $("items-hint");
   var itemsStepNo = $("items-step-no");
-  var addOnToggle = $("addon-toggle");
-  var addOnBody = $("addon-body");
+  var addOnRemain = $("addon-remain");
   var addOnChips = $("addon-chips");
   var addOnInput = $("addon-input");
-  var addOnPreview = $("addon-preview");
+  var addOnBody = $("addon-body");
   var resultCard = $("result-card");
   var resultBody = $("result-body");
   var recipesCard = $("recipes-card");
@@ -259,65 +264,86 @@
     });
   }
 
-  /* ---------- 追い足し（オプション） ---------- */
+  /* ---------- 追い足し計算（上の計算とは別枠） ---------- */
 
   ADD_ONS.forEach(function (percent) {
     var chip = button("chip", percent + "%");
     chip.dataset.addon = String(percent);
     chip.addEventListener("click", function () {
-      state.addOnPercent = percent;
+      addOn.percent = percent;
       addOnInput.value = String(percent);
-      syncAddOn();
-      update();
+      updateAddOn();
     });
     addOnChips.appendChild(chip);
   });
 
-  addOnToggle.addEventListener("change", function () {
-    state.addOn = addOnToggle.checked;
-    syncAddOn();
-    update();
+  addOnRemain.addEventListener("input", function () {
+    addOn.remain = parseInput(addOnRemain.value);
+    updateAddOn();
   });
 
   addOnInput.addEventListener("input", function () {
-    state.addOnPercent = Math.min(parseInput(addOnInput.value), 100);
-    syncAddOn();
-    update();
+    addOn.percent = Math.min(parseInput(addOnInput.value), 100);
+    updateAddOn();
   });
 
-  function bumpAddOn(delta) {
-    state.addOnPercent = Math.min(
-      100,
-      Math.max(0, Math.round((state.addOnPercent + delta) * 10) / 10)
-    );
-    addOnInput.value = String(state.addOnPercent);
-    syncAddOn();
-    update();
+  function bumpRemain(delta) {
+    addOn.remain = Math.max(0, Math.round((addOn.remain + delta) * 10) / 10);
+    addOnRemain.value = String(addOn.remain);
+    updateAddOn();
   }
 
-  function syncAddOn() {
-    addOnToggle.checked = state.addOn;
-    addOnBody.hidden = !state.addOn;
-    // :has() が使えないブラウザ向けに、見た目もクラスで切り替える
-    addOnToggle.parentNode.classList.toggle("on", state.addOn);
+  function bumpAddOn(delta) {
+    addOn.percent = Math.min(
+      100,
+      Math.max(0, Math.round((addOn.percent + delta) * 10) / 10)
+    );
+    addOnInput.value = String(addOn.percent);
+    updateAddOn();
+  }
+
+  function renderAddOn(result) {
+    addOnBody.textContent = "";
+
+    if (!result.ok) {
+      var err = document.createElement("p");
+      err.className = "error";
+      err.textContent = "⚠ " + t("err." + result.code);
+      addOnBody.appendChild(err);
+      return;
+    }
+
+    addOnBody.appendChild(
+      resultRow(
+        t("addon.result"),
+        t("addon.resultSub", { remain: result.remainText, pct: result.percent }),
+        result.text,
+        "addon"
+      )
+    );
+
+    var after = document.createElement("p");
+    after.className = "addon-after";
+    after.textContent = t("addon.after", { g: result.totalText });
+    addOnBody.appendChild(after);
+  }
+
+  /** 追い足しだけを計算し直す（配合計算には触らない） */
+  function updateAddOn() {
     Array.prototype.forEach.call(addOnChips.children, function (chip) {
       chip.setAttribute(
         "aria-pressed",
-        Number(chip.dataset.addon) === state.addOnPercent ? "true" : "false"
+        Number(chip.dataset.addon) === addOn.percent ? "true" : "false"
       );
     });
-  }
-
-  /** 計算に渡す値。OFF のときは追い足しを 0% として扱う */
-  function calcInput() {
-    return {
-      mode: state.mode,
-      oxRatio: state.oxRatio,
-      total: state.total,
-      step: state.step,
-      items: state.items,
-      addOnPercent: state.addOn ? state.addOnPercent : 0,
-    };
+    renderAddOn(
+      CM.calcAddOn({
+        remain: addOn.remain,
+        percent: addOn.percent,
+        step: state.step,
+      })
+    );
+    writeStore(ADDON_KEY, addOn);
   }
 
   document.addEventListener("click", function (event) {
@@ -328,6 +354,8 @@
     if (act === "total-plus") bumpTotal(10);
     if (act === "addon-minus") bumpAddOn(-1);
     if (act === "addon-plus") bumpAddOn(1);
+    if (act === "remain-minus") bumpRemain(-10);
+    if (act === "remain-plus") bumpRemain(10);
   });
 
   /* ---------- モード切り替え ---------- */
@@ -543,39 +571,6 @@
       resultRow(t("result.sum"), "", CM.formatGrams(result.total, step), "sum")
     );
 
-    if (result.addOn) {
-      resultBody.appendChild(
-        resultRow(
-          t("result.addon"),
-          t("result.addonSub", { pct: result.addOn.percent }),
-          result.addOn.text,
-          "addon"
-        )
-      );
-
-      if (result.items.length > 1) {
-        var breakdown = document.createElement("p");
-        breakdown.className = "addon-break";
-        breakdown.textContent = t("result.addonBreak", {
-          list: result.addOn.items
-            .map(function (row, index) {
-              return itemLabel(state.items[index], index) + " " + row.text + "g";
-            })
-            .join(" / "),
-        });
-        resultBody.appendChild(breakdown);
-      }
-
-      resultBody.appendChild(
-        resultRow(
-          t("result.grand"),
-          "",
-          CM.formatGrams(result.grandTotal, step),
-          "grand"
-        )
-      );
-    }
-
     if (result.adjusted) {
       var notice = document.createElement("p");
       notice.className = "notice";
@@ -586,21 +581,6 @@
       });
       resultBody.appendChild(notice);
     }
-  }
-
-  /** 追い足しカードの「＋◯g」プレビュー */
-  function renderAddOnPreview(result) {
-    if (!state.addOn || !result.ok || !result.addOn) {
-      addOnPreview.textContent = "";
-      return;
-    }
-    setText(
-      addOnPreview,
-      t("addon.preview", {
-        total: CM.formatGrams(result.total, result.step),
-        g: result.addOn.text,
-      })
-    );
   }
 
   function buildStepToggle() {
@@ -651,10 +631,9 @@
     }
     stickyBar.hidden = resultVisible;
     var step = result.step;
-    $("sticky-base").textContent =
-      CM.formatGrams(result.base1WithAddOn, step) + "g";
+    $("sticky-base").textContent = CM.formatGrams(result.base1, step) + "g";
     $("sticky-ox").textContent = CM.formatGrams(result.ox, step) + "g";
-    $("sticky-total").textContent = CM.formatGrams(result.grandTotal, step) + "g";
+    $("sticky-total").textContent = CM.formatGrams(result.total, step) + "g";
   }
 
   /* 結果カードが画面から外れているときだけ下部バーを出す */
@@ -689,25 +668,6 @@
     }
     lines.push(t("copy.ox") + "  " + CM.formatGrams(result.ox, step) + "g");
     lines.push(t("copy.total") + "  " + CM.formatGrams(result.total, step) + "g");
-    if (result.addOn) {
-      lines.push("");
-      lines.push(
-        t("copy.addon") +
-          " (" +
-          result.addOn.percent +
-          "%)  " +
-          result.addOn.text +
-          "g"
-      );
-      if (result.items.length > 1) {
-        result.addOn.items.forEach(function (row, index) {
-          lines.push("  " + itemLabel(state.items[index], index) + "  " + row.text + "g");
-        });
-      }
-      lines.push(
-        t("copy.grand") + "  " + CM.formatGrams(result.grandTotal, step) + "g"
-      );
-    }
     return lines.join("\n");
   }
 
@@ -895,9 +855,8 @@
   var lastResult = { ok: false };
 
   function update() {
-    lastResult = CM.calc(calcInput());
+    lastResult = CM.calc(state);
     renderResult(lastResult);
-    renderAddOnPreview(lastResult);
     renderBadges(lastResult);
     renderSticky(lastResult);
     writeStore(STATE_KEY, state);
@@ -905,16 +864,17 @@
 
   function syncAll() {
     ratioCustom.value = String(state.oxRatio);
+    addOnRemain.value = String(addOn.remain);
+    addOnInput.value = String(addOn.percent);
     totalInput.value = String(state.total);
-    addOnInput.value = String(state.addOnPercent);
     syncMode();
     syncRatio();
     syncTotal();
-    syncAddOn();
     syncStep();
     renderItems();
     renderRecipes();
     update();
+    updateAddOn();
   }
 
   I18N.onChange(function () {

@@ -104,85 +104,56 @@ test("1剤量モード: 30g+10g を 1:2 で使うと2剤80g・合計120g", () =>
   assert.deepStrictEqual(grams(r), [30, 10]);
 });
 
-test("追い足し: 合計120g の 5% は 6g、総量は126g", () => {
-  const r = ColorMix.calcFromTotal({
-    total: 120,
-    oxRatio: 2,
-    items: items(1),
-    addOnPercent: 5,
-  });
-  assert.strictEqual(r.base1, 40);
-  assert.strictEqual(r.ox, 80);
-  assert.strictEqual(r.total, 120, "追い足し前の合計は変わらない");
-  assert.strictEqual(r.addOn.grams, 6);
-  assert.strictEqual(r.base1WithAddOn, 46);
-  assert.strictEqual(r.grandTotal, 126);
-  assert.strictEqual(r.items[0].withAddOn, 46);
+test("追い足し: 残り40g の 5% は 2g、追い足し後は42g", () => {
+  const r = ColorMix.calcAddOn({ remain: 40, percent: 5 });
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.remain, 40);
+  assert.strictEqual(r.grams, 2);
+  assert.strictEqual(r.total, 42);
+  assert.strictEqual(r.text, "2");
 });
 
-test("追い足しも配合比どおりに割り振り、合計はぴったり一致する", () => {
-  const r = ColorMix.calcFromTotal({
-    total: 120,
-    oxRatio: 2,
-    items: items(2, 1),
-    addOnPercent: 10,
-  });
-  assert.strictEqual(r.addOn.grams, 12);
-  assert.deepStrictEqual(r.addOn.items.map((row) => row.grams), [8, 4]);
-  const sum = r.addOn.items.reduce((a, row) => a + row.grams, 0);
-  assert.strictEqual(sum, r.addOn.grams);
-  assert.deepStrictEqual(r.items.map((row) => row.withAddOn), [35, 17]);
-  assert.strictEqual(r.grandTotal, 132);
+test("追い足し: 5% / 7% / 10% の代表例", () => {
+  const at = (remain, percent) => ColorMix.calcAddOn({ remain, percent }).grams;
+  assert.strictEqual(at(40, 7), 3, "40g の7% は 2.8 → 3g");
+  assert.strictEqual(at(40, 10), 4);
+  assert.strictEqual(at(100, 5), 5);
+  assert.strictEqual(at(65, 10), 7, "65g の10% は 6.5 → 7g");
 });
 
-test("追い足しは1剤量モードでも合計量を基準にする", () => {
-  const r = ColorMix.calcFromBase({
-    oxRatio: 1,
-    items: [{ grams: 50 }],
-    addOnPercent: 10,
-  });
-  assert.strictEqual(r.total, 100);
-  assert.strictEqual(r.addOn.grams, 10, "合計100g の10%");
-  assert.strictEqual(r.grandTotal, 110);
-});
-
-test("追い足しは0.1g刻みでも端数が消えない", () => {
-  const r = ColorMix.calcFromTotal({
-    total: 100,
-    oxRatio: 2,
-    items: items(2, 1),
-    addOnPercent: 7,
-    step: 0.1,
-  });
-  assert.strictEqual(r.addOn.grams, 7);
-  assert.deepStrictEqual(r.addOn.items.map((row) => row.text), ["4.7", "2.3"]);
-  assert.strictEqual(r.grandTotal, 107);
-});
-
-test("追い足しなし・不正な％は addOn が null で総量は合計のまま", () => {
-  for (const pct of [undefined, 0, -5, NaN, "abc"]) {
-    const r = ColorMix.calcFromTotal({
-      total: 100,
-      oxRatio: 1,
-      items: items(1),
-      addOnPercent: pct,
-    });
-    assert.strictEqual(r.addOn, null, String(pct));
-    assert.strictEqual(r.grandTotal, 100);
-    assert.strictEqual(r.base1WithAddOn, r.base1);
-    assert.strictEqual(r.items[0].withAddOn, r.items[0].grams);
-  }
+test("追い足しは0.1g刻みでも計算できる", () => {
+  const r = ColorMix.calcAddOn({ remain: 45, percent: 7, step: 0.1 });
+  assert.strictEqual(r.grams, 3.2);
+  assert.strictEqual(r.text, "3.2");
+  assert.strictEqual(r.total, 48.2);
 });
 
 test("追い足しの％は100%までに丸める", () => {
-  const r = ColorMix.calcFromTotal({
-    total: 100,
-    oxRatio: 1,
-    items: items(1),
-    addOnPercent: 500,
-  });
-  assert.strictEqual(r.addOn.percent, 100);
-  assert.strictEqual(r.addOn.grams, 100);
+  const r = ColorMix.calcAddOn({ remain: 40, percent: 500 });
+  assert.strictEqual(r.percent, 100);
+  assert.strictEqual(r.grams, 40);
+});
+
+test("追い足しは入力が足りないとエラーコードを返す", () => {
+  const cases = [
+    [ColorMix.calcAddOn({ remain: 0, percent: 5 }), "need_remain"],
+    [ColorMix.calcAddOn({ percent: 5 }), "need_remain"],
+    [ColorMix.calcAddOn({ remain: 40, percent: 0 }), "need_percent"],
+    [ColorMix.calcAddOn({ remain: 40 }), "need_percent"],
+    [ColorMix.calcAddOn({ remain: 40, percent: -5 }), "need_percent"],
+    [ColorMix.calcAddOn({ remain: 0.4, percent: 5 }), "remain_too_small"],
+  ];
+  for (const [result, code] of cases) {
+    assert.strictEqual(result.ok, false);
+    assert.strictEqual(result.code, code);
+  }
+});
+
+test("追い足しは合計量の計算に影響しない", () => {
+  const r = ColorMix.calcFromTotal({ total: 120, oxRatio: 2, items: items(1) });
+  assert.strictEqual(r.total, 120);
+  assert.strictEqual(r.base1, 40);
+  assert.strictEqual(r.ox, 80);
 });
 
 test("配分は合計が必ず一致する（総当たり）", () => {

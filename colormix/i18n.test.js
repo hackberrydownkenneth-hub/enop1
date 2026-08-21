@@ -82,6 +82,9 @@ test("エラーコードに対応する文言が揃っている", () => {
     "total_too_small",
     "base_too_small",
     "need_grams",
+    "need_remain",
+    "need_percent",
+    "remain_too_small",
   ];
   for (const code of codes) {
     for (const lang of I18N.LANGS) {

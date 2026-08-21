@@ -513,90 +513,59 @@ body {
   font-size: 13px;
 }
 
-/* 追い足し（オプション） */
+/* 追い足し計算（別枠） */
 .addon-no {
   background: var(--add);
   color: var(--card);
 }
 
-.switch {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 48px;
-  padding: 8px 12px;
-  border: 2px solid var(--line);
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
+.card.addon {
+  border: 2px solid var(--add-soft);
 }
 
-.switch input {
-  width: 24px;
-  height: 24px;
-  flex: none;
-  accent-color: var(--add);
+.addon-label {
+  margin: 16px 0 8px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
-.switch.on,
-.switch:has(input:checked) {
-  border-color: var(--add);
-  background: var(--add-soft);
-  color: var(--add);
-}
-
-.addon-body {
-  margin-top: 12px;
-}
-
-.addon-body .chip[aria-pressed="true"] {
+.addon .chip[aria-pressed="true"] {
   border-color: var(--add);
   background: var(--add);
   color: var(--card);
 }
 
-.addon-preview {
-  margin: 12px 0 0;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--add-soft);
-  color: var(--add);
-  font-size: 14px;
-  text-align: center;
-}
-
-.addon-preview b {
-  font-size: 20px;
-  font-variant-numeric: tabular-nums;
-}
-
 .rrow.addon {
   background: var(--add-soft);
-  margin: 6px -14px 0;
+  margin: 14px -14px 0;
   padding: 12px 14px;
   border-bottom: none;
   border-radius: 12px;
   color: var(--add);
 }
 
-.rrow.grand {
-  border-bottom: none;
-  padding-top: 12px;
-  color: var(--add);
+.rrow.addon .rgram {
+  font-size: 40px;
+}
+
+.addon-after {
+  margin: 8px 0 0;
+  text-align: right;
+  color: var(--muted);
+  font-size: 14px;
   font-weight: 700;
 }
 
-.rrow.grand .rgram {
-  font-size: 28px;
-  color: var(--add);
-}
-
-.addon-break {
-  margin: 6px 0 0;
-  text-align: right;
+.addon-example {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
   color: var(--muted);
   font-size: 12px;
+}
+
+.addon-example b {
+  color: var(--add);
 }
 
 .notice {
