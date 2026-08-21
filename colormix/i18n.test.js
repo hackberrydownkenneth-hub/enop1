@@ -50,6 +50,22 @@ test("繁體中文に日本語のかなが混ざっていない", () => {
   assert.deepStrictEqual(leaked, [], "ひらがな・カタカナが残っているキー");
 });
 
+test("繁體中文に日本の新字体が混ざっていない", () => {
+  // 日本語入力で打つと紛れ込みやすい字。左が新字体、右が繁体字
+  const shinjitai = {
+    "毎": "每", "国": "國", "図": "圖", "楽": "樂", "実": "實",
+    "総": "總", "価": "價", "髪": "髮", "検": "檢", "点": "點",
+    "対": "對", "変": "變", "収": "收", "経": "經", "続": "續",
+  };
+  const found = [];
+  for (const [key, text] of Object.entries(yue)) {
+    for (const [bad, good] of Object.entries(shinjitai)) {
+      if (String(text).includes(bad)) found.push(`${key}: 「${bad}」→「${good}」`);
+    }
+  }
+  assert.deepStrictEqual(found, [], "新字体が混ざっているキー");
+});
+
 test("置換用の {name} が両言語で一致している", () => {
   const holders = (text) => (String(text).match(/\{(\w+)\}/g) || []).sort();
   for (const key of Object.keys(ja)) {
