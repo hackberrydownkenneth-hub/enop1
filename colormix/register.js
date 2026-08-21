@@ -24,6 +24,18 @@
     (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.register) || {}
   );
 
+  // Google フォームの「事前入力したURL」が入っていれば、そこから送信先とIDを組み立てる
+  if (config.mode === "form" && config.form && config.form.prefilledUrl) {
+    var parsed = Profile.parseGoogleForm(config.form.prefilledUrl);
+    if (parsed) {
+      config.form = Object.assign({}, config.form, parsed);
+    } else if (window.console && console.warn) {
+      console.warn(
+        "[colormix] 事前入力URLを読み取れませんでした。各欄に affiliation / salon / instagram / lang と入れて取得しなおしてください。"
+      );
+    }
+  }
+
   var t = I18N.scoped(I18N.current);
 
   /* ---------- 保存 ---------- */

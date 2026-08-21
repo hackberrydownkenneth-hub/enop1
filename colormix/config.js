@@ -14,8 +14,19 @@ window.COLORMIX_CONFIG = {
     // mode: "api" のとき
     apiUrl: "/api/register",
 
-    // mode: "form" のとき（Google フォームの送信先と entry.xxx フィールドID）
+    // mode: "form" のとき
+    //
+    // いちばん簡単なやり方:
+    //   1. Google フォームに記述式の項目を4つ作る（区分 / サロン名 / Instagram / 言語）
+    //   2. 右上の「⋮」→「事前入力したURLを取得」を開く
+    //   3. 4つの欄に affiliation / salon / instagram / lang とそのまま入力する
+    //   4. 「リンクを取得」で出てきたURLを prefilledUrl に貼る
+    //
+    // 値から項目を見分けるので、entry.xxx のIDを自分で調べる必要はない。
     form: {
+      prefilledUrl: "",
+
+      // prefilledUrl を使わず手で指定したいときはこちら
       actionUrl: "",
       fields: {
         affiliation: "",

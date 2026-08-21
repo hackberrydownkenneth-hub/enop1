@@ -109,29 +109,32 @@ python run_colormix.py                        # http://127.0.0.1:5001
 ### B. Google フォームで集める（`mode: "form"`）
 
 サーバーを立てずに、回答を Google スプレッドシートに溜められます。
+`entry.xxx` のIDを自分で調べる必要はありません。
 
-1. Google フォームを作り、「区分」「サロン名」「Instagram」「言語」の記述式項目を用意する
-2. フォームのプレビューを開き、HTML から `entry.1234567890` 形式のIDを控える
-3. `config.js` を書き換える
+1. Google フォームに**記述式の項目を4つ**作る（区分 / サロン名 / Instagram / 言語）
+2. 右上の **「⋮」→「事前入力したURLを取得」** を開く
+3. 4つの欄に、そのまま **`affiliation` / `salon` / `instagram` / `lang`** と入力して「リンクを取得」
+4. 出てきたURLを `config.js` に貼る
 
 ```js
 register: {
   mode: "form",
   form: {
-    actionUrl: "https://docs.google.com/forms/d/e/xxxxx/formResponse",
-    fields: {
-      affiliation: "entry.1111111111",
-      salon: "entry.2222222222",
-      instagram: "entry.3333333333",
-      lang: "entry.4444444444",
-    },
+    prefilledUrl:
+      "https://docs.google.com/forms/d/e/xxxxx/viewform?usp=pp_url" +
+      "&entry.111=affiliation&entry.222=salon&entry.333=instagram&entry.444=lang",
   },
 }
 ```
 
-4. `colormix/` を静的ホスティング（GitHub Pages など）に置く
+5. `colormix/` を静的ホスティング（GitHub Pages など）に置く
 
-> Google フォームは応答を返さない（CORS 非対応）ため、送信できたかどうかは確認できません。
+入力した合言葉（`affiliation` など）から、どの `entry` がどの項目かを自動で判別します
+（`parseGoogleForm`）。読み取れなかったときはコンソールに警告を出し、**収集しない扱い**に
+なるので、設定ミスのまま「運営者が使います」と表示されることはありません。
+
+> Google フォームは応答を返さない（CORS 非対応）ため、フォーム側で弾かれた場合は検知できません。
+> 電波が悪くて送れなかった場合は検知して、次回起動時に自動で再送します。
 > 取りこぼしを確実に検知したい場合は A を選んでください。
 
 ### 集めたデータの扱い

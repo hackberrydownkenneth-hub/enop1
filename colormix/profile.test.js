@@ -118,3 +118,62 @@ test("送信レコードを組み立てる", () => {
     registeredAt: "2026-08-21T00:00:00Z",
   });
 });
+
+test("Google フォームの事前入力URLから送信設定を読み取る", () => {
+  const url =
+    "https://docs.google.com/forms/d/e/1FAIpQLSabc123/viewform?usp=pp_url" +
+    "&entry.111111=affiliation&entry.222222=salon&entry.333333=instagram&entry.444444=lang";
+
+  assert.deepStrictEqual(Profile.parseGoogleForm(url), {
+    actionUrl: "https://docs.google.com/forms/d/e/1FAIpQLSabc123/formResponse",
+    fields: {
+      affiliation: "entry.111111",
+      salon: "entry.222222",
+      instagram: "entry.333333",
+      lang: "entry.444444",
+    },
+  });
+});
+
+test("合言葉の大文字・空白・+ 表記を吸収する", () => {
+  const url =
+    "https://docs.google.com/forms/d/e/X/viewform?entry.1=+Affiliation+&entry.2=INSTAGRAM";
+  assert.deepStrictEqual(Profile.parseGoogleForm(url).fields, {
+    affiliation: "entry.1",
+    instagram: "entry.2",
+  });
+});
+
+test("サロン名と言語は無くても読み取れる（区分と Instagram は必須）", () => {
+  const ok = Profile.parseGoogleForm(
+    "https://docs.google.com/forms/d/e/X/viewform?entry.1=affiliation&entry.2=instagram"
+  );
+  assert.strictEqual(ok.fields.salon, undefined);
+
+  const missing = Profile.parseGoogleForm(
+    "https://docs.google.com/forms/d/e/X/viewform?entry.1=salon&entry.2=lang"
+  );
+  assert.strictEqual(missing, null, "区分と Instagram が無ければ設定なし扱い");
+});
+
+test("フォームのURLとして読めないものは null", () => {
+  for (const bad of [
+    "",
+    null,
+    undefined,
+    "https://example.com/?entry.1=affiliation&entry.2=instagram",
+    "https://docs.google.com/forms/d/e/X/viewform",
+    "ただの文字列",
+  ]) {
+    assert.strictEqual(Profile.parseGoogleForm(bad), null, String(bad));
+  }
+});
+
+test("回答用URLをそのまま貼っても動く", () => {
+  const url =
+    "https://docs.google.com/forms/d/e/X/formResponse?entry.1=affiliation&entry.2=instagram";
+  assert.strictEqual(
+    Profile.parseGoogleForm(url).actionUrl,
+    "https://docs.google.com/forms/d/e/X/formResponse"
+  );
+});
