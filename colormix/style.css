@@ -106,18 +106,18 @@ body {
   display: block;
   width: 168px;
   aspect-ratio: 327 / 60;
-  background-color: #ffffff;
   background-image: url("logo.png");
   background-repeat: no-repeat;
   background-position: center;
-  background-size: calc(100% - 20px) auto;
-  border-radius: 8px;
+  background-size: contain;
 }
 
-.footer .brand-logo {
-  width: 132px;
-  background-size: calc(100% - 16px) auto;
-  border-radius: 6px;
+/* フッターは文字での表記。ダークモードで黒いロゴが埋もれるため、
+   ロゴ画像を暗い背景に置いたり色を変えたりはしない */
+.footer-brand {
+  color: var(--ink);
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .header h1 {
