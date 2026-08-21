@@ -16,6 +16,7 @@ const SHARED_ON_PURPOSE = new Set([
   "footer.by", // 「提供」は日本語・繁体字とも同じ
   "footer.instagram", // サービス名
   "reg.instagram.ph", // 入力例
+  "footer.whatsapp", // サービス名
 ]);
 
 test("キーが両言語で揃っている", () => {

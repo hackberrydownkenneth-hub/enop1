@@ -139,7 +139,7 @@
     "reg.instagram.ph": "your_id",
     "reg.consent": "上の使いみちに同意します",
     "reg.purpose.collect":
-      "いただいた情報（区分・サロン名・Instagram）は、運営者である DRIVE BLUE HONG KONG が、サービス改善とご連絡のためだけに使います。第三者には渡しません。",
+      "いただいた情報（区分・サロン名・Instagram）は、運営者である DRIVE BLUE HONG KONG が、サービス改善・ご連絡・お知らせの配信のために使います。第三者には渡しません。",
     "reg.purpose.local":
       "※ プレビュー版です。入力した内容はこの端末の中だけに保存され、どこにも送信されません。",
     "reg.contact": "お問い合わせ: {contact}",
@@ -156,6 +156,17 @@
     "reg.manage.delete": "この端末から削除",
     "reg.manage.deleted": "削除しました",
     "reg.manage.pending": "（未送信・あとで再送します）",
+
+    "reg.done.title": "ありがとうございます！",
+    "reg.done.lead":
+      "WhatsApp でお知らせを受け取れます（任意）。ボタンを押すとメッセージが用意されるので、そのまま送信してください。",
+    "reg.done.whatsapp": "WhatsApp で受け取る",
+    "reg.done.start": "計算機をはじめる",
+    "reg.whatsapp.message":
+      "DRIVE BLUE の最新情報を受け取りたいです。Instagram: @{instagram}",
+    "footer.whatsapp": "WhatsApp",
+    "footer.aria.whatsapp": "DRIVE BLUE HONG KONG に WhatsApp で連絡する",
+    "footer.whatsapp.message": "DRIVE BLUE の最新情報を受け取りたいです。",
   };
 
   var yue = {
@@ -281,7 +292,7 @@
     "reg.instagram.ph": "your_id",
     "reg.consent": "我同意上面講嘅用途",
     "reg.purpose.collect":
-      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者 DRIVE BLUE HONG KONG 用嚟改善服務同聯絡你，唔會俾第三方。",
+      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者 DRIVE BLUE HONG KONG 用嚟改善服務、聯絡你同 send 最新消息，唔會俾第三方。",
     "reg.purpose.local":
       "※ 呢個係預覽版。你填嘅嘢淨係擺喺呢部機入面，唔會傳去任何地方。",
     "reg.contact": "查詢: {contact}",
@@ -298,6 +309,17 @@
     "reg.manage.delete": "喺呢部機刪除",
     "reg.manage.deleted": "已刪除",
     "reg.manage.pending": "（未傳送・遲啲會再試）",
+
+    "reg.done.title": "多謝！",
+    "reg.done.lead":
+      "可以用 WhatsApp 收最新消息（自願）。㩒個掣就會幫你打好訊息，直接 send 出嚟就得。",
+    "reg.done.whatsapp": "用 WhatsApp 接收",
+    "reg.done.start": "開始用計算機",
+    "reg.whatsapp.message":
+      "我想收 DRIVE BLUE 嘅最新消息。Instagram: @{instagram}",
+    "footer.whatsapp": "WhatsApp",
+    "footer.aria.whatsapp": "用 WhatsApp 聯絡 DRIVE BLUE HONG KONG",
+    "footer.whatsapp.message": "我想收 DRIVE BLUE 嘅最新消息。",
   };
 
   var dictionaries = { ja: ja, yue: yue };

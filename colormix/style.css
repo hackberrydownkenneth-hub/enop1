@@ -921,6 +921,52 @@ body.gate-open {
   cursor: progress;
 }
 
+/* 登録完了画面 */
+.gate-done {
+  text-align: center;
+  align-items: center;
+}
+
+.gate-done .gate-lead {
+  text-align: center;
+}
+
+.gate-done .gate-submit {
+  width: 100%;
+}
+
+.gate-done-mark {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 4px auto 0;
+  border-radius: 50%;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.gate-whatsapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 54px;
+  border-radius: 12px;
+  background: #25d366;
+  color: #04310f;
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.gate-whatsapp:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
 .gate-contact {
   margin: 0;
   text-align: center;

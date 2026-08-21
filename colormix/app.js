@@ -691,9 +691,17 @@
     if (!host) return;
 
     host.textContent = "";
+    var whatsapp = config.whatsapp
+      ? "https://wa.me/" +
+        String(config.whatsapp).replace(/[^0-9]/g, "") +
+        "?text=" +
+        encodeURIComponent(t("footer.whatsapp.message"))
+      : "";
+
     var defined = [
       { key: "site", url: config.site },
       { key: "instagram", url: config.instagram },
+      { key: "whatsapp", url: whatsapp },
     ].filter(function (item) {
       return item.url;
     });

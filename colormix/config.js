@@ -47,5 +47,9 @@ window.COLORMIX_CONFIG = {
   links: {
     site: "https://drivebluehk.com",
     instagram: "https://www.instagram.com/driveblue_hk/",
+
+    // WhatsApp は「相手から送ってもらう」方式。国番号付き・記号なしの番号を入れる。
+    // 電話番号をこちらから聞かずに、送ってくれた人の番号が手元に残る。
+    whatsapp: "85255994111",
   },
 };

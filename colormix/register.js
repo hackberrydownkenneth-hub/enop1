@@ -125,6 +125,20 @@
     });
   }
 
+  /** wa.me のリンク。メッセージを入れておけるので、相手は送信するだけで済む */
+  function whatsappLink(message) {
+    var number = (window.COLORMIX_CONFIG &&
+      window.COLORMIX_CONFIG.links &&
+      window.COLORMIX_CONFIG.links.whatsapp) || "";
+    if (!number) return "";
+    return (
+      "https://wa.me/" +
+      String(number).replace(/[^0-9]/g, "") +
+      "?text=" +
+      encodeURIComponent(message)
+    );
+  }
+
   /* ---------- 画面の下ごしらえ ---------- */
 
   function el(tag, className, text) {
@@ -401,10 +415,46 @@
         collected: collecting,
       });
       writeProfile(profile);
-      closeGate();
       renderManage();
       if (collecting && !sent) notify(t("reg.warn.offline"));
+
+      // WhatsApp の案内があるときだけ、閉じる前に完了画面を挟む
+      var link = whatsappLink(t("reg.whatsapp.message", { instagram: record.instagram }));
+      if (link) showDone(link);
+      else closeGate();
     });
+  }
+
+  /**
+   * 登録直後に出す完了画面。
+   * こちらから電話番号を聞かず、相手から WhatsApp を送ってもらう導線にする。
+   */
+  function showDone(link) {
+    var card = backdrop.querySelector(".gate-card");
+    card.textContent = "";
+    card.classList.add("gate-done");
+
+    var check = el("p", "gate-done-mark", "✓");
+    var title = el("h2", "gate-title", t("reg.done.title"));
+    var lead = el("p", "gate-lead", t("reg.done.lead"));
+
+    var wa = document.createElement("a");
+    wa.className = "gate-whatsapp";
+    wa.href = link;
+    wa.target = "_blank";
+    wa.rel = "noopener noreferrer";
+    wa.textContent = t("reg.done.whatsapp");
+
+    var start = el("button", "gate-submit", t("reg.done.start"));
+    start.type = "button";
+    start.addEventListener("click", closeGate);
+
+    card.appendChild(check);
+    card.appendChild(title);
+    card.appendChild(lead);
+    card.appendChild(wa);
+    card.appendChild(start);
+    start.focus();
   }
 
   function closeGate() {
