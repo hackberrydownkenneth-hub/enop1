@@ -278,6 +278,60 @@ body {
   font-weight: 700;
 }
 
+/* 折りたたみできるカードの見出し */
+.fold-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fold-title {
+  overflow-wrap: anywhere;
+}
+
+.fold-sum {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.fold-head.closed .fold-sum {
+  opacity: 1;
+}
+
+.fold-caret {
+  flex: none;
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  transition: transform 0.15s ease;
+}
+
+.fold-head.closed .fold-caret {
+  transform: rotate(-90deg);
+}
+
+.card:has(> .step > .fold-head.closed),
+.card:has(> .result-title > .fold-head.closed) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
 .hint {
   margin: 0 0 10px;
   color: var(--muted);
@@ -477,6 +531,7 @@ body {
 
 .result-title {
   margin: 0 0 10px;
+  display: flex;
   font-size: 15px;
   color: var(--muted);
   font-weight: 700;
@@ -1196,10 +1251,15 @@ body.gate-open {
       </div>
 
       <!-- STEP 1 -->
-      <section class="card">
+      <section class="card" data-fold="ratio">
         <h2 class="step">
-          <span class="step-no">1</span><span data-i18n="step1.title">2剤のわりあい</span>
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="ratio-body">
+            <span class="step-no">1</span><span class="fold-title" data-i18n="step1.title">2剤のわりあい</span>
+            <span class="fold-sum" id="fold-sum-ratio"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
         </h2>
+        <div class="fold-body" id="ratio-body">
         <p class="hint" data-i18n="step1.hint">1剤 1 に対して、2剤（オキシ）を何倍いれる？</p>
         <div class="chips" id="ratio-chips"></div>
         <div class="custom-row">
@@ -1221,13 +1281,19 @@ body.gate-open {
         <p class="ratio-view">
           <span data-i18n="step1.ratioLabel">1剤 : 2剤 ＝ </span><b id="ratio-view">1 : 1</b>
         </p>
+        </div>
       </section>
 
       <!-- STEP 2（合計量モードのみ） -->
-      <section class="card" id="total-card">
+      <section class="card" id="total-card" data-fold="total">
         <h2 class="step">
-          <span class="step-no">2</span><span data-i18n="step2.title">ぜんぶで何g つくる？</span>
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="total-body">
+            <span class="step-no">2</span><span class="fold-title" data-i18n="step2.title">ぜんぶで何g つくる？</span>
+            <span class="fold-sum" id="fold-sum-total"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
         </h2>
+        <div class="fold-body" id="total-body">
         <p class="hint" data-i18n="step2.hint">1剤と2剤をまぜたあとの合計量です。</p>
         <div class="chips" id="total-chips"></div>
         <div class="custom-row">
@@ -1247,24 +1313,39 @@ body.gate-open {
             <button type="button" class="round" data-act="total-plus" data-i18n-aria="step2.aria.plus">＋</button>
           </div>
         </div>
+        </div>
       </section>
 
       <!-- STEP 3 -->
-      <section class="card">
+      <section class="card" data-fold="items">
         <h2 class="step">
-          <span class="step-no" id="items-step-no">3</span><span id="items-title">1剤のミックス</span>
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="items-body">
+            <span class="step-no" id="items-step-no">3</span><span class="fold-title" id="items-title">1剤のミックス</span>
+            <span class="fold-sum" id="fold-sum-items"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
         </h2>
+        <div class="fold-body" id="items-body">
         <p class="hint" id="items-hint">
           まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。
         </p>
         <div id="items"></div>
         <button type="button" class="add-btn" id="add-item" data-i18n="items.add">＋ 1剤をふやす</button>
+        </div>
       </section>
 
       <!-- けっか -->
-      <section class="card result" id="result-card" aria-live="polite">
-        <h2 class="result-title" data-i18n="result.title">はかる量</h2>
-        <div id="result-body"></div>
+      <section class="card result" id="result-card" aria-live="polite" data-fold="result">
+        <h2 class="result-title">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="result-fold">
+            <span class="fold-title" data-i18n="result.title">はかる量</span>
+            <span class="fold-sum" id="fold-sum-result"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="result-fold">
+          <div id="result-body"></div>
+        </div>
       </section>
 
       <!-- 追い足し（計量とは別枠。ボタンを押したときだけ開く） -->
@@ -1442,6 +1523,7 @@ body.gate-open {
     "item.aria.plus": "増やす",
     "label.parts": "割合",
     "label.grams": "使う量",
+    "fold.items": "{n}種類",
 
     "addon.title": "追い足しオプション",
     "addon.hint":
@@ -1618,6 +1700,7 @@ body.gate-open {
     "item.aria.plus": "增加",
     "label.parts": "比例",
     "label.grams": "份量",
+    "fold.items": "{n} 支",
     "addon.title": "追加染膏（選用）",
     "addon.hint": "用於在餘下的染劑中額外加入染膏。此計算與上方的份量互不影響，只需輸入餘下的克數。",
     "addon.aria.open": "展開或收起追加染膏計算",
@@ -2363,6 +2446,7 @@ window.COLORMIX_CONFIG = {
   var ADD_ONS = [5, 7, 10];
   var STATE_KEY = "colormix.state.v1";
   var ADDON_KEY = "colormix.addon.v1";
+  var FOLD_KEY = "colormix.fold.v1";
   var RECIPE_KEY = "colormix.recipes.v1";
 
   var $ = function (id) {
@@ -2472,6 +2556,8 @@ window.COLORMIX_CONFIG = {
   if (state.items.length === 0) state.items = defaultState().items;
   var addOn = sanitizeAddOn(readStore(ADDON_KEY, null));
   var recipes = readStore(RECIPE_KEY, []) || [];
+  /* 閉じているカード（既定はすべて開いた状態） */
+  var folded = readStore(FOLD_KEY, {}) || {};
   var rows = [];
 
   /* ---------- 画面部品 ---------- */
@@ -2506,6 +2592,50 @@ window.COLORMIX_CONFIG = {
     el.className = className;
     el.textContent = text;
     return el;
+  }
+
+  /* ---------- カードの折りたたみ ---------- */
+
+  var foldSums = {};
+
+  Array.prototype.forEach.call(
+    document.querySelectorAll("[data-fold]"),
+    function (card) {
+      var key = card.dataset.fold;
+      var head = card.querySelector(".fold-head");
+      var body = card.querySelector(".fold-body");
+      foldSums[key] = card.querySelector(".fold-sum");
+      head.addEventListener("click", function () {
+        folded[key] = !folded[key];
+        syncFold(key, head, body);
+        writeStore(FOLD_KEY, folded);
+        if (key === "result") renderSticky(lastResult);
+      });
+      syncFold(key, head, body);
+    }
+  );
+
+  function syncFold(key, head, body) {
+    var open = !folded[key];
+    body.hidden = !open;
+    head.setAttribute("aria-expanded", open ? "true" : "false");
+    head.classList.toggle("closed", !open);
+  }
+
+  /** 閉じているときに、見出しの右へ今の設定を出す */
+  function renderFoldSums(result) {
+    if (foldSums.ratio) foldSums.ratio.textContent = CM.formatRatio(state.oxRatio);
+    if (foldSums.total) {
+      foldSums.total.textContent = CM.formatGrams(state.total, state.step) + "g";
+    }
+    if (foldSums.items) {
+      foldSums.items.textContent = t("fold.items", { n: state.items.length });
+    }
+    if (foldSums.result) {
+      foldSums.result.textContent = result.ok
+        ? CM.formatGrams(result.total, result.step) + "g"
+        : "-";
+    }
   }
 
   /* ---------- 言語切り替え ---------- */
@@ -2976,7 +3106,7 @@ window.COLORMIX_CONFIG = {
       wrap.appendChild(chip);
     });
 
-    resultCard.appendChild(wrap);
+    $("result-fold").appendChild(wrap);
     stepToggle = wrap;
   }
 
@@ -3004,7 +3134,7 @@ window.COLORMIX_CONFIG = {
       stickyBar.hidden = true;
       return;
     }
-    stickyBar.hidden = resultVisible;
+    stickyBar.hidden = resultVisible && !folded.result;
     var step = result.step;
     $("sticky-base").textContent = CM.formatGrams(result.base1, step) + "g";
     $("sticky-ox").textContent = CM.formatGrams(result.ox, step) + "g";
@@ -3020,7 +3150,8 @@ window.COLORMIX_CONFIG = {
       function (entries) {
         entries.forEach(function (entry) {
           resultVisible = entry.isIntersecting;
-          stickyBar.hidden = resultVisible || !lastResult.ok;
+          stickyBar.hidden =
+            (resultVisible && !folded.result) || !lastResult.ok;
         });
       },
       { threshold: 0.25 }
@@ -3232,6 +3363,7 @@ window.COLORMIX_CONFIG = {
   function update() {
     lastResult = CM.calc(state);
     renderResult(lastResult);
+    renderFoldSums(lastResult);
     renderBadges(lastResult);
     renderSticky(lastResult);
     writeStore(STATE_KEY, state);

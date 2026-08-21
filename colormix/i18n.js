@@ -61,6 +61,7 @@
     "item.aria.plus": "増やす",
     "label.parts": "割合",
     "label.grams": "使う量",
+    "fold.items": "{n}種類",
 
     "addon.title": "追い足しオプション",
     "addon.hint":
@@ -237,6 +238,7 @@
     "item.aria.plus": "增加",
     "label.parts": "比例",
     "label.grams": "份量",
+    "fold.items": "{n} 支",
     "addon.title": "追加染膏（選用）",
     "addon.hint": "用於在餘下的染劑中額外加入染膏。此計算與上方的份量互不影響，只需輸入餘下的克數。",
     "addon.aria.open": "展開或收起追加染膏計算",

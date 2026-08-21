@@ -63,10 +63,15 @@
       </div>
 
       <!-- STEP 1 -->
-      <section class="card">
+      <section class="card" data-fold="ratio">
         <h2 class="step">
-          <span class="step-no">1</span><span data-i18n="step1.title">2剤のわりあい</span>
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="ratio-body">
+            <span class="step-no">1</span><span class="fold-title" data-i18n="step1.title">2剤のわりあい</span>
+            <span class="fold-sum" id="fold-sum-ratio"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
         </h2>
+        <div class="fold-body" id="ratio-body">
         <p class="hint" data-i18n="step1.hint">1剤 1 に対して、2剤（オキシ）を何倍いれる？</p>
         <div class="chips" id="ratio-chips"></div>
         <div class="custom-row">
@@ -88,13 +93,19 @@
         <p class="ratio-view">
           <span data-i18n="step1.ratioLabel">1剤 : 2剤 ＝ </span><b id="ratio-view">1 : 1</b>
         </p>
+        </div>
       </section>
 
       <!-- STEP 2（合計量モードのみ） -->
-      <section class="card" id="total-card">
+      <section class="card" id="total-card" data-fold="total">
         <h2 class="step">
-          <span class="step-no">2</span><span data-i18n="step2.title">ぜんぶで何g つくる？</span>
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="total-body">
+            <span class="step-no">2</span><span class="fold-title" data-i18n="step2.title">ぜんぶで何g つくる？</span>
+            <span class="fold-sum" id="fold-sum-total"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
         </h2>
+        <div class="fold-body" id="total-body">
         <p class="hint" data-i18n="step2.hint">1剤と2剤をまぜたあとの合計量です。</p>
         <div class="chips" id="total-chips"></div>
         <div class="custom-row">
@@ -114,24 +125,39 @@
             <button type="button" class="round" data-act="total-plus" data-i18n-aria="step2.aria.plus">＋</button>
           </div>
         </div>
+        </div>
       </section>
 
       <!-- STEP 3 -->
-      <section class="card">
+      <section class="card" data-fold="items">
         <h2 class="step">
-          <span class="step-no" id="items-step-no">3</span><span id="items-title">1剤のミックス</span>
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="items-body">
+            <span class="step-no" id="items-step-no">3</span><span class="fold-title" id="items-title">1剤のミックス</span>
+            <span class="fold-sum" id="fold-sum-items"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
         </h2>
+        <div class="fold-body" id="items-body">
         <p class="hint" id="items-hint">
           まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。
         </p>
         <div id="items"></div>
         <button type="button" class="add-btn" id="add-item" data-i18n="items.add">＋ 1剤をふやす</button>
+        </div>
       </section>
 
       <!-- けっか -->
-      <section class="card result" id="result-card" aria-live="polite">
-        <h2 class="result-title" data-i18n="result.title">はかる量</h2>
-        <div id="result-body"></div>
+      <section class="card result" id="result-card" aria-live="polite" data-fold="result">
+        <h2 class="result-title">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="result-fold">
+            <span class="fold-title" data-i18n="result.title">はかる量</span>
+            <span class="fold-sum" id="fold-sum-result"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="result-fold">
+          <div id="result-body"></div>
+        </div>
       </section>
 
       <!-- 追い足し（計量とは別枠。ボタンを押したときだけ開く） -->

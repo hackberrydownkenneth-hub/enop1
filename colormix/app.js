@@ -9,6 +9,7 @@
   var ADD_ONS = [5, 7, 10];
   var STATE_KEY = "colormix.state.v1";
   var ADDON_KEY = "colormix.addon.v1";
+  var FOLD_KEY = "colormix.fold.v1";
   var RECIPE_KEY = "colormix.recipes.v1";
 
   var $ = function (id) {
@@ -118,6 +119,8 @@
   if (state.items.length === 0) state.items = defaultState().items;
   var addOn = sanitizeAddOn(readStore(ADDON_KEY, null));
   var recipes = readStore(RECIPE_KEY, []) || [];
+  /* 閉じているカード（既定はすべて開いた状態） */
+  var folded = readStore(FOLD_KEY, {}) || {};
   var rows = [];
 
   /* ---------- 画面部品 ---------- */
@@ -152,6 +155,50 @@
     el.className = className;
     el.textContent = text;
     return el;
+  }
+
+  /* ---------- カードの折りたたみ ---------- */
+
+  var foldSums = {};
+
+  Array.prototype.forEach.call(
+    document.querySelectorAll("[data-fold]"),
+    function (card) {
+      var key = card.dataset.fold;
+      var head = card.querySelector(".fold-head");
+      var body = card.querySelector(".fold-body");
+      foldSums[key] = card.querySelector(".fold-sum");
+      head.addEventListener("click", function () {
+        folded[key] = !folded[key];
+        syncFold(key, head, body);
+        writeStore(FOLD_KEY, folded);
+        if (key === "result") renderSticky(lastResult);
+      });
+      syncFold(key, head, body);
+    }
+  );
+
+  function syncFold(key, head, body) {
+    var open = !folded[key];
+    body.hidden = !open;
+    head.setAttribute("aria-expanded", open ? "true" : "false");
+    head.classList.toggle("closed", !open);
+  }
+
+  /** 閉じているときに、見出しの右へ今の設定を出す */
+  function renderFoldSums(result) {
+    if (foldSums.ratio) foldSums.ratio.textContent = CM.formatRatio(state.oxRatio);
+    if (foldSums.total) {
+      foldSums.total.textContent = CM.formatGrams(state.total, state.step) + "g";
+    }
+    if (foldSums.items) {
+      foldSums.items.textContent = t("fold.items", { n: state.items.length });
+    }
+    if (foldSums.result) {
+      foldSums.result.textContent = result.ok
+        ? CM.formatGrams(result.total, result.step) + "g"
+        : "-";
+    }
   }
 
   /* ---------- 言語切り替え ---------- */
@@ -622,7 +669,7 @@
       wrap.appendChild(chip);
     });
 
-    resultCard.appendChild(wrap);
+    $("result-fold").appendChild(wrap);
     stepToggle = wrap;
   }
 
@@ -650,7 +697,7 @@
       stickyBar.hidden = true;
       return;
     }
-    stickyBar.hidden = resultVisible;
+    stickyBar.hidden = resultVisible && !folded.result;
     var step = result.step;
     $("sticky-base").textContent = CM.formatGrams(result.base1, step) + "g";
     $("sticky-ox").textContent = CM.formatGrams(result.ox, step) + "g";
@@ -666,7 +713,8 @@
       function (entries) {
         entries.forEach(function (entry) {
           resultVisible = entry.isIntersecting;
-          stickyBar.hidden = resultVisible || !lastResult.ok;
+          stickyBar.hidden =
+            (resultVisible && !folded.result) || !lastResult.ok;
         });
       },
       { threshold: 0.25 }
@@ -878,6 +926,7 @@
   function update() {
     lastResult = CM.calc(state);
     renderResult(lastResult);
+    renderFoldSums(lastResult);
     renderBadges(lastResult);
     renderSticky(lastResult);
     writeStore(STATE_KEY, state);

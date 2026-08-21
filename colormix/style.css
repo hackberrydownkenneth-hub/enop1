@@ -248,6 +248,60 @@ body {
   font-weight: 700;
 }
 
+/* 折りたたみできるカードの見出し */
+.fold-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fold-title {
+  overflow-wrap: anywhere;
+}
+
+.fold-sum {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.fold-head.closed .fold-sum {
+  opacity: 1;
+}
+
+.fold-caret {
+  flex: none;
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  transition: transform 0.15s ease;
+}
+
+.fold-head.closed .fold-caret {
+  transform: rotate(-90deg);
+}
+
+.card:has(> .step > .fold-head.closed),
+.card:has(> .result-title > .fold-head.closed) {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
 .hint {
   margin: 0 0 10px;
   color: var(--muted);
@@ -447,6 +501,7 @@ body {
 
 .result-title {
   margin: 0 0 10px;
+  display: flex;
   font-size: 15px;
   color: var(--muted);
   font-weight: 700;
