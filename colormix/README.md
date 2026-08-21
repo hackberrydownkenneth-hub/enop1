@@ -147,6 +147,21 @@ register: {
 判定はプロフィールの `collected` フラグで行います。収集を有効にした状態で
 登録した人には、二度と登録画面は出ません。
 
+### ブランド表記について
+
+ヘッダーとフッターに DRIVE BLUE HONG KONG を表示しています。
+
+- **文字（DRIVE BLUE / HONG KONG）はブラウザで描画**しています。画像にすると
+  小さいサイズで潰れるためです。字形は `style.css` の `.brand-name` /
+  `.brand-place` で調整できます。
+- **円形エンブレムだけを画像**にしています。紫のヘッダーとダークモードでは
+  白抜き版（`logo-mark-white.png`）に切り替わります。切り替えは
+  `--logo-mark` トークンで行うので、CSS のテーマ定義に追従します。
+- 1ファイル版では、`build.js` が CSS 内の PNG を data URI に埋め込みます。
+
+エンブレムの元データは 48×48 相当しかありません。**より大きく使いたい場合は
+SVG か高解像度の PNG をもらってください。**
+
 ### 集めたデータの扱い
 
 - 登録画面には「何に使うか」を明示しています。用途を変えるときは `i18n.js` の
@@ -230,6 +245,8 @@ python3 -m http.server 8000 --directory colormix
 | `config.js` | 送信先などの設定（ここだけ書き換える） |
 | `app.js` | 計算機の入力・表示・保存の制御 |
 | `register.js` | はじめて使う人への登録画面 |
+| `logo-mark.png` | DRIVE BLUE のエンブレム（明るい背景用） |
+| `logo-mark-white.png` | 同・白抜き（紫のヘッダーとダークモード用） |
 | `calc.test.js` | 計算ロジックのテスト |
 | `build.js` | 1ファイル版を生成するスクリプト |
 | `standalone.html` | 配布用の1ファイル版（`build.js` が生成） |

@@ -15,7 +15,13 @@ const dir = __dirname;
 const read = (name) => fs.readFileSync(path.join(dir, name), "utf8");
 
 const html = read("index.html");
-const css = read("style.css");
+
+// 1ファイル版が外部ファイルを見に行かないよう、CSS 内の画像も data URI にする
+const css = read("style.css").replace(/url\("([^"]+\.png)"\)/g, (whole, name) => {
+  const file = path.join(dir, name);
+  if (!fs.existsSync(file)) return whole;
+  return 'url("data:image/png;base64,' + fs.readFileSync(file).toString("base64") + '")';
+});
 const i18n = read("i18n.js");
 const calc = read("calc.js");
 const profile = read("profile.js");
@@ -72,6 +78,8 @@ const published = [
   "config.js",
   "app.js",
   "register.js",
+  "logo-mark.png",
+  "logo-mark-white.png",
   "_headers",
 ];
 
