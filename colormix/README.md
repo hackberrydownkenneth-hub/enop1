@@ -166,6 +166,10 @@ GitHubアカウントで連携するだけです。
 
 4. **Save and Deploy**
 
+Node のバージョンはリポジトリ直下の `.node-version`（20）で固定しています。
+これが無いとビルド環境によっては古い Node が使われ、`fs.rmSync is not a function`
+のようなエラーでビルドが失敗します。
+
 `node colormix/build.js` が公開用の `_site/` を組み立てます。テストファイルや
 `build.js` 自体、1ファイル版は `_site/` に入らないので、公開されるのは
 実際に必要な9ファイルだけです。以後、ブランチに push するたび自動で再公開されます。
