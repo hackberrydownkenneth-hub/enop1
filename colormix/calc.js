@@ -85,8 +85,9 @@
     return allocated;
   }
 
-  function error(message) {
-    return { ok: false, error: message };
+  /** エラーはコードだけ返し、文言は画面側（i18n）に任せる */
+  function error(code) {
+    return { ok: false, code: code };
   }
 
   /**
@@ -105,13 +106,13 @@
     var items = (input && input.items) || [];
 
     if (!isPositiveNumber(total)) {
-      return error("つくる合計量を入力してください");
+      return error("need_total");
     }
     if (!(typeof oxRatio === "number" && isFinite(oxRatio) && oxRatio >= 0)) {
-      return error("2剤の倍率を入力してください");
+      return error("need_ratio");
     }
     if (items.length === 0) {
-      return error("1剤を1つ以上追加してください");
+      return error("need_item");
     }
 
     var parts = items.map(function (item) {
@@ -122,19 +123,19 @@
       return a + b;
     }, 0);
     if (!(partsSum > 0)) {
-      return error("1剤の配合比を入力してください");
+      return error("need_parts");
     }
 
     var totalUnits = toUnits(total, step);
     if (totalUnits <= 0) {
-      return error("合計量が少なすぎます");
+      return error("total_too_small");
     }
 
     // 合計量を最優先。1剤を四捨五入し、残り全部を2剤にすることで合計は必ずぴったりになる
     var base1Units = Math.round(totalUnits / (1 + oxRatio));
     var oxUnits = totalUnits - base1Units;
     if (base1Units <= 0) {
-      return error("合計量が少なすぎて1剤が計れません");
+      return error("base_too_small");
     }
 
     var allocated = distribute(base1Units, parts);
@@ -167,10 +168,10 @@
     var items = (input && input.items) || [];
 
     if (!(typeof oxRatio === "number" && isFinite(oxRatio) && oxRatio >= 0)) {
-      return error("2剤の倍率を入力してください");
+      return error("need_ratio");
     }
     if (items.length === 0) {
-      return error("1剤を1つ以上追加してください");
+      return error("need_item");
     }
 
     var allocated = items.map(function (item) {
@@ -181,7 +182,7 @@
       return a + b;
     }, 0);
     if (base1Units <= 0) {
-      return error("1剤の量を入力してください");
+      return error("need_grams");
     }
 
     var oxUnits = Math.round(base1Units * oxRatio);

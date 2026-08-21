@@ -1,12 +1,14 @@
-/* カラー剤計算機の画面制御。計算そのものは calc.js（ColorMix）に任せる。 */
+/* カラー剤計算機の画面制御。計算は calc.js、文言は i18n.js に任せる。 */
 (function () {
   "use strict";
 
   var CM = window.ColorMix;
+  var I18N = window.ColorMixI18N;
   var RATIOS = [1, 1.5, 2, 3];
   var TOTALS = [30, 60, 80, 100, 120, 150, 200];
   var STATE_KEY = "colormix.state.v1";
   var RECIPE_KEY = "colormix.recipes.v1";
+  var LANG_KEY = "colormix.lang.v1";
 
   var $ = function (id) {
     return document.getElementById(id);
@@ -29,6 +31,37 @@
     } catch (e) {
       /* プライベートモードなどでは保存しないだけ */
     }
+  }
+
+  /* ---------- 言語 ---------- */
+
+  var lang = readStore(LANG_KEY, null);
+  if (!I18N.has(lang)) {
+    lang = I18N.detect(navigator.languages || [navigator.language || ""]);
+  }
+
+  function t(key, params) {
+    return I18N.translate(lang, key, params);
+  }
+
+  /**
+   * **強調** を <b> に変えながらテキストを流し込む。
+   * innerHTML を使わないので、文言に記号が入っても壊れない。
+   */
+  function setText(el, text) {
+    el.textContent = "";
+    String(text)
+      .split("**")
+      .forEach(function (chunk, index) {
+        if (!chunk) return;
+        if (index % 2 === 1) {
+          var strong = document.createElement("b");
+          strong.textContent = chunk;
+          el.appendChild(strong);
+        } else {
+          el.appendChild(document.createTextNode(chunk));
+        }
+      });
   }
 
   /* ---------- 状態 ---------- */
@@ -82,6 +115,7 @@
 
   /* ---------- 画面部品 ---------- */
 
+  var langSwitch = $("lang-switch");
   var ratioChips = $("ratio-chips");
   var ratioCustom = $("ratio-custom");
   var ratioView = $("ratio-view");
@@ -105,6 +139,49 @@
     el.className = className;
     el.textContent = text;
     return el;
+  }
+
+  /* ---------- 言語切り替え ---------- */
+
+  I18N.LANGS.forEach(function (code) {
+    var btn = button("lang-btn", I18N.translate(code, "lang.name"));
+    btn.dataset.lang = code;
+    btn.addEventListener("click", function () {
+      if (lang === code) return;
+      lang = code;
+      writeStore(LANG_KEY, lang);
+      applyLang();
+      syncAll();
+    });
+    langSwitch.appendChild(btn);
+  });
+
+  /** 静的な文言（data-i18n / data-i18n-aria）をまとめて差し替える */
+  function applyLang() {
+    document.documentElement.lang = t("lang.tag");
+    document.title = t("app.docTitle");
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-i18n]"),
+      function (el) {
+        setText(el, t(el.dataset.i18n));
+      }
+    );
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-i18n-aria]"),
+      function (el) {
+        el.setAttribute("aria-label", t(el.dataset.i18nAria));
+      }
+    );
+    Array.prototype.forEach.call(langSwitch.children, function (btn) {
+      btn.setAttribute("aria-pressed", btn.dataset.lang === lang ? "true" : "false");
+    });
+    if (stepToggle) {
+      Array.prototype.forEach.call(stepToggle.querySelectorAll(".chip"), function (chip) {
+        chip.textContent = t("step." + chip.dataset.step);
+      });
+      setText(stepToggle.querySelector(".steps-label"), t("step.label"));
+    }
   }
 
   /* ---------- STEP 1: 2剤のわりあい ---------- */
@@ -206,29 +283,29 @@
     });
     totalCard.hidden = !isTotal;
     itemsStepNo.textContent = isTotal ? "3" : "2";
-    itemsTitle.textContent = isTotal ? "1剤のミックス" : "使う1剤の量";
-    itemsHint.textContent = isTotal
-      ? "まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。"
-      : "実際にはかる1剤のグラム数を入れてください。2剤と合計量を計算します。";
+    itemsTitle.textContent = t(isTotal ? "items.title.total" : "items.title.base");
+    itemsHint.textContent = t(isTotal ? "items.hint.total" : "items.hint.base");
   }
 
   /* ---------- STEP 3: 1剤の行 ---------- */
 
   function renderItems() {
     var isTotal = state.mode === "total";
+    var valueLabel = t(isTotal ? "label.parts" : "label.grams");
     itemsEl.textContent = "";
     rows = [];
 
     state.items.forEach(function (item, index) {
+      var no = index + 1;
       var row = document.createElement("div");
       row.className = "item";
 
       var name = document.createElement("input");
       name.type = "text";
       name.className = "text-input";
-      name.placeholder = "1剤 " + (index + 1) + "（例 ブラウン6）";
+      name.placeholder = t("item.placeholder", { n: no });
       name.value = item.name;
-      name.setAttribute("aria-label", (index + 1) + "番目の1剤の名前");
+      name.setAttribute("aria-label", t("item.aria.name", { n: no }));
       name.addEventListener("input", function () {
         item.name = name.value;
         update();
@@ -236,7 +313,7 @@
       row.appendChild(name);
 
       var del = button("del-btn", "✕");
-      del.setAttribute("aria-label", (index + 1) + "番目の1剤を削除");
+      del.setAttribute("aria-label", t("item.aria.del", { n: no }));
       del.disabled = state.items.length <= 1;
       del.addEventListener("click", function () {
         if (state.items.length <= 1) return;
@@ -251,7 +328,7 @@
 
       var label = document.createElement("span");
       label.className = "label";
-      label.textContent = isTotal ? "わりあい" : "使う量";
+      label.textContent = valueLabel;
       controls.appendChild(label);
 
       var minus = button("round", "−");
@@ -262,10 +339,10 @@
       value.min = "0";
       value.step = isTotal ? "1" : "5";
       value.value = String(isTotal ? item.parts : item.grams);
-      value.setAttribute("aria-label", (index + 1) + "番目の" + (isTotal ? "わりあい" : "使う量"));
+      value.setAttribute("aria-label", t("item.aria.value", { n: no, label: valueLabel }));
       var plus = button("round", "＋");
-      minus.setAttribute("aria-label", "減らす");
-      plus.setAttribute("aria-label", "増やす");
+      minus.setAttribute("aria-label", t("item.aria.minus"));
+      plus.setAttribute("aria-label", t("item.aria.plus"));
 
       var stepSize = isTotal ? 1 : 5;
       function setValue(next) {
@@ -321,7 +398,9 @@
   /* ---------- 結果 ---------- */
 
   function itemLabel(item, index) {
-    return item.name && item.name.trim() ? item.name : "1剤 " + (index + 1);
+    return item && item.name && item.name.trim()
+      ? item.name
+      : t("item.fallback", { n: index + 1 });
   }
 
   function resultRow(name, sub, grams, className) {
@@ -355,7 +434,7 @@
     if (!result.ok) {
       var err = document.createElement("p");
       err.className = "error";
-      err.textContent = "⚠ " + result.error;
+      err.textContent = "⚠ " + t("err." + result.code);
       resultBody.appendChild(err);
       return;
     }
@@ -368,7 +447,10 @@
     result.items.forEach(function (row, index) {
       var sub = "";
       if (state.mode === "total" && result.items.length > 1 && partsSum > 0) {
-        sub = "わりあい " + row.parts + "（全体の " + Math.round((row.parts / partsSum) * 100) + "%）";
+        sub = t("result.partsSub", {
+          parts: row.parts,
+          pct: Math.round((row.parts / partsSum) * 100),
+        });
       }
       resultBody.appendChild(
         resultRow(itemLabel(state.items[index], index), sub, row.text, "")
@@ -378,23 +460,32 @@
     if (result.items.length > 1) {
       var subtotal = document.createElement("p");
       subtotal.className = "subtotal";
-      subtotal.textContent = "1剤 合計 " + CM.formatGrams(result.base1, step) + "g";
+      subtotal.textContent = t("result.subtotal", {
+        g: CM.formatGrams(result.base1, step),
+      });
       resultBody.appendChild(subtotal);
     }
 
     resultBody.appendChild(
-      resultRow("2剤（オキシ）", "1剤の " + result.oxRatio + " 倍", CM.formatGrams(result.ox, step), "ox")
+      resultRow(
+        t("result.ox"),
+        t("result.oxSub", { r: result.oxRatio }),
+        CM.formatGrams(result.ox, step),
+        "ox"
+      )
     );
     resultBody.appendChild(
-      resultRow("ぜんぶで", "", CM.formatGrams(result.total, step), "sum")
+      resultRow(t("result.sum"), "", CM.formatGrams(result.total, step), "sum")
     );
 
     if (result.adjusted) {
       var notice = document.createElement("p");
       notice.className = "notice";
-      notice.textContent =
-        "※ " + result.requestedTotal + "g は " + (step < 1 ? "0.1g" : "1g") +
-        " 刻みに丸めて " + CM.formatGrams(result.total, step) + "g で計算しました。";
+      notice.textContent = t("result.notice", {
+        req: result.requestedTotal,
+        step: step < 1 ? "0.1g" : "1g",
+        got: CM.formatGrams(result.total, step),
+      });
       resultBody.appendChild(notice);
     }
   }
@@ -403,11 +494,11 @@
     var wrap = document.createElement("div");
     wrap.className = "steps-toggle";
     var label = document.createElement("span");
-    label.textContent = "はかる細かさ";
+    label.className = "steps-label";
     wrap.appendChild(label);
 
     CM.STEPS.forEach(function (step) {
-      var chip = button("chip", step < 1 ? "0.1g刻み" : "1g刻み");
+      var chip = button("chip", "");
       chip.dataset.step = String(step);
       chip.addEventListener("click", function () {
         state.step = step;
@@ -473,16 +564,16 @@
   function resultText(result) {
     if (!result.ok) return "";
     var step = result.step;
-    var lines = ["【カラーレシピ】", "1剤 : 2剤 ＝ " + CM.formatRatio(result.oxRatio), ""];
+    var lines = [t("copy.header"), t("copy.ratio") + CM.formatRatio(result.oxRatio), ""];
     result.items.forEach(function (row, index) {
       lines.push(itemLabel(state.items[index], index) + "  " + row.text + "g");
     });
     lines.push("--------------------");
     if (result.items.length > 1) {
-      lines.push("1剤 合計  " + CM.formatGrams(result.base1, step) + "g");
+      lines.push(t("copy.subtotal") + "  " + CM.formatGrams(result.base1, step) + "g");
     }
-    lines.push("2剤       " + CM.formatGrams(result.ox, step) + "g");
-    lines.push("ぜんぶで  " + CM.formatGrams(result.total, step) + "g");
+    lines.push(t("copy.ox") + "  " + CM.formatGrams(result.ox, step) + "g");
+    lines.push(t("copy.total") + "  " + CM.formatGrams(result.total, step) + "g");
     return lines.join("\n");
   }
 
@@ -490,7 +581,7 @@
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(
         function () {
-          toast("コピーしました");
+          toast(t("toast.copied"));
         },
         function () {
           fallbackCopy(text);
@@ -515,13 +606,13 @@
       ok = false;
     }
     document.body.removeChild(area);
-    toast(ok ? "コピーしました" : "コピーできませんでした");
+    toast(t(ok ? "toast.copied" : "toast.copy_failed"));
   }
 
   $("copy-btn").addEventListener("click", function () {
     var text = resultText(lastResult);
     if (!text) {
-      toast("先に入力してください");
+      toast(t("toast.need_input"));
       return;
     }
     copyText(text);
@@ -530,26 +621,22 @@
   function recipeSummary(saved) {
     var names = saved.state.items
       .map(function (item, index) {
-        return itemLabelOf(item, index);
+        return itemLabel(item, index);
       })
       .join(" / ");
     return CM.formatRatio(saved.state.oxRatio) + "　" + names;
   }
 
-  function itemLabelOf(item, index) {
-    return item.name && item.name.trim() ? item.name : "1剤 " + (index + 1);
-  }
-
   $("save-btn").addEventListener("click", function () {
-    var suggestion = itemLabelOf(state.items[0], 0);
-    var name = window.prompt("レシピの名前をつけてください", suggestion);
+    var suggestion = itemLabel(state.items[0], 0);
+    var name = window.prompt(t("prompt.save"), suggestion);
     if (name === null) return;
     name = name.trim() || suggestion;
     recipes.unshift({ name: name, state: JSON.parse(JSON.stringify(state)) });
     recipes = recipes.slice(0, 30);
     writeStore(RECIPE_KEY, recipes);
     renderRecipes();
-    toast("保存しました");
+    toast(t("toast.saved"));
   });
 
   function renderRecipes() {
@@ -568,11 +655,11 @@
       load.addEventListener("click", function () {
         state = sanitize(saved.state);
         syncAll();
-        toast("よびだしました");
+        toast(t("toast.loaded"));
       });
 
       var del = button("del-btn", "✕");
-      del.setAttribute("aria-label", saved.name + " を削除");
+      del.setAttribute("aria-label", t("recipe.aria.del", { name: saved.name }));
       del.addEventListener("click", function () {
         recipes.splice(index, 1);
         writeStore(RECIPE_KEY, recipes);
@@ -586,7 +673,7 @@
   }
 
   $("reset-btn").addEventListener("click", function () {
-    if (!window.confirm("入力をリセットしますか？（保存したレシピは消えません）")) return;
+    if (!window.confirm(t("confirm.reset"))) return;
     state = defaultState();
     syncAll();
   });
@@ -625,11 +712,12 @@
     syncTotal();
     syncStep();
     renderItems();
+    renderRecipes();
     update();
   }
 
   buildStepToggle();
-  renderRecipes();
+  applyLang();
   syncAll();
   watchResultCard();
 })();

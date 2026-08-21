@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#7c3aed" />
-    <meta name="description" content="美容師向け。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。" />
+    <meta
+      name="description"
+      content="美容師向け。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。日本語・廣東話対応。"
+    />
     <title>カラー剤 計算機</title>
     <link rel="stylesheet" href="style.css" />
     <link
@@ -14,32 +17,35 @@
   </head>
   <body>
     <header class="header">
-      <h1>🎨 カラー剤 計算機</h1>
-      <p>タップするだけ。1剤のグラム数を自動で出します。</p>
+      <h1 data-i18n="app.title">🎨 カラー剤 計算機</h1>
+      <p data-i18n="app.tagline">タップするだけ。1剤のグラム数を自動で出します。</p>
+      <div class="lang" id="lang-switch" role="group" data-i18n-aria="lang.aria"></div>
     </header>
 
     <main class="main">
       <!-- 計算のむき -->
-      <div class="tabs" role="tablist" aria-label="計算のしかた">
+      <div class="tabs" role="tablist" data-i18n-aria="tabs.aria">
         <button class="tab" role="tab" data-mode="total" aria-selected="true">
-          <strong>合計量からきめる</strong>
-          <small>ぜんぶで◯g つくりたい</small>
+          <strong data-i18n="tab.total.title">合計量からきめる</strong>
+          <small data-i18n="tab.total.sub">ぜんぶで◯g つくりたい</small>
         </button>
         <button class="tab" role="tab" data-mode="base" aria-selected="false">
-          <strong>1剤の量からきめる</strong>
-          <small>1剤を◯g 使いたい</small>
+          <strong data-i18n="tab.base.title">1剤の量からきめる</strong>
+          <small data-i18n="tab.base.sub">1剤を◯g 使いたい</small>
         </button>
       </div>
 
       <!-- STEP 1 -->
       <section class="card">
-        <h2 class="step"><span class="step-no">1</span>2剤のわりあい</h2>
-        <p class="hint">1剤 <b>1</b> に対して、2剤（オキシ）を何倍いれる？</p>
+        <h2 class="step">
+          <span class="step-no">1</span><span data-i18n="step1.title">2剤のわりあい</span>
+        </h2>
+        <p class="hint" data-i18n="step1.hint">1剤 1 に対して、2剤（オキシ）を何倍いれる？</p>
         <div class="chips" id="ratio-chips"></div>
         <div class="custom-row">
-          <label for="ratio-custom">その他の倍率</label>
+          <label for="ratio-custom" data-i18n="step1.custom">その他の倍率</label>
           <div class="stepper">
-            <button type="button" class="round" data-act="ratio-minus" aria-label="倍率を減らす">−</button>
+            <button type="button" class="round" data-act="ratio-minus" data-i18n-aria="step1.aria.minus">−</button>
             <input
               id="ratio-custom"
               class="num-input"
@@ -47,23 +53,27 @@
               inputmode="decimal"
               min="0"
               step="0.5"
-              aria-label="2剤の倍率"
+              data-i18n-aria="step1.aria.input"
             />
-            <button type="button" class="round" data-act="ratio-plus" aria-label="倍率を増やす">＋</button>
+            <button type="button" class="round" data-act="ratio-plus" data-i18n-aria="step1.aria.plus">＋</button>
           </div>
         </div>
-        <p class="ratio-view">1剤 : 2剤 ＝ <b id="ratio-view">1 : 1</b></p>
+        <p class="ratio-view">
+          <span data-i18n="step1.ratioLabel">1剤 : 2剤 ＝ </span><b id="ratio-view">1 : 1</b>
+        </p>
       </section>
 
       <!-- STEP 2（合計量モードのみ） -->
       <section class="card" id="total-card">
-        <h2 class="step"><span class="step-no">2</span>ぜんぶで何g つくる？</h2>
-        <p class="hint">1剤と2剤をまぜたあとの合計量です。</p>
+        <h2 class="step">
+          <span class="step-no">2</span><span data-i18n="step2.title">ぜんぶで何g つくる？</span>
+        </h2>
+        <p class="hint" data-i18n="step2.hint">1剤と2剤をまぜたあとの合計量です。</p>
         <div class="chips" id="total-chips"></div>
         <div class="custom-row">
-          <label for="total-input">合計量</label>
+          <label for="total-input" data-i18n="step2.label">合計量</label>
           <div class="stepper">
-            <button type="button" class="round" data-act="total-minus" aria-label="10g 減らす">−</button>
+            <button type="button" class="round" data-act="total-minus" data-i18n-aria="step2.aria.minus">−</button>
             <input
               id="total-input"
               class="num-input big"
@@ -71,67 +81,65 @@
               inputmode="decimal"
               min="0"
               step="10"
-              aria-label="合計量（g）"
+              data-i18n-aria="step2.aria.input"
             />
             <span class="unit">g</span>
-            <button type="button" class="round" data-act="total-plus" aria-label="10g 増やす">＋</button>
+            <button type="button" class="round" data-act="total-plus" data-i18n-aria="step2.aria.plus">＋</button>
           </div>
         </div>
       </section>
 
       <!-- STEP 3 -->
       <section class="card">
-        <h2 class="step"><span class="step-no" id="items-step-no">3</span><span id="items-title">1剤のミックス</span></h2>
-        <p class="hint" id="items-hint">まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。</p>
+        <h2 class="step">
+          <span class="step-no" id="items-step-no">3</span><span id="items-title">1剤のミックス</span>
+        </h2>
+        <p class="hint" id="items-hint">
+          まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。
+        </p>
         <div id="items"></div>
-        <button type="button" class="add-btn" id="add-item">＋ 1剤をふやす</button>
+        <button type="button" class="add-btn" id="add-item" data-i18n="items.add">＋ 1剤をふやす</button>
       </section>
 
       <!-- けっか -->
       <section class="card result" id="result-card" aria-live="polite">
-        <h2 class="result-title">はかる量</h2>
+        <h2 class="result-title" data-i18n="result.title">はかる量</h2>
         <div id="result-body"></div>
       </section>
 
       <div class="actions">
-        <button type="button" class="action" id="copy-btn">📋 コピー</button>
-        <button type="button" class="action" id="save-btn">⭐ レシピ保存</button>
-        <button type="button" class="action" id="reset-btn">↺ リセット</button>
+        <button type="button" class="action" id="copy-btn" data-i18n="action.copy">📋 コピー</button>
+        <button type="button" class="action" id="save-btn" data-i18n="action.save">⭐ レシピ保存</button>
+        <button type="button" class="action" id="reset-btn" data-i18n="action.reset">↺ リセット</button>
       </div>
 
       <section class="card recipes" id="recipes-card" hidden>
-        <h2 class="step"><span class="step-no">★</span>保存したレシピ</h2>
+        <h2 class="step">
+          <span class="step-no">★</span><span data-i18n="recipes.title">保存したレシピ</span>
+        </h2>
         <div id="recipes"></div>
       </section>
 
       <details class="card how">
-        <summary>つかいかた・計算のしくみ</summary>
+        <summary data-i18n="how.summary">つかいかた・計算のしくみ</summary>
         <ol>
-          <li><b>2剤のわりあい</b>を選ぶ（1:1 / 1:2 / 1:3 など）</li>
-          <li><b>ぜんぶで何g</b> つくるか入れる</li>
-          <li>まぜる<b>1剤のわりあい</b>を入れる（例 ブラウン 2 : マット 1）</li>
+          <li data-i18n="how.step1"></li>
+          <li data-i18n="how.step2"></li>
+          <li data-i18n="how.step3"></li>
         </ol>
-        <p class="how-math">
-          1剤の合計 ＝ 合計量 ÷（1 ＋ 2剤の倍率）<br />
-          2剤 ＝ 合計量 − 1剤の合計<br />
-          各1剤 ＝ 1剤の合計 × その割合 ÷ 割合の合計
-        </p>
-        <p class="how-note">
-          例）合計 90g で 1:2 のとき → 1剤 30g、2剤 60g。1剤を 2:1 でまぜるなら 20g と 10g。
-        </p>
-        <p class="how-note">
-          小数が出る場合はグラム数を丸めますが、<b>合計量はいつもぴったり</b>になるよう調整しています。
-          0.1g 単位ではかりたいときは、結果の下の「0.1g刻み」を選んでください。
-        </p>
+        <p class="how-math" data-i18n="how.math"></p>
+        <p class="how-note" data-i18n="how.note1"></p>
+        <p class="how-note" data-i18n="how.note2"></p>
       </details>
     </main>
 
     <div class="sticky-bar" id="sticky-bar" hidden>
-      <span><small>1剤</small><b id="sticky-base">-</b></span>
-      <span><small>2剤</small><b id="sticky-ox">-</b></span>
-      <span class="sticky-total"><small>合計</small><b id="sticky-total">-</b></span>
+      <span><small data-i18n="sticky.base">1剤</small><b id="sticky-base">-</b></span>
+      <span><small data-i18n="sticky.ox">2剤</small><b id="sticky-ox">-</b></span>
+      <span class="sticky-total"><small data-i18n="sticky.total">合計</small><b id="sticky-total">-</b></span>
     </div>
 
+    <script src="i18n.js"></script>
     <script src="calc.js"></script>
     <script src="app.js"></script>
   </body>

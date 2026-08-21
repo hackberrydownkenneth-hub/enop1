@@ -4,7 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#7c3aed" />
-    <meta name="description" content="美容師向け。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。" />
+    <meta
+      name="description"
+      content="美容師向け。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。日本語・廣東話対応。"
+    />
     <title>カラー剤 計算機</title>
     <style>
 /* カラー剤計算機 — スマホ片手で使える大きめUI */
@@ -22,6 +25,8 @@
   --warn: #b45309;
   --danger: #d02f4b;
   --badge-ink: #7c3aed;
+  --font: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+    system-ui, -apple-system, "Segoe UI", sans-serif;
   --radius: 16px;
   --shadow: 0 2px 10px rgba(36, 31, 46, 0.07);
 }
@@ -64,6 +69,13 @@
   --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
+/* 広東語（繁体字）表示のときは中文フォントを優先する */
+:root[lang^="yue"],
+:root[lang^="zh"] {
+  --font: "PingFang HK", "Noto Sans HK", "Noto Sans TC", "Hiragino Sans CNS",
+    "Microsoft JhengHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -77,8 +89,7 @@ body {
   padding: 0 0 96px;
   background: var(--bg);
   color: var(--ink);
-  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
-    system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font);
   font-size: 17px;
   line-height: 1.6;
 }
@@ -100,6 +111,38 @@ body {
   margin: 4px 0 0;
   font-size: 13px;
   opacity: 0.9;
+}
+
+.lang {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.lang-btn {
+  min-height: 34px;
+  padding: 4px 16px;
+  border: 2px solid var(--brand-ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brand-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.lang-btn[aria-pressed="true"] {
+  background: var(--brand-ink);
+  color: var(--brand);
+  opacity: 1;
+}
+
+.lang-btn:focus-visible {
+  outline: 3px solid var(--brand-ink);
+  outline-offset: 2px;
 }
 
 .main {
@@ -539,6 +582,7 @@ body {
 }
 
 .how-math {
+  white-space: pre-line;
   padding: 10px;
   border-radius: 10px;
   background: var(--brand-soft);
@@ -609,32 +653,35 @@ body {
   </head>
   <body>
     <header class="header">
-      <h1>🎨 カラー剤 計算機</h1>
-      <p>タップするだけ。1剤のグラム数を自動で出します。</p>
+      <h1 data-i18n="app.title">🎨 カラー剤 計算機</h1>
+      <p data-i18n="app.tagline">タップするだけ。1剤のグラム数を自動で出します。</p>
+      <div class="lang" id="lang-switch" role="group" data-i18n-aria="lang.aria"></div>
     </header>
 
     <main class="main">
       <!-- 計算のむき -->
-      <div class="tabs" role="tablist" aria-label="計算のしかた">
+      <div class="tabs" role="tablist" data-i18n-aria="tabs.aria">
         <button class="tab" role="tab" data-mode="total" aria-selected="true">
-          <strong>合計量からきめる</strong>
-          <small>ぜんぶで◯g つくりたい</small>
+          <strong data-i18n="tab.total.title">合計量からきめる</strong>
+          <small data-i18n="tab.total.sub">ぜんぶで◯g つくりたい</small>
         </button>
         <button class="tab" role="tab" data-mode="base" aria-selected="false">
-          <strong>1剤の量からきめる</strong>
-          <small>1剤を◯g 使いたい</small>
+          <strong data-i18n="tab.base.title">1剤の量からきめる</strong>
+          <small data-i18n="tab.base.sub">1剤を◯g 使いたい</small>
         </button>
       </div>
 
       <!-- STEP 1 -->
       <section class="card">
-        <h2 class="step"><span class="step-no">1</span>2剤のわりあい</h2>
-        <p class="hint">1剤 <b>1</b> に対して、2剤（オキシ）を何倍いれる？</p>
+        <h2 class="step">
+          <span class="step-no">1</span><span data-i18n="step1.title">2剤のわりあい</span>
+        </h2>
+        <p class="hint" data-i18n="step1.hint">1剤 1 に対して、2剤（オキシ）を何倍いれる？</p>
         <div class="chips" id="ratio-chips"></div>
         <div class="custom-row">
-          <label for="ratio-custom">その他の倍率</label>
+          <label for="ratio-custom" data-i18n="step1.custom">その他の倍率</label>
           <div class="stepper">
-            <button type="button" class="round" data-act="ratio-minus" aria-label="倍率を減らす">−</button>
+            <button type="button" class="round" data-act="ratio-minus" data-i18n-aria="step1.aria.minus">−</button>
             <input
               id="ratio-custom"
               class="num-input"
@@ -642,23 +689,27 @@ body {
               inputmode="decimal"
               min="0"
               step="0.5"
-              aria-label="2剤の倍率"
+              data-i18n-aria="step1.aria.input"
             />
-            <button type="button" class="round" data-act="ratio-plus" aria-label="倍率を増やす">＋</button>
+            <button type="button" class="round" data-act="ratio-plus" data-i18n-aria="step1.aria.plus">＋</button>
           </div>
         </div>
-        <p class="ratio-view">1剤 : 2剤 ＝ <b id="ratio-view">1 : 1</b></p>
+        <p class="ratio-view">
+          <span data-i18n="step1.ratioLabel">1剤 : 2剤 ＝ </span><b id="ratio-view">1 : 1</b>
+        </p>
       </section>
 
       <!-- STEP 2（合計量モードのみ） -->
       <section class="card" id="total-card">
-        <h2 class="step"><span class="step-no">2</span>ぜんぶで何g つくる？</h2>
-        <p class="hint">1剤と2剤をまぜたあとの合計量です。</p>
+        <h2 class="step">
+          <span class="step-no">2</span><span data-i18n="step2.title">ぜんぶで何g つくる？</span>
+        </h2>
+        <p class="hint" data-i18n="step2.hint">1剤と2剤をまぜたあとの合計量です。</p>
         <div class="chips" id="total-chips"></div>
         <div class="custom-row">
-          <label for="total-input">合計量</label>
+          <label for="total-input" data-i18n="step2.label">合計量</label>
           <div class="stepper">
-            <button type="button" class="round" data-act="total-minus" aria-label="10g 減らす">−</button>
+            <button type="button" class="round" data-act="total-minus" data-i18n-aria="step2.aria.minus">−</button>
             <input
               id="total-input"
               class="num-input big"
@@ -666,67 +717,330 @@ body {
               inputmode="decimal"
               min="0"
               step="10"
-              aria-label="合計量（g）"
+              data-i18n-aria="step2.aria.input"
             />
             <span class="unit">g</span>
-            <button type="button" class="round" data-act="total-plus" aria-label="10g 増やす">＋</button>
+            <button type="button" class="round" data-act="total-plus" data-i18n-aria="step2.aria.plus">＋</button>
           </div>
         </div>
       </section>
 
       <!-- STEP 3 -->
       <section class="card">
-        <h2 class="step"><span class="step-no" id="items-step-no">3</span><span id="items-title">1剤のミックス</span></h2>
-        <p class="hint" id="items-hint">まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。</p>
+        <h2 class="step">
+          <span class="step-no" id="items-step-no">3</span><span id="items-title">1剤のミックス</span>
+        </h2>
+        <p class="hint" id="items-hint">
+          まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。
+        </p>
         <div id="items"></div>
-        <button type="button" class="add-btn" id="add-item">＋ 1剤をふやす</button>
+        <button type="button" class="add-btn" id="add-item" data-i18n="items.add">＋ 1剤をふやす</button>
       </section>
 
       <!-- けっか -->
       <section class="card result" id="result-card" aria-live="polite">
-        <h2 class="result-title">はかる量</h2>
+        <h2 class="result-title" data-i18n="result.title">はかる量</h2>
         <div id="result-body"></div>
       </section>
 
       <div class="actions">
-        <button type="button" class="action" id="copy-btn">📋 コピー</button>
-        <button type="button" class="action" id="save-btn">⭐ レシピ保存</button>
-        <button type="button" class="action" id="reset-btn">↺ リセット</button>
+        <button type="button" class="action" id="copy-btn" data-i18n="action.copy">📋 コピー</button>
+        <button type="button" class="action" id="save-btn" data-i18n="action.save">⭐ レシピ保存</button>
+        <button type="button" class="action" id="reset-btn" data-i18n="action.reset">↺ リセット</button>
       </div>
 
       <section class="card recipes" id="recipes-card" hidden>
-        <h2 class="step"><span class="step-no">★</span>保存したレシピ</h2>
+        <h2 class="step">
+          <span class="step-no">★</span><span data-i18n="recipes.title">保存したレシピ</span>
+        </h2>
         <div id="recipes"></div>
       </section>
 
       <details class="card how">
-        <summary>つかいかた・計算のしくみ</summary>
+        <summary data-i18n="how.summary">つかいかた・計算のしくみ</summary>
         <ol>
-          <li><b>2剤のわりあい</b>を選ぶ（1:1 / 1:2 / 1:3 など）</li>
-          <li><b>ぜんぶで何g</b> つくるか入れる</li>
-          <li>まぜる<b>1剤のわりあい</b>を入れる（例 ブラウン 2 : マット 1）</li>
+          <li data-i18n="how.step1"></li>
+          <li data-i18n="how.step2"></li>
+          <li data-i18n="how.step3"></li>
         </ol>
-        <p class="how-math">
-          1剤の合計 ＝ 合計量 ÷（1 ＋ 2剤の倍率）<br />
-          2剤 ＝ 合計量 − 1剤の合計<br />
-          各1剤 ＝ 1剤の合計 × その割合 ÷ 割合の合計
-        </p>
-        <p class="how-note">
-          例）合計 90g で 1:2 のとき → 1剤 30g、2剤 60g。1剤を 2:1 でまぜるなら 20g と 10g。
-        </p>
-        <p class="how-note">
-          小数が出る場合はグラム数を丸めますが、<b>合計量はいつもぴったり</b>になるよう調整しています。
-          0.1g 単位ではかりたいときは、結果の下の「0.1g刻み」を選んでください。
-        </p>
+        <p class="how-math" data-i18n="how.math"></p>
+        <p class="how-note" data-i18n="how.note1"></p>
+        <p class="how-note" data-i18n="how.note2"></p>
       </details>
     </main>
 
     <div class="sticky-bar" id="sticky-bar" hidden>
-      <span><small>1剤</small><b id="sticky-base">-</b></span>
-      <span><small>2剤</small><b id="sticky-ox">-</b></span>
-      <span class="sticky-total"><small>合計</small><b id="sticky-total">-</b></span>
+      <span><small data-i18n="sticky.base">1剤</small><b id="sticky-base">-</b></span>
+      <span><small data-i18n="sticky.ox">2剤</small><b id="sticky-ox">-</b></span>
+      <span class="sticky-total"><small data-i18n="sticky.total">合計</small><b id="sticky-total">-</b></span>
     </div>
 
+    <script>
+/**
+ * 画面の文言（日本語 / 廣東話）。
+ *
+ * ブラウザ: script タグで読み込むと window.ColorMixI18N から参照できる
+ *
+ * ・{name} は置換用のプレースホルダ
+ * ・**強調** は <b> になる（innerHTML は使わない）
+ */
+(function (root, factory) {
+  var api = factory();
+  if (typeof module === "object" && module.exports) {
+    module.exports = api;
+  } else {
+    root.ColorMixI18N = api;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  var ja = {
+    "lang.tag": "ja",
+    "lang.name": "日本語",
+    "app.title": "🎨 カラー剤 計算機",
+    "app.docTitle": "カラー剤 計算機",
+    "app.tagline": "タップするだけ。1剤のグラム数を自動で出します。",
+    "lang.aria": "言語",
+
+    "tabs.aria": "計算のしかた",
+    "tab.total.title": "合計量からきめる",
+    "tab.total.sub": "ぜんぶで◯g つくりたい",
+    "tab.base.title": "1剤の量からきめる",
+    "tab.base.sub": "1剤を◯g 使いたい",
+
+    "step1.title": "2剤のわりあい",
+    "step1.hint": "1剤 1 に対して、2剤（オキシ）を何倍いれる？",
+    "step1.custom": "その他の倍率",
+    "step1.aria.input": "2剤の倍率",
+    "step1.aria.minus": "倍率を減らす",
+    "step1.aria.plus": "倍率を増やす",
+    "step1.ratioLabel": "1剤 : 2剤 ＝ ",
+
+    "step2.title": "ぜんぶで何g つくる？",
+    "step2.hint": "1剤と2剤をまぜたあとの合計量です。",
+    "step2.label": "合計量",
+    "step2.aria.input": "合計量（g）",
+    "step2.aria.minus": "10g 減らす",
+    "step2.aria.plus": "10g 増やす",
+
+    "items.title.total": "1剤のミックス",
+    "items.title.base": "使う1剤の量",
+    "items.hint.total":
+      "まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。",
+    "items.hint.base":
+      "実際にはかる1剤のグラム数を入れてください。2剤と合計量を計算します。",
+    "items.add": "＋ 1剤をふやす",
+    "item.placeholder": "1剤 {n}（例 ブラウン6）",
+    "item.fallback": "1剤 {n}",
+    "item.aria.name": "{n}番目の1剤の名前",
+    "item.aria.del": "{n}番目の1剤を削除",
+    "item.aria.value": "{n}番目の{label}",
+    "item.aria.minus": "減らす",
+    "item.aria.plus": "増やす",
+    "label.parts": "わりあい",
+    "label.grams": "使う量",
+
+    "result.title": "はかる量",
+    "result.partsSub": "わりあい {parts}（全体の {pct}%）",
+    "result.subtotal": "1剤 合計 {g}g",
+    "result.ox": "2剤（オキシ）",
+    "result.oxSub": "1剤の {r} 倍",
+    "result.sum": "ぜんぶで",
+    "result.notice": "※ {req}g は {step} 刻みに丸めて {got}g で計算しました。",
+    "step.label": "はかる細かさ",
+    "step.1": "1g刻み",
+    "step.0.1": "0.1g刻み",
+
+    "action.copy": "📋 コピー",
+    "action.save": "⭐ レシピ保存",
+    "action.reset": "↺ リセット",
+
+    "recipes.title": "保存したレシピ",
+    "recipe.aria.del": "{name} を削除",
+
+    "how.summary": "つかいかた・計算のしくみ",
+    "how.step1": "**2剤のわりあい**を選ぶ（1:1 / 1:2 / 1:3 など）",
+    "how.step2": "**ぜんぶで何g** つくるか入れる",
+    "how.step3": "まぜる**1剤のわりあい**を入れる（例 ブラウン 2 : マット 1）",
+    "how.math":
+      "1剤の合計 ＝ 合計量 ÷（1 ＋ 2剤の倍率）\n2剤 ＝ 合計量 − 1剤の合計\n各1剤 ＝ 1剤の合計 × その割合 ÷ 割合の合計",
+    "how.note1":
+      "例）合計 90g で 1:2 のとき → 1剤 30g、2剤 60g。1剤を 2:1 でまぜるなら 20g と 10g。",
+    "how.note2":
+      "小数が出る場合はグラム数を丸めますが、**合計量はいつもぴったり**になるよう調整しています。0.1g 単位ではかりたいときは、結果の下の「0.1g刻み」を選んでください。",
+
+    "sticky.base": "1剤",
+    "sticky.ox": "2剤",
+    "sticky.total": "合計",
+
+    "err.need_total": "つくる合計量を入力してください",
+    "err.need_ratio": "2剤の倍率を入力してください",
+    "err.need_item": "1剤を1つ以上追加してください",
+    "err.need_parts": "1剤の配合比を入力してください",
+    "err.total_too_small": "合計量が少なすぎます",
+    "err.base_too_small": "合計量が少なすぎて1剤が計れません",
+    "err.need_grams": "1剤の量を入力してください",
+
+    "toast.copied": "コピーしました",
+    "toast.copy_failed": "コピーできませんでした",
+    "toast.need_input": "先に入力してください",
+    "toast.saved": "保存しました",
+    "toast.loaded": "よびだしました",
+
+    "prompt.save": "レシピの名前をつけてください",
+    "confirm.reset": "入力をリセットしますか？（保存したレシピは消えません）",
+
+    "copy.header": "【カラーレシピ】",
+    "copy.ratio": "1剤 : 2剤 ＝ ",
+    "copy.subtotal": "1剤 合計",
+    "copy.ox": "2剤",
+    "copy.total": "ぜんぶで",
+  };
+
+  var yue = {
+    "lang.tag": "yue-Hant-HK",
+    "lang.name": "廣東話",
+    "app.title": "🎨 染髮劑計算機",
+    "app.docTitle": "染髮劑計算機",
+    "app.tagline": "撳幾下就得，自動計出每支染膏要幾多 g。",
+    "lang.aria": "語言",
+
+    "tabs.aria": "計算方式",
+    "tab.total.title": "用總份量計",
+    "tab.total.sub": "想溝夠 ◯g",
+    "tab.base.title": "用染膏份量計",
+    "tab.base.sub": "想用 ◯g 染膏",
+
+    "step1.title": "雙氧奶嘅比例",
+    "step1.hint": "染膏 1 份，要落幾多倍雙氧奶（二劑）？",
+    "step1.custom": "其他倍數",
+    "step1.aria.input": "雙氧奶嘅倍數",
+    "step1.aria.minus": "減少倍數",
+    "step1.aria.plus": "增加倍數",
+    "step1.ratioLabel": "染膏 : 雙氧奶 ＝ ",
+
+    "step2.title": "總共要溝幾多 g？",
+    "step2.hint": "即係染膏加雙氧奶溝埋之後嘅總份量。",
+    "step2.label": "總份量",
+    "step2.aria.input": "總份量（g）",
+    "step2.aria.minus": "減 10g",
+    "step2.aria.plus": "加 10g",
+
+    "items.title.total": "染膏點溝",
+    "items.title.base": "用幾多染膏",
+    "items.hint.total":
+      "入低每支染膏嘅「比例」（例：2 : 1）。淨係用一支就唔使改。",
+    "items.hint.base":
+      "入低你實際要秤嘅染膏 g 數，會計返雙氧奶同總份量。",
+    "items.add": "＋ 加多支染膏",
+    "item.placeholder": "染膏 {n}（例：啡色 6）",
+    "item.fallback": "染膏 {n}",
+    "item.aria.name": "第 {n} 支染膏嘅名",
+    "item.aria.del": "刪除第 {n} 支染膏",
+    "item.aria.value": "第 {n} 支嘅{label}",
+    "item.aria.minus": "減少",
+    "item.aria.plus": "增加",
+    "label.parts": "比例",
+    "label.grams": "份量",
+
+    "result.title": "要秤幾多",
+    "result.partsSub": "比例 {parts}（佔 {pct}%）",
+    "result.subtotal": "染膏合計 {g}g",
+    "result.ox": "雙氧奶（二劑）",
+    "result.oxSub": "染膏嘅 {r} 倍",
+    "result.sum": "總共",
+    "result.notice": "※ {req}g 已經按 {step} 為單位調整做 {got}g 嚟計。",
+    "step.label": "秤嘅精度",
+    "step.1": "1g 為單位",
+    "step.0.1": "0.1g 為單位",
+
+    "action.copy": "📋 複製",
+    "action.save": "⭐ 儲存配方",
+    "action.reset": "↺ 重設",
+
+    "recipes.title": "已儲存嘅配方",
+    "recipe.aria.del": "刪除 {name}",
+
+    "how.summary": "用法・點計出嚟",
+    "how.step1": "揀**雙氧奶嘅比例**（1:1 / 1:2 / 1:3 等等）",
+    "how.step2": "入**總共要溝幾多 g**",
+    "how.step3": "入**每支染膏嘅比例**（例：啡色 2 : 冷色 1）",
+    "how.math":
+      "染膏合計 ＝ 總份量 ÷（1 ＋ 雙氧奶倍數）\n雙氧奶 ＝ 總份量 － 染膏合計\n每支染膏 ＝ 染膏合計 × 佢嘅比例 ÷ 比例總和",
+    "how.note1":
+      "例：總共 90g、1:2 → 染膏 30g、雙氧奶 60g。染膏用 2:1 溝，就係 20g 同 10g。",
+    "how.note2":
+      "有小數會四捨五入，但**總份量一定啱數**。想秤到 0.1g，就揀結果下面嘅「0.1g 為單位」。",
+
+    "sticky.base": "染膏",
+    "sticky.ox": "雙氧奶",
+    "sticky.total": "總共",
+
+    "err.need_total": "請入總份量",
+    "err.need_ratio": "請入雙氧奶倍數",
+    "err.need_item": "最少要有一支染膏",
+    "err.need_parts": "請入染膏嘅比例",
+    "err.total_too_small": "總份量太少",
+    "err.base_too_small": "總份量太少，秤唔到染膏",
+    "err.need_grams": "請入染膏份量",
+
+    "toast.copied": "已複製",
+    "toast.copy_failed": "複製唔到",
+    "toast.need_input": "請先輸入",
+    "toast.saved": "已儲存",
+    "toast.loaded": "已載入",
+
+    "prompt.save": "幫呢個配方改個名",
+    "confirm.reset": "要重設所有輸入？（已儲存嘅配方唔會刪除）",
+
+    "copy.header": "【染髮配方】",
+    "copy.ratio": "染膏 : 雙氧奶 ＝ ",
+    "copy.subtotal": "染膏合計",
+    "copy.ox": "雙氧奶",
+    "copy.total": "總共",
+  };
+
+  var dictionaries = { ja: ja, yue: yue };
+  var order = ["ja", "yue"];
+
+  /** 端末の言語設定から初期言語を決める */
+  function detect(languages) {
+    var list = languages || [];
+    for (var i = 0; i < list.length; i++) {
+      var tag = String(list[i]).toLowerCase();
+      if (tag.indexOf("yue") === 0 || tag.indexOf("zh") === 0) return "yue";
+      if (tag.indexOf("ja") === 0) return "ja";
+    }
+    return "ja";
+  }
+
+  function has(lang) {
+    return order.indexOf(lang) >= 0;
+  }
+
+  /** キーを引いて {name} を差し替える。未定義キーは日本語 → キー名の順にフォールバック */
+  function translate(lang, key, params) {
+    var dict = dictionaries[has(lang) ? lang : "ja"];
+    var text = dict[key];
+    if (text === undefined) text = ja[key];
+    if (text === undefined) return key;
+    if (!params) return text;
+    return text.replace(/\{(\w+)\}/g, function (match, name) {
+      return Object.prototype.hasOwnProperty.call(params, name)
+        ? String(params[name])
+        : match;
+    });
+  }
+
+  return {
+    LANGS: order,
+    dictionaries: dictionaries,
+    detect: detect,
+    has: has,
+    translate: translate,
+  };
+});
+    </script>
     <script>
 /**
  * ヘアカラー剤の配合計算ロジック（画面から独立した純粋関数）。
@@ -815,8 +1129,9 @@ body {
     return allocated;
   }
 
-  function error(message) {
-    return { ok: false, error: message };
+  /** エラーはコードだけ返し、文言は画面側（i18n）に任せる */
+  function error(code) {
+    return { ok: false, code: code };
   }
 
   /**
@@ -835,13 +1150,13 @@ body {
     var items = (input && input.items) || [];
 
     if (!isPositiveNumber(total)) {
-      return error("つくる合計量を入力してください");
+      return error("need_total");
     }
     if (!(typeof oxRatio === "number" && isFinite(oxRatio) && oxRatio >= 0)) {
-      return error("2剤の倍率を入力してください");
+      return error("need_ratio");
     }
     if (items.length === 0) {
-      return error("1剤を1つ以上追加してください");
+      return error("need_item");
     }
 
     var parts = items.map(function (item) {
@@ -852,19 +1167,19 @@ body {
       return a + b;
     }, 0);
     if (!(partsSum > 0)) {
-      return error("1剤の配合比を入力してください");
+      return error("need_parts");
     }
 
     var totalUnits = toUnits(total, step);
     if (totalUnits <= 0) {
-      return error("合計量が少なすぎます");
+      return error("total_too_small");
     }
 
     // 合計量を最優先。1剤を四捨五入し、残り全部を2剤にすることで合計は必ずぴったりになる
     var base1Units = Math.round(totalUnits / (1 + oxRatio));
     var oxUnits = totalUnits - base1Units;
     if (base1Units <= 0) {
-      return error("合計量が少なすぎて1剤が計れません");
+      return error("base_too_small");
     }
 
     var allocated = distribute(base1Units, parts);
@@ -897,10 +1212,10 @@ body {
     var items = (input && input.items) || [];
 
     if (!(typeof oxRatio === "number" && isFinite(oxRatio) && oxRatio >= 0)) {
-      return error("2剤の倍率を入力してください");
+      return error("need_ratio");
     }
     if (items.length === 0) {
-      return error("1剤を1つ以上追加してください");
+      return error("need_item");
     }
 
     var allocated = items.map(function (item) {
@@ -911,7 +1226,7 @@ body {
       return a + b;
     }, 0);
     if (base1Units <= 0) {
-      return error("1剤の量を入力してください");
+      return error("need_grams");
     }
 
     var oxUnits = Math.round(base1Units * oxRatio);
@@ -989,15 +1304,17 @@ body {
 });
     </script>
     <script>
-/* カラー剤計算機の画面制御。計算そのものは calc.js（ColorMix）に任せる。 */
+/* カラー剤計算機の画面制御。計算は calc.js、文言は i18n.js に任せる。 */
 (function () {
   "use strict";
 
   var CM = window.ColorMix;
+  var I18N = window.ColorMixI18N;
   var RATIOS = [1, 1.5, 2, 3];
   var TOTALS = [30, 60, 80, 100, 120, 150, 200];
   var STATE_KEY = "colormix.state.v1";
   var RECIPE_KEY = "colormix.recipes.v1";
+  var LANG_KEY = "colormix.lang.v1";
 
   var $ = function (id) {
     return document.getElementById(id);
@@ -1020,6 +1337,37 @@ body {
     } catch (e) {
       /* プライベートモードなどでは保存しないだけ */
     }
+  }
+
+  /* ---------- 言語 ---------- */
+
+  var lang = readStore(LANG_KEY, null);
+  if (!I18N.has(lang)) {
+    lang = I18N.detect(navigator.languages || [navigator.language || ""]);
+  }
+
+  function t(key, params) {
+    return I18N.translate(lang, key, params);
+  }
+
+  /**
+   * **強調** を <b> に変えながらテキストを流し込む。
+   * innerHTML を使わないので、文言に記号が入っても壊れない。
+   */
+  function setText(el, text) {
+    el.textContent = "";
+    String(text)
+      .split("**")
+      .forEach(function (chunk, index) {
+        if (!chunk) return;
+        if (index % 2 === 1) {
+          var strong = document.createElement("b");
+          strong.textContent = chunk;
+          el.appendChild(strong);
+        } else {
+          el.appendChild(document.createTextNode(chunk));
+        }
+      });
   }
 
   /* ---------- 状態 ---------- */
@@ -1073,6 +1421,7 @@ body {
 
   /* ---------- 画面部品 ---------- */
 
+  var langSwitch = $("lang-switch");
   var ratioChips = $("ratio-chips");
   var ratioCustom = $("ratio-custom");
   var ratioView = $("ratio-view");
@@ -1096,6 +1445,49 @@ body {
     el.className = className;
     el.textContent = text;
     return el;
+  }
+
+  /* ---------- 言語切り替え ---------- */
+
+  I18N.LANGS.forEach(function (code) {
+    var btn = button("lang-btn", I18N.translate(code, "lang.name"));
+    btn.dataset.lang = code;
+    btn.addEventListener("click", function () {
+      if (lang === code) return;
+      lang = code;
+      writeStore(LANG_KEY, lang);
+      applyLang();
+      syncAll();
+    });
+    langSwitch.appendChild(btn);
+  });
+
+  /** 静的な文言（data-i18n / data-i18n-aria）をまとめて差し替える */
+  function applyLang() {
+    document.documentElement.lang = t("lang.tag");
+    document.title = t("app.docTitle");
+
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-i18n]"),
+      function (el) {
+        setText(el, t(el.dataset.i18n));
+      }
+    );
+    Array.prototype.forEach.call(
+      document.querySelectorAll("[data-i18n-aria]"),
+      function (el) {
+        el.setAttribute("aria-label", t(el.dataset.i18nAria));
+      }
+    );
+    Array.prototype.forEach.call(langSwitch.children, function (btn) {
+      btn.setAttribute("aria-pressed", btn.dataset.lang === lang ? "true" : "false");
+    });
+    if (stepToggle) {
+      Array.prototype.forEach.call(stepToggle.querySelectorAll(".chip"), function (chip) {
+        chip.textContent = t("step." + chip.dataset.step);
+      });
+      setText(stepToggle.querySelector(".steps-label"), t("step.label"));
+    }
   }
 
   /* ---------- STEP 1: 2剤のわりあい ---------- */
@@ -1197,29 +1589,29 @@ body {
     });
     totalCard.hidden = !isTotal;
     itemsStepNo.textContent = isTotal ? "3" : "2";
-    itemsTitle.textContent = isTotal ? "1剤のミックス" : "使う1剤の量";
-    itemsHint.textContent = isTotal
-      ? "まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。"
-      : "実際にはかる1剤のグラム数を入れてください。2剤と合計量を計算します。";
+    itemsTitle.textContent = t(isTotal ? "items.title.total" : "items.title.base");
+    itemsHint.textContent = t(isTotal ? "items.hint.total" : "items.hint.base");
   }
 
   /* ---------- STEP 3: 1剤の行 ---------- */
 
   function renderItems() {
     var isTotal = state.mode === "total";
+    var valueLabel = t(isTotal ? "label.parts" : "label.grams");
     itemsEl.textContent = "";
     rows = [];
 
     state.items.forEach(function (item, index) {
+      var no = index + 1;
       var row = document.createElement("div");
       row.className = "item";
 
       var name = document.createElement("input");
       name.type = "text";
       name.className = "text-input";
-      name.placeholder = "1剤 " + (index + 1) + "（例 ブラウン6）";
+      name.placeholder = t("item.placeholder", { n: no });
       name.value = item.name;
-      name.setAttribute("aria-label", (index + 1) + "番目の1剤の名前");
+      name.setAttribute("aria-label", t("item.aria.name", { n: no }));
       name.addEventListener("input", function () {
         item.name = name.value;
         update();
@@ -1227,7 +1619,7 @@ body {
       row.appendChild(name);
 
       var del = button("del-btn", "✕");
-      del.setAttribute("aria-label", (index + 1) + "番目の1剤を削除");
+      del.setAttribute("aria-label", t("item.aria.del", { n: no }));
       del.disabled = state.items.length <= 1;
       del.addEventListener("click", function () {
         if (state.items.length <= 1) return;
@@ -1242,7 +1634,7 @@ body {
 
       var label = document.createElement("span");
       label.className = "label";
-      label.textContent = isTotal ? "わりあい" : "使う量";
+      label.textContent = valueLabel;
       controls.appendChild(label);
 
       var minus = button("round", "−");
@@ -1253,10 +1645,10 @@ body {
       value.min = "0";
       value.step = isTotal ? "1" : "5";
       value.value = String(isTotal ? item.parts : item.grams);
-      value.setAttribute("aria-label", (index + 1) + "番目の" + (isTotal ? "わりあい" : "使う量"));
+      value.setAttribute("aria-label", t("item.aria.value", { n: no, label: valueLabel }));
       var plus = button("round", "＋");
-      minus.setAttribute("aria-label", "減らす");
-      plus.setAttribute("aria-label", "増やす");
+      minus.setAttribute("aria-label", t("item.aria.minus"));
+      plus.setAttribute("aria-label", t("item.aria.plus"));
 
       var stepSize = isTotal ? 1 : 5;
       function setValue(next) {
@@ -1312,7 +1704,9 @@ body {
   /* ---------- 結果 ---------- */
 
   function itemLabel(item, index) {
-    return item.name && item.name.trim() ? item.name : "1剤 " + (index + 1);
+    return item && item.name && item.name.trim()
+      ? item.name
+      : t("item.fallback", { n: index + 1 });
   }
 
   function resultRow(name, sub, grams, className) {
@@ -1346,7 +1740,7 @@ body {
     if (!result.ok) {
       var err = document.createElement("p");
       err.className = "error";
-      err.textContent = "⚠ " + result.error;
+      err.textContent = "⚠ " + t("err." + result.code);
       resultBody.appendChild(err);
       return;
     }
@@ -1359,7 +1753,10 @@ body {
     result.items.forEach(function (row, index) {
       var sub = "";
       if (state.mode === "total" && result.items.length > 1 && partsSum > 0) {
-        sub = "わりあい " + row.parts + "（全体の " + Math.round((row.parts / partsSum) * 100) + "%）";
+        sub = t("result.partsSub", {
+          parts: row.parts,
+          pct: Math.round((row.parts / partsSum) * 100),
+        });
       }
       resultBody.appendChild(
         resultRow(itemLabel(state.items[index], index), sub, row.text, "")
@@ -1369,23 +1766,32 @@ body {
     if (result.items.length > 1) {
       var subtotal = document.createElement("p");
       subtotal.className = "subtotal";
-      subtotal.textContent = "1剤 合計 " + CM.formatGrams(result.base1, step) + "g";
+      subtotal.textContent = t("result.subtotal", {
+        g: CM.formatGrams(result.base1, step),
+      });
       resultBody.appendChild(subtotal);
     }
 
     resultBody.appendChild(
-      resultRow("2剤（オキシ）", "1剤の " + result.oxRatio + " 倍", CM.formatGrams(result.ox, step), "ox")
+      resultRow(
+        t("result.ox"),
+        t("result.oxSub", { r: result.oxRatio }),
+        CM.formatGrams(result.ox, step),
+        "ox"
+      )
     );
     resultBody.appendChild(
-      resultRow("ぜんぶで", "", CM.formatGrams(result.total, step), "sum")
+      resultRow(t("result.sum"), "", CM.formatGrams(result.total, step), "sum")
     );
 
     if (result.adjusted) {
       var notice = document.createElement("p");
       notice.className = "notice";
-      notice.textContent =
-        "※ " + result.requestedTotal + "g は " + (step < 1 ? "0.1g" : "1g") +
-        " 刻みに丸めて " + CM.formatGrams(result.total, step) + "g で計算しました。";
+      notice.textContent = t("result.notice", {
+        req: result.requestedTotal,
+        step: step < 1 ? "0.1g" : "1g",
+        got: CM.formatGrams(result.total, step),
+      });
       resultBody.appendChild(notice);
     }
   }
@@ -1394,11 +1800,11 @@ body {
     var wrap = document.createElement("div");
     wrap.className = "steps-toggle";
     var label = document.createElement("span");
-    label.textContent = "はかる細かさ";
+    label.className = "steps-label";
     wrap.appendChild(label);
 
     CM.STEPS.forEach(function (step) {
-      var chip = button("chip", step < 1 ? "0.1g刻み" : "1g刻み");
+      var chip = button("chip", "");
       chip.dataset.step = String(step);
       chip.addEventListener("click", function () {
         state.step = step;
@@ -1464,16 +1870,16 @@ body {
   function resultText(result) {
     if (!result.ok) return "";
     var step = result.step;
-    var lines = ["【カラーレシピ】", "1剤 : 2剤 ＝ " + CM.formatRatio(result.oxRatio), ""];
+    var lines = [t("copy.header"), t("copy.ratio") + CM.formatRatio(result.oxRatio), ""];
     result.items.forEach(function (row, index) {
       lines.push(itemLabel(state.items[index], index) + "  " + row.text + "g");
     });
     lines.push("--------------------");
     if (result.items.length > 1) {
-      lines.push("1剤 合計  " + CM.formatGrams(result.base1, step) + "g");
+      lines.push(t("copy.subtotal") + "  " + CM.formatGrams(result.base1, step) + "g");
     }
-    lines.push("2剤       " + CM.formatGrams(result.ox, step) + "g");
-    lines.push("ぜんぶで  " + CM.formatGrams(result.total, step) + "g");
+    lines.push(t("copy.ox") + "  " + CM.formatGrams(result.ox, step) + "g");
+    lines.push(t("copy.total") + "  " + CM.formatGrams(result.total, step) + "g");
     return lines.join("\n");
   }
 
@@ -1481,7 +1887,7 @@ body {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(
         function () {
-          toast("コピーしました");
+          toast(t("toast.copied"));
         },
         function () {
           fallbackCopy(text);
@@ -1506,13 +1912,13 @@ body {
       ok = false;
     }
     document.body.removeChild(area);
-    toast(ok ? "コピーしました" : "コピーできませんでした");
+    toast(t(ok ? "toast.copied" : "toast.copy_failed"));
   }
 
   $("copy-btn").addEventListener("click", function () {
     var text = resultText(lastResult);
     if (!text) {
-      toast("先に入力してください");
+      toast(t("toast.need_input"));
       return;
     }
     copyText(text);
@@ -1521,26 +1927,22 @@ body {
   function recipeSummary(saved) {
     var names = saved.state.items
       .map(function (item, index) {
-        return itemLabelOf(item, index);
+        return itemLabel(item, index);
       })
       .join(" / ");
     return CM.formatRatio(saved.state.oxRatio) + "　" + names;
   }
 
-  function itemLabelOf(item, index) {
-    return item.name && item.name.trim() ? item.name : "1剤 " + (index + 1);
-  }
-
   $("save-btn").addEventListener("click", function () {
-    var suggestion = itemLabelOf(state.items[0], 0);
-    var name = window.prompt("レシピの名前をつけてください", suggestion);
+    var suggestion = itemLabel(state.items[0], 0);
+    var name = window.prompt(t("prompt.save"), suggestion);
     if (name === null) return;
     name = name.trim() || suggestion;
     recipes.unshift({ name: name, state: JSON.parse(JSON.stringify(state)) });
     recipes = recipes.slice(0, 30);
     writeStore(RECIPE_KEY, recipes);
     renderRecipes();
-    toast("保存しました");
+    toast(t("toast.saved"));
   });
 
   function renderRecipes() {
@@ -1559,11 +1961,11 @@ body {
       load.addEventListener("click", function () {
         state = sanitize(saved.state);
         syncAll();
-        toast("よびだしました");
+        toast(t("toast.loaded"));
       });
 
       var del = button("del-btn", "✕");
-      del.setAttribute("aria-label", saved.name + " を削除");
+      del.setAttribute("aria-label", t("recipe.aria.del", { name: saved.name }));
       del.addEventListener("click", function () {
         recipes.splice(index, 1);
         writeStore(RECIPE_KEY, recipes);
@@ -1577,7 +1979,7 @@ body {
   }
 
   $("reset-btn").addEventListener("click", function () {
-    if (!window.confirm("入力をリセットしますか？（保存したレシピは消えません）")) return;
+    if (!window.confirm(t("confirm.reset"))) return;
     state = defaultState();
     syncAll();
   });
@@ -1616,11 +2018,12 @@ body {
     syncTotal();
     syncStep();
     renderItems();
+    renderRecipes();
     update();
   }
 
   buildStepToggle();
-  renderRecipes();
+  applyLang();
   syncAll();
   watchResultCard();
 })();

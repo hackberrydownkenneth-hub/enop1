@@ -13,6 +13,8 @@
   --warn: #b45309;
   --danger: #d02f4b;
   --badge-ink: #7c3aed;
+  --font: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+    system-ui, -apple-system, "Segoe UI", sans-serif;
   --radius: 16px;
   --shadow: 0 2px 10px rgba(36, 31, 46, 0.07);
 }
@@ -55,6 +57,13 @@
   --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
+/* 広東語（繁体字）表示のときは中文フォントを優先する */
+:root[lang^="yue"],
+:root[lang^="zh"] {
+  --font: "PingFang HK", "Noto Sans HK", "Noto Sans TC", "Hiragino Sans CNS",
+    "Microsoft JhengHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -68,8 +77,7 @@ body {
   padding: 0 0 96px;
   background: var(--bg);
   color: var(--ink);
-  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
-    system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font);
   font-size: 17px;
   line-height: 1.6;
 }
@@ -91,6 +99,38 @@ body {
   margin: 4px 0 0;
   font-size: 13px;
   opacity: 0.9;
+}
+
+.lang {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.lang-btn {
+  min-height: 34px;
+  padding: 4px 16px;
+  border: 2px solid var(--brand-ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--brand-ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.lang-btn[aria-pressed="true"] {
+  background: var(--brand-ink);
+  color: var(--brand);
+  opacity: 1;
+}
+
+.lang-btn:focus-visible {
+  outline: 3px solid var(--brand-ink);
+  outline-offset: 2px;
 }
 
 .main {
@@ -530,6 +570,7 @@ body {
 }
 
 .how-math {
+  white-space: pre-line;
   padding: 10px;
   border-radius: 10px;
   background: var(--brand-soft);

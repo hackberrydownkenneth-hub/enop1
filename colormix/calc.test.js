@@ -115,12 +115,19 @@ test("配分は合計が必ず一致する（総当たり）", () => {
   }
 });
 
-test("入力が足りないときはエラーメッセージを返す", () => {
-  assert.strictEqual(ColorMix.calcFromTotal({ total: 0, oxRatio: 1, items: items(1) }).ok, false);
-  assert.strictEqual(ColorMix.calcFromTotal({ total: 100, oxRatio: 1, items: [] }).ok, false);
-  assert.strictEqual(ColorMix.calcFromTotal({ total: 100, oxRatio: 1, items: items(0, 0) }).ok, false);
-  assert.strictEqual(ColorMix.calcFromTotal({ total: 100, oxRatio: -1, items: items(1) }).ok, false);
-  assert.strictEqual(ColorMix.calcFromBase({ oxRatio: 2, items: [{ grams: 0 }] }).ok, false);
+test("入力が足りないときはエラーコードを返す（文言は画面側で翻訳）", () => {
+  const cases = [
+    [ColorMix.calcFromTotal({ total: 0, oxRatio: 1, items: items(1) }), "need_total"],
+    [ColorMix.calcFromTotal({ total: 100, oxRatio: 1, items: [] }), "need_item"],
+    [ColorMix.calcFromTotal({ total: 100, oxRatio: 1, items: items(0, 0) }), "need_parts"],
+    [ColorMix.calcFromTotal({ total: 100, oxRatio: -1, items: items(1) }), "need_ratio"],
+    [ColorMix.calcFromTotal({ total: 0.4, oxRatio: 1, items: items(1) }), "total_too_small"],
+    [ColorMix.calcFromBase({ oxRatio: 2, items: [{ grams: 0 }] }), "need_grams"],
+  ];
+  for (const [result, code] of cases) {
+    assert.strictEqual(result.ok, false);
+    assert.strictEqual(result.code, code);
+  }
 });
 
 test("calc は mode で振り分ける", () => {

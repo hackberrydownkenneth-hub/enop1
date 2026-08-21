@@ -14,6 +14,7 @@ const read = (name) => fs.readFileSync(path.join(dir, name), "utf8");
 
 const html = read("index.html");
 const css = read("style.css");
+const i18n = read("i18n.js");
 const calc = read("calc.js");
 const app = read("app.js");
 
@@ -22,7 +23,8 @@ const inlineScript = (source) =>
   "<script>\n" + source.trim().replace(/<\/script/gi, "<\\/script") + "\n    </script>";
 
 const cssTag = '<link rel="stylesheet" href="style.css" />';
-const scriptTags = '<script src="calc.js"></script>\n    <script src="app.js"></script>';
+const scriptTags =
+  '<script src="i18n.js"></script>\n    <script src="calc.js"></script>\n    <script src="app.js"></script>';
 
 if (!html.includes(cssTag) || !html.includes(scriptTags)) {
   console.error("index.html の参照タグが見つかりません。build.js を更新してください。");
@@ -31,7 +33,17 @@ if (!html.includes(cssTag) || !html.includes(scriptTags)) {
 
 const out = html
   .replace(cssTag, () => "<style>\n" + css.trim() + "\n    </style>")
-  .replace(scriptTags, () => inlineScript(calc) + "\n    " + inlineScript(app));
+  .replace(
+    scriptTags,
+    () => [i18n, calc, app].map(inlineScript).join("\n    ")
+  );
+
+// data: 以外の外部参照が残っていたら 1ファイルとして成立しない
+const leftover = out.match(/<(?:script|link)[^>]+(?:src|href)="(?!data:)[^"]+"/g);
+if (leftover) {
+  console.error("外部ファイルの参照が残っています: " + leftover.join(", "));
+  process.exit(1);
+}
 
 fs.writeFileSync(path.join(dir, "standalone.html"), out);
 console.log("colormix/standalone.html を生成しました (" + Math.round(out.length / 1024) + " KB)");
