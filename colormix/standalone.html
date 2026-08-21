@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#7c3aed" />
     <meta
       name="description"
-      content="DRIVE BLUE HONG KONG がお届けする美容師向けツール。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。日本語・廣東話対応。"
+      content="DRIVE BLUE HONG KONG がお届けする美容師向けツール。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。日本語・繁體中文対応。"
     />
     <title>カラー剤 計算機</title>
     <style>
@@ -1190,7 +1190,7 @@ body.gate-open {
 
     <script>
 /**
- * 画面の文言（日本語 / 廣東話）。
+ * 画面の文言（日本語 / 繁體中文・書面語）。
  *
  * ブラウザ: script タグで読み込むと window.ColorMixI18N から参照できる
  *
@@ -1363,158 +1363,133 @@ body.gate-open {
   };
 
   var yue = {
-    "lang.tag": "yue-Hant-HK",
-    "lang.name": "廣東話",
+    "lang.tag": "zh-Hant-HK",
+    "lang.name": "繁體中文",
     "app.title": "🎨 染髮劑計算機",
     "app.docTitle": "染髮劑計算機 | DRIVE BLUE HONG KONG",
-    "app.tagline": "撳幾下就得，自動計出每支染膏要幾多 g。",
+    "app.tagline": "只需輕觸幾下，自動計算每支染膏所需的克數。",
     "lang.aria": "語言",
-
     "tabs.aria": "計算方式",
-    "tab.total.title": "用總份量計",
-    "tab.total.sub": "想溝夠 ◯g",
-    "tab.base.title": "用染膏份量計",
-    "tab.base.sub": "想用 ◯g 染膏",
-
-    "step1.title": "雙氧奶嘅比例",
-    "step1.hint": "染膏 1 份，要落幾多倍雙氧奶（二劑）？",
+    "tab.total.title": "由總份量計算",
+    "tab.total.sub": "想調配 ◯g",
+    "tab.base.title": "由染膏用量計算",
+    "tab.base.sub": "使用 ◯g 染膏",
+    "step1.title": "雙氧奶的比例",
+    "step1.hint": "染膏 1 份，需加入多少倍的雙氧奶（二劑）？",
     "step1.custom": "其他倍數",
-    "step1.aria.input": "雙氧奶嘅倍數",
+    "step1.aria.input": "雙氧奶的倍數",
     "step1.aria.minus": "減少倍數",
     "step1.aria.plus": "增加倍數",
     "step1.ratioLabel": "染膏 : 雙氧奶 ＝ ",
-
-    "step2.title": "總共要溝幾多 g？",
-    "step2.hint": "即係染膏加雙氧奶溝埋之後嘅總份量。",
+    "step2.title": "總共需要調配多少 g？",
+    "step2.hint": "即染膏與雙氧奶混合後的總份量。",
     "step2.label": "總份量",
     "step2.aria.input": "總份量（g）",
     "step2.aria.minus": "減 10g",
     "step2.aria.plus": "加 10g",
-
-    "items.title.total": "染膏點溝",
-    "items.title.base": "用幾多染膏",
-    "items.hint.total":
-      "入低每支染膏嘅「比例」（例：2 : 1）。淨係用一支就唔使改。",
-    "items.hint.base":
-      "入低你實際要秤嘅染膏 g 數，會計返雙氧奶同總份量。",
-    "items.add": "＋ 加多支染膏",
+    "items.title.total": "染膏配方",
+    "items.title.base": "染膏用量",
+    "items.hint.total": "請輸入每支染膏的「比例」（例：2 : 1）。只使用一支則無需更改。",
+    "items.hint.base": "請輸入實際秤量的染膏克數，系統會計算雙氧奶及總份量。",
+    "items.add": "＋ 新增染膏",
     "item.placeholder": "染膏 {n}（例：啡色 6）",
     "item.fallback": "染膏 {n}",
-    "item.aria.name": "第 {n} 支染膏嘅名",
+    "item.aria.name": "第 {n} 支染膏的名稱",
     "item.aria.del": "刪除第 {n} 支染膏",
-    "item.aria.value": "第 {n} 支嘅{label}",
+    "item.aria.value": "第 {n} 支的{label}",
     "item.aria.minus": "減少",
     "item.aria.plus": "增加",
     "label.parts": "比例",
     "label.grams": "份量",
-
-    "result.title": "要秤幾多",
+    "result.title": "秤量份量",
     "result.partsSub": "比例 {parts}（佔 {pct}%）",
     "result.subtotal": "染膏合計 {g}g",
     "result.ox": "雙氧奶（二劑）",
-    "result.oxSub": "染膏嘅 {r} 倍",
+    "result.oxSub": "染膏的 {r} 倍",
     "result.sum": "總共",
-    "result.notice": "※ {req}g 已經按 {step} 為單位調整做 {got}g 嚟計。",
-    "step.label": "秤嘅精度",
+    "result.notice": "※ {req}g 已按 {step} 為單位調整為 {got}g 計算。",
+    "step.label": "秤量精度",
     "step.1": "1g 為單位",
     "step.0.1": "0.1g 為單位",
-
     "action.copy": "📋 複製",
     "action.save": "⭐ 儲存配方",
     "action.reset": "↺ 重設",
-
-    "recipes.title": "已儲存嘅配方",
+    "recipes.title": "已儲存的配方",
     "recipe.aria.del": "刪除 {name}",
-
-    "how.summary": "用法・點計出嚟",
-    "how.step1": "揀**雙氧奶嘅比例**（1:1 / 1:2 / 1:3 等等）",
-    "how.step2": "入**總共要溝幾多 g**",
-    "how.step3": "入**每支染膏嘅比例**（例：啡色 2 : 冷色 1）",
-    "how.math":
-      "染膏合計 ＝ 總份量 ÷（1 ＋ 雙氧奶倍數）\n雙氧奶 ＝ 總份量 － 染膏合計\n每支染膏 ＝ 染膏合計 × 佢嘅比例 ÷ 比例總和",
-    "how.note1":
-      "例：總共 90g、1:2 → 染膏 30g、雙氧奶 60g。染膏用 2:1 溝，就係 20g 同 10g。",
-    "how.note2":
-      "有小數會四捨五入，但**總份量一定啱數**。想秤到 0.1g，就揀結果下面嘅「0.1g 為單位」。",
-
+    "how.summary": "使用方法及計算原理",
+    "how.step1": "選擇**雙氧奶的比例**（1:1 / 1:2 / 1:3 等）",
+    "how.step2": "輸入**總共需要調配多少 g**",
+    "how.step3": "輸入**每支染膏的比例**（例：啡色 2 : 冷色 1）",
+    "how.math": "染膏合計 ＝ 總份量 ÷（1 ＋ 雙氧奶倍數）\n雙氧奶 ＝ 總份量 － 染膏合計\n每支染膏 ＝ 染膏合計 × 該支的比例 ÷ 比例總和",
+    "how.note1": "例：總共 90g、1:2 → 染膏 30g、雙氧奶 60g。染膏以 2:1 混合，即 20g 與 10g。",
+    "how.note2": "出現小數時會四捨五入，但**總份量必定準確**。如需秤量至 0.1g，請於結果下方選擇「0.1g 為單位」。",
     "footer.by": "提供",
-    "footer.lead": "產品查詢・訂購",
+    "footer.lead": "產品查詢及訂購",
     "footer.site": "官方網站",
     "footer.instagram": "Instagram",
-    "footer.aria.site": "打開 DRIVE BLUE HONG KONG 官方網站",
-    "footer.aria.instagram": "打開 DRIVE BLUE HONG KONG 嘅 Instagram",
+    "footer.aria.site": "開啟 DRIVE BLUE HONG KONG 官方網站",
+    "footer.aria.instagram": "開啟 DRIVE BLUE HONG KONG 的 Instagram",
     "sticky.base": "染膏",
     "sticky.ox": "雙氧奶",
     "sticky.total": "總共",
-
-    "err.need_total": "請入總份量",
-    "err.need_ratio": "請入雙氧奶倍數",
-    "err.need_item": "最少要有一支染膏",
-    "err.need_parts": "請入染膏嘅比例",
+    "err.need_total": "請輸入總份量",
+    "err.need_ratio": "請輸入雙氧奶倍數",
+    "err.need_item": "最少需要一支染膏",
+    "err.need_parts": "請輸入染膏的比例",
     "err.total_too_small": "總份量太少",
-    "err.base_too_small": "總份量太少，秤唔到染膏",
-    "err.need_grams": "請入染膏份量",
-
+    "err.base_too_small": "總份量太少，無法秤量染膏",
+    "err.need_grams": "請輸入染膏份量",
     "toast.copied": "已複製",
-    "toast.copy_failed": "複製唔到",
+    "toast.copy_failed": "複製失敗",
     "toast.need_input": "請先輸入",
     "toast.saved": "已儲存",
     "toast.loaded": "已載入",
-
-    "prompt.save": "幫呢個配方改個名",
-    "confirm.reset": "要重設所有輸入？（已儲存嘅配方唔會刪除）",
-
+    "prompt.save": "請為此配方命名",
+    "confirm.reset": "確定要重設所有輸入？（已儲存的配方不會刪除）",
     "copy.header": "【染髮配方】",
     "copy.ratio": "染膏 : 雙氧奶 ＝ ",
     "copy.subtotal": "染膏合計",
     "copy.ox": "雙氧奶",
     "copy.total": "總共",
-
     "reg.title": "開始之前",
-    "reg.lead":
-      "DRIVE BLUE HONG KONG 出品，美容師專用嘅免費工具。淨係第一次用要登記一次，之後唔會再出。",
-    "reg.q1": "你嘅工作形式",
-    "reg.opt.salon": "喺髮型屋返工",
+    "reg.lead": "DRIVE BLUE HONG KONG 為髮型師提供的免費工具。只需首次使用時登記一次，其後不會再顯示。",
+    "reg.q1": "您的工作形式",
+    "reg.opt.salon": "髮型屋任職",
     "reg.opt.salon.sub": "受聘於髮型屋",
     "reg.opt.freelance": "自由身",
     "reg.opt.freelance.sub": "租位、獨立、外判",
-    "reg.salonName": "髮型屋名（可以唔填）",
+    "reg.salonName": "髮型屋名稱（可選填）",
     "reg.salonName.ph": "例：SALON HK",
     "reg.q2": "Instagram 帳戶",
-    "reg.q2.hint": "入 @ 後面嘅 ID，貼個人檔案嘅 URL 都得。",
+    "reg.q2.hint": "請輸入 @ 後面的 ID，亦可貼上個人檔案的網址。",
     "reg.instagram.ph": "your_id",
-    "reg.consent": "我同意上面講嘅用途",
-    "reg.purpose.collect":
-      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者 DRIVE BLUE HONG KONG 用嚟改善服務、聯絡你同 send 最新消息，唔會俾第三方。",
-    "reg.purpose.local":
-      "※ 呢個係預覽版。你填嘅嘢淨係擺喺呢部機入面，唔會傳去任何地方。",
+    "reg.consent": "本人同意上述用途",
+    "reg.purpose.collect": "您提供的資料（工作形式、髮型屋名稱、Instagram）僅由營運者 DRIVE BLUE HONG KONG 用於改善服務、聯絡及發送最新消息，不會提供予第三方。",
+    "reg.purpose.local": "※ 此為預覽版本。您輸入的資料只會儲存於本機，不會傳送至任何地方。",
     "reg.contact": "查詢: {contact}",
-    "reg.submit": "同意，開始用",
-    "reg.submitting": "傳送緊…",
-    "reg.err.affiliation": "請揀你嘅工作形式",
-    "reg.err.instagram": "請入 Instagram ID",
-    "reg.err.instagram_format": "只可以用英文、數字同 . _（最多 30 個字）",
-    "reg.err.consent": "請剔咗同意先",
-    "reg.warn.offline": "而家傳送唔到，遲啲會自動再試。",
+    "reg.submit": "同意並開始使用",
+    "reg.submitting": "傳送中…",
+    "reg.err.affiliation": "請選擇工作形式",
+    "reg.err.instagram": "請輸入 Instagram ID",
+    "reg.err.instagram_format": "只可使用英文、數字及 . _（最多 30 個字元）",
+    "reg.err.consent": "請先剔選同意",
+    "reg.warn.offline": "暫時無法傳送，稍後會自動重試。",
     "reg.manage.title": "登記資料",
-    "reg.aff.salon": "喺髮型屋返工",
+    "reg.aff.salon": "髮型屋任職",
     "reg.aff.freelance": "自由身",
-    "reg.manage.delete": "喺呢部機刪除",
+    "reg.manage.delete": "從本機刪除",
     "reg.manage.deleted": "已刪除",
-    "reg.manage.pending": "（未傳送・遲啲會再試）",
-
-    "reg.done.title": "多謝！",
+    "reg.manage.pending": "（尚未傳送，稍後重試）",
+    "reg.done.title": "多謝您！",
     "reg.done.offer": "首次購物 5% OFF",
-    "reg.done.lead":
-      "用 WhatsApp 落單，DRIVE BLUE HONG KONG 嘅產品首次可以平 5%。㩒個掣就會幫你打好訊息，直接 send 出嚟就得。",
-    "reg.done.note": "※ 只限用 WhatsApp 落單，每人限首次一次。",
-    "reg.done.whatsapp": "用 WhatsApp 攞 5% OFF",
-    "reg.done.start": "開始用計算機",
-    "reg.whatsapp.message":
-      "我想用 DRIVE BLUE 首次購物 5% OFF。Instagram: @{instagram}",
+    "reg.done.lead": "透過 WhatsApp 訂購，DRIVE BLUE HONG KONG 的產品首次可享 5% 折扣。按下按鈕後會自動填好訊息，直接傳送即可。",
+    "reg.done.note": "※ 只限透過 WhatsApp 訂購，每人限首次一次。",
+    "reg.done.whatsapp": "以 WhatsApp 領取 5% OFF",
+    "reg.done.start": "開始使用計算機",
+    "reg.whatsapp.message": "您好，我想使用 DRIVE BLUE 首次購物 5% OFF 優惠。Instagram: @{instagram}",
     "footer.whatsapp": "WhatsApp",
-    "footer.aria.whatsapp": "用 WhatsApp 聯絡 DRIVE BLUE HONG KONG",
-    "footer.whatsapp.message": "我想用 DRIVE BLUE 首次購物 5% OFF。",
+    "footer.aria.whatsapp": "以 WhatsApp 聯絡 DRIVE BLUE HONG KONG",
+    "footer.whatsapp.message": "您好，我想使用 DRIVE BLUE 首次購物 5% OFF 優惠。",
   };
 
   var dictionaries = { ja: ja, yue: yue };

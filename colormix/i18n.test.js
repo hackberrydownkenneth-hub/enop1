@@ -25,7 +25,7 @@ test("キーが両言語で揃っている", () => {
   assert.deepStrictEqual(
     jaKeys.filter((k) => !yue[k]),
     [],
-    "広東語に無いキー"
+    "繁體中文に無いキー"
   );
   assert.deepStrictEqual(
     yueKeys.filter((k) => !ja[k]),
@@ -38,10 +38,10 @@ test("翻訳し忘れ（両言語で同じ文言）が無い", () => {
   const same = Object.keys(ja).filter(
     (key) => ja[key] === yue[key] && !SHARED_ON_PURPOSE.has(key)
   );
-  assert.deepStrictEqual(same, [], "広東語が日本語のままになっているキー");
+  assert.deepStrictEqual(same, [], "繁體中文が日本語のままになっているキー");
 });
 
-test("広東語に日本語のかなが混ざっていない", () => {
+test("繁體中文に日本語のかなが混ざっていない", () => {
   // 中黒(U+30FB)は繁体字でも区切りに使うので、かなの判定から外す
   const kana = /[\u3041-\u309F\u30A1-\u30FA\u30FC-\u30FF]/;
   const leaked = Object.keys(yue).filter((key) => kana.test(yue[key]));
