@@ -141,8 +141,11 @@ python -m pytest
 詳細は [`colormix/README.md`](colormix/README.md) を参照してください。
 
 公開して使ってもらう場合は、はじめての人にだけ登録画面(サロン所属 / フリーランス
-の選択と Instagram アカウント)を出し、登録者を SQLite に集められます。計算機の配信と
-登録の受け付けは [`colormix_server/`](colormix_server) が担当します。
+の選択と Instagram アカウント)を出し、登録者を集められます。送信先は Google フォームか、
+同梱の [`colormix_server/`](colormix_server)(SQLite + 管理画面)から選べます。
+
+一般公開は Cloudflare Pages を想定しています。`node colormix/build.js` が公開用の
+`_site/` を組み立てるので、ビルドコマンドにこれ、公開フォルダに `_site` を指定するだけです。
 
 ```bash
 # 計算ロジック・入力チェックのテスト

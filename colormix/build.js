@@ -1,10 +1,12 @@
 /**
- * 1ファイル版（standalone.html）を生成する。
+ * 公開用の成果物を作る。
  *
  *   node colormix/build.js
  *
- * CSS と JS を index.html に埋め込むだけ。生成物はスマホに送って
- * ダブルタップで開ける「配りやすい1ファイル」として使う。
+ * 1. colormix/standalone.html … CSS と JS を埋め込んだ配布用の1ファイル
+ * 2. _site/ ……………………… ホスティングにそのまま載せる公開フォルダ
+ *
+ * Cloudflare Pages のビルドコマンドはこれ1行でよい（公開フォルダは _site）。
  */
 const fs = require("fs");
 const path = require("path");
@@ -58,3 +60,34 @@ if (leftover) {
 
 fs.writeFileSync(path.join(dir, "standalone.html"), out);
 console.log("colormix/standalone.html を生成しました (" + Math.round(out.length / 1024) + " KB)");
+
+// 公開フォルダを作り直す。テストやビルド用のファイルは載せない
+const siteDir = path.join(path.dirname(dir), "_site");
+const published = [
+  "index.html",
+  "style.css",
+  "i18n.js",
+  "calc.js",
+  "profile.js",
+  "config.js",
+  "app.js",
+  "register.js",
+  "_headers",
+];
+
+fs.rmSync(siteDir, { recursive: true, force: true });
+fs.mkdirSync(siteDir, { recursive: true });
+for (const name of published) {
+  fs.copyFileSync(path.join(dir, name), path.join(siteDir, name));
+}
+
+// index.html が読み込むファイルが全部入っているか確かめる
+const missing = [...html.matchAll(/(?:src|href)="(?!data:)([^"]+)"/g)]
+  .map((match) => match[1])
+  .filter((ref) => !published.includes(ref));
+if (missing.length) {
+  console.error("_site に入っていない参照があります: " + missing.join(", "));
+  process.exit(1);
+}
+
+console.log("_site/ を生成しました (" + published.length + " ファイル)");

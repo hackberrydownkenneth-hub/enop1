@@ -1,0 +1,22 @@
+# Cloudflare Pages 用のレスポンスヘッダー設定。
+# 公開フォルダ(_site)の直下に置かれると有効になる。
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+
+# ファイル名にハッシュを付けていないので、毎回サーバーに確認させる。
+# 中身が変わっていなければ 304 が返るだけなので通信量はごくわずか。
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/*.css
+  Cache-Control: public, max-age=0, must-revalidate

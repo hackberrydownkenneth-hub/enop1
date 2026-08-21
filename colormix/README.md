@@ -146,24 +146,41 @@ register: {
 
 ## 使い方
 
-### GitHub Pages で一般公開する
+### Cloudflare Pages で一般公開する（推奨）
 
-このリポジトリは公開設定なので、GitHub Pages で無料で公開できます。
-`.github/workflows/pages.yml` を用意してあるので、**一度だけ設定を切り替える**だけです。
+無料・独自ドメイン不要で、`https://hair-color-calc.pages.dev` のようなURLで公開できます。
+GitHubアカウントで連携するだけです。
 
-1. Settings → Pages → Source を **GitHub Actions** にする
-2. Settings → Environments → **github-pages** → Deployment branches に、
-   公開したいブランチを追加する
-   （既定では default ブランチからしか公開できず、deploy ジョブが
-   ステップを1つも実行せずに失敗します）
-3. Actions タブで `Deploy colormix to Pages` が緑になるのを待つ
-4. 公開URL: `https://<ユーザー名>.github.io/<リポジトリ名>/`
+1. Cloudflare にログイン → **Workers & Pages** → **Create** → **Pages** →
+   **Connect to Git**
+2. このリポジトリを選ぶ
+3. 設定を次のとおりにする
 
-ワークフローは、テストが通ったときだけ公開します。
-別のブランチに移したときは `pages.yml` の `branches:` も書き換えてください。
+   | 項目 | 値 |
+   |------|-----|
+   | Project name | `hair-color-calc` |
+   | Production branch | 公開したいブランチ |
+   | Framework preset | None |
+   | Build command | `node colormix/build.js` |
+   | Build output directory | `_site` |
 
-> Pages は静的ホスティングなので、登録データを集めるには `mode: "form"`（下記 B）を使います。
-> `mode: "api"` の自前サーバーは Pages では動きません。
+4. **Save and Deploy**
+
+`node colormix/build.js` が公開用の `_site/` を組み立てます。テストファイルや
+`build.js` 自体、1ファイル版は `_site/` に入らないので、公開されるのは
+実際に必要な9ファイルだけです。以後、ブランチに push するたび自動で再公開されます。
+
+`_site/_headers` でセキュリティヘッダーとキャッシュを指定しています。
+ファイル名にハッシュを付けていないので、更新がすぐ届くよう毎回サーバーに
+確認させる設定（変更がなければ 304 が返るだけ）にしてあります。
+別のサイトに iframe で埋め込みたい場合は `X-Frame-Options` を調整してください。
+
+> **URLは配り始めたら変えられません。** プロジェクト名は最初に決めてください。
+
+### 他のホスティングに置く場合
+
+`node colormix/build.js` で作られる `_site/` を、そのまま静的ホスティングに
+置けば動きます（Netlify、GitHub Pages なども同様）。
 
 ### パソコン・スマホでそのまま開く
 

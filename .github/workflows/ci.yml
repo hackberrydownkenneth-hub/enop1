@@ -1,0 +1,35 @@
+# テストを回すだけのワークフロー。
+# 公開(デプロイ)は Cloudflare Pages が担当するので、ここではやらない。
+name: CI
+
+on:
+  push:
+    branches:
+      - claude/hair-color-mixer-calculator-qga3ey
+      - claude/timecard-system-c4mj2g
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 計算ロジックと入力チェック
+        run: node --test colormix/calc.test.js colormix/profile.test.js
+      - name: ビルドが通り、1ファイル版が最新か
+        run: |
+          node colormix/build.js
+          git diff --exit-code colormix/standalone.html
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Python の依存関係
+        run: pip install -r requirements.txt
+      - name: タイムカードと登録APIのテスト
+        run: python -m pytest -q
