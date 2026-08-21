@@ -543,14 +543,66 @@ body {
   font-size: 13px;
 }
 
-/* 追い足し計算（別枠） */
-.addon-no {
-  background: var(--add);
-  color: var(--card);
+/* 追い足し（計量の下・ボタンで開閉する別枠） */
+.card.addon {
+  padding: 10px 14px;
 }
 
-.card.addon {
-  border: 2px solid var(--add-soft);
+.addon-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--add);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.addon-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--add);
+  color: var(--card);
+  font-size: 14px;
+}
+
+.addon-caret {
+  margin-left: auto;
+  font-size: 14px;
+  transition: transform 0.15s ease;
+}
+
+.addon-open.open .addon-caret {
+  transform: rotate(180deg);
+}
+
+.addon-panel {
+  padding: 4px 0 8px;
+  border-top: 1px dashed var(--line);
+  margin-top: 4px;
+}
+
+.addon-panel .hint {
+  margin-top: 10px;
+}
+
+/* 追い足し専用の計量枠 */
+.addon-result {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 2px solid var(--add);
+  border-radius: var(--radius);
 }
 
 .addon-label {
@@ -567,7 +619,7 @@ body {
 
 .rrow.addon {
   background: var(--add-soft);
-  margin: 14px -14px 0;
+  margin: 0 -14px;
   padding: 12px 14px;
   border-bottom: none;
   border-radius: 12px;
@@ -1215,61 +1267,77 @@ body.gate-open {
         <div id="result-body"></div>
       </section>
 
+      <!-- 追い足し（計量とは別枠。ボタンを押したときだけ開く） -->
+      <section class="card addon" id="addon-card">
+        <button
+          type="button"
+          class="addon-open"
+          id="addon-open"
+          aria-expanded="false"
+          aria-controls="addon-panel"
+        >
+          <span class="addon-icon" aria-hidden="true">＋</span>
+          <span data-i18n="addon.title">追い足しオプション</span>
+          <span class="addon-caret" aria-hidden="true">▾</span>
+        </button>
+
+        <div class="addon-panel" id="addon-panel" hidden>
+          <p class="hint" data-i18n="addon.hint"></p>
+
+          <div class="custom-row">
+            <label for="addon-remain" data-i18n="addon.remain">残っている量</label>
+            <div class="stepper">
+              <button type="button" class="round" data-act="remain-minus" data-i18n-aria="addon.aria.remainMinus">−</button>
+              <input
+                id="addon-remain"
+                class="num-input big"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="10"
+                data-i18n-aria="addon.aria.remain"
+              />
+              <span class="unit">g</span>
+              <button type="button" class="round" data-act="remain-plus" data-i18n-aria="addon.aria.remainPlus">＋</button>
+            </div>
+          </div>
+
+          <p class="addon-label" data-i18n="addon.percent">追い足す割合</p>
+          <div class="chips" id="addon-chips" data-i18n-aria="addon.aria.group" role="group"></div>
+          <div class="custom-row">
+            <label for="addon-input" data-i18n="addon.custom">その他の％</label>
+            <div class="stepper">
+              <button type="button" class="round" data-act="addon-minus" data-i18n-aria="addon.aria.minus">−</button>
+              <input
+                id="addon-input"
+                class="num-input"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                max="100"
+                step="1"
+                data-i18n-aria="addon.aria.input"
+              />
+              <span class="unit">%</span>
+              <button type="button" class="round" data-act="addon-plus" data-i18n-aria="addon.aria.plus">＋</button>
+            </div>
+          </div>
+
+          <!-- 追い足し専用の計量枠 -->
+          <div class="addon-result" aria-live="polite">
+            <h3 class="result-title" data-i18n="addon.resultTitle">追い足しの計量</h3>
+            <div id="addon-body"></div>
+          </div>
+
+          <p class="addon-example" data-i18n="addon.example"></p>
+        </div>
+      </section>
+
       <div class="actions">
         <button type="button" class="action" id="copy-btn" data-i18n="action.copy">📋 コピー</button>
         <button type="button" class="action" id="save-btn" data-i18n="action.save">⭐ レシピ保存</button>
         <button type="button" class="action" id="reset-btn" data-i18n="action.reset">↺ リセット</button>
       </div>
-
-      <!-- 追い足し計算（上の計算とは別枠の単体ツール） -->
-      <section class="card addon" id="addon-card" aria-live="polite">
-        <h2 class="step">
-          <span class="step-no addon-no">＋</span><span data-i18n="addon.title">追い足し計算</span>
-        </h2>
-        <p class="hint" data-i18n="addon.hint"></p>
-
-        <div class="custom-row">
-          <label for="addon-remain" data-i18n="addon.remain">残っている量</label>
-          <div class="stepper">
-            <button type="button" class="round" data-act="remain-minus" data-i18n-aria="addon.aria.remainMinus">−</button>
-            <input
-              id="addon-remain"
-              class="num-input big"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              step="10"
-              data-i18n-aria="addon.aria.remain"
-            />
-            <span class="unit">g</span>
-            <button type="button" class="round" data-act="remain-plus" data-i18n-aria="addon.aria.remainPlus">＋</button>
-          </div>
-        </div>
-
-        <p class="addon-label" data-i18n="addon.percent">追い足す割合</p>
-        <div class="chips" id="addon-chips" data-i18n-aria="addon.aria.group" role="group"></div>
-        <div class="custom-row">
-          <label for="addon-input" data-i18n="addon.custom">その他の％</label>
-          <div class="stepper">
-            <button type="button" class="round" data-act="addon-minus" data-i18n-aria="addon.aria.minus">−</button>
-            <input
-              id="addon-input"
-              class="num-input"
-              type="number"
-              inputmode="decimal"
-              min="0"
-              max="100"
-              step="1"
-              data-i18n-aria="addon.aria.input"
-            />
-            <span class="unit">%</span>
-            <button type="button" class="round" data-act="addon-plus" data-i18n-aria="addon.aria.plus">＋</button>
-          </div>
-        </div>
-
-        <div id="addon-body"></div>
-        <p class="addon-example" data-i18n="addon.example"></p>
-      </section>
 
       <section class="card recipes" id="recipes-card" hidden>
         <h2 class="step">
@@ -1375,9 +1443,11 @@ body.gate-open {
     "label.parts": "割合",
     "label.grams": "使う量",
 
-    "addon.title": "追い足し計算",
+    "addon.title": "追い足しオプション",
     "addon.hint":
-      "残ったカラー剤に、あとから1剤を足すときの計算です。上の配合計算とは別枠なので、残りのグラム数を入れるだけで使えます。",
+      "残ったカラー剤に、あとから1剤を足すときの計算です。上の計量とは別枠なので、残っている量を入れるだけで使えます。",
+    "addon.aria.open": "追い足しオプションを開く・閉じる",
+    "addon.resultTitle": "追い足しの計量",
     "addon.remain": "残っている量",
     "addon.aria.remain": "残っている量（g）",
     "addon.aria.remainMinus": "10g 減らす",
@@ -1548,8 +1618,10 @@ body.gate-open {
     "item.aria.plus": "增加",
     "label.parts": "比例",
     "label.grams": "份量",
-    "addon.title": "追加染膏計算",
-    "addon.hint": "用於在餘下的染劑中額外加入染膏。此計算與上方的配方計算互不影響，只需輸入餘下的克數。",
+    "addon.title": "追加染膏（選用）",
+    "addon.hint": "用於在餘下的染劑中額外加入染膏。此計算與上方的份量互不影響，只需輸入餘下的克數。",
+    "addon.aria.open": "展開或收起追加染膏計算",
+    "addon.resultTitle": "追加染膏的份量",
     "addon.remain": "餘下份量",
     "addon.aria.remain": "餘下份量（g）",
     "addon.aria.remainMinus": "減 10g",
@@ -2386,8 +2458,11 @@ window.COLORMIX_CONFIG = {
 
   /* 追い足し計算は上の配合計算とは別枠。状態も別に持つ */
   function sanitizeAddOn(saved) {
-    if (!saved || typeof saved !== "object") return { remain: 40, percent: 5 };
+    if (!saved || typeof saved !== "object") {
+      return { open: false, remain: 40, percent: 5 };
+    }
     return {
+      open: saved.open === true,
       remain: num(saved.remain, 40),
       percent: Math.min(num(saved.percent, 5), 100),
     };
@@ -2412,6 +2487,8 @@ window.COLORMIX_CONFIG = {
   var itemsTitle = $("items-title");
   var itemsHint = $("items-hint");
   var itemsStepNo = $("items-step-no");
+  var addOnOpen = $("addon-open");
+  var addOnPanel = $("addon-panel");
   var addOnRemain = $("addon-remain");
   var addOnChips = $("addon-chips");
   var addOnInput = $("addon-input");
@@ -2546,7 +2623,19 @@ window.COLORMIX_CONFIG = {
     });
   }
 
-  /* ---------- 追い足し計算（上の計算とは別枠） ---------- */
+  /* ---------- 追い足し（計量とは別枠。ボタンで開閉する） ---------- */
+
+  addOnOpen.addEventListener("click", function () {
+    addOn.open = !addOn.open;
+    syncAddOnOpen();
+    updateAddOn();
+  });
+
+  function syncAddOnOpen() {
+    addOnPanel.hidden = !addOn.open;
+    addOnOpen.setAttribute("aria-expanded", addOn.open ? "true" : "false");
+    addOnOpen.classList.toggle("open", addOn.open);
+  }
 
   ADD_ONS.forEach(function (percent) {
     var chip = button("chip", percent + "%");
@@ -2612,6 +2701,10 @@ window.COLORMIX_CONFIG = {
 
   /** 追い足しだけを計算し直す（配合計算には触らない） */
   function updateAddOn() {
+    if (!addOn.open) {
+      writeStore(ADDON_KEY, addOn);
+      return;
+    }
     Array.prototype.forEach.call(addOnChips.children, function (chip) {
       chip.setAttribute(
         "aria-pressed",
@@ -3148,6 +3241,7 @@ window.COLORMIX_CONFIG = {
     ratioCustom.value = String(state.oxRatio);
     addOnRemain.value = String(addOn.remain);
     addOnInput.value = String(addOn.percent);
+    syncAddOnOpen();
     totalInput.value = String(state.total);
     syncMode();
     syncRatio();

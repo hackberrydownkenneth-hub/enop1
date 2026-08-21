@@ -513,14 +513,66 @@ body {
   font-size: 13px;
 }
 
-/* 追い足し計算（別枠） */
-.addon-no {
-  background: var(--add);
-  color: var(--card);
+/* 追い足し（計量の下・ボタンで開閉する別枠） */
+.card.addon {
+  padding: 10px 14px;
 }
 
-.card.addon {
-  border: 2px solid var(--add-soft);
+.addon-open {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 50px;
+  padding: 6px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--add);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.addon-icon {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--add);
+  color: var(--card);
+  font-size: 14px;
+}
+
+.addon-caret {
+  margin-left: auto;
+  font-size: 14px;
+  transition: transform 0.15s ease;
+}
+
+.addon-open.open .addon-caret {
+  transform: rotate(180deg);
+}
+
+.addon-panel {
+  padding: 4px 0 8px;
+  border-top: 1px dashed var(--line);
+  margin-top: 4px;
+}
+
+.addon-panel .hint {
+  margin-top: 10px;
+}
+
+/* 追い足し専用の計量枠 */
+.addon-result {
+  margin-top: 16px;
+  padding: 12px 14px;
+  border: 2px solid var(--add);
+  border-radius: var(--radius);
 }
 
 .addon-label {
@@ -537,7 +589,7 @@ body {
 
 .rrow.addon {
   background: var(--add-soft);
-  margin: 14px -14px 0;
+  margin: 0 -14px;
   padding: 12px 14px;
   border-bottom: none;
   border-radius: 12px;

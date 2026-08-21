@@ -104,8 +104,11 @@
 
   /* 追い足し計算は上の配合計算とは別枠。状態も別に持つ */
   function sanitizeAddOn(saved) {
-    if (!saved || typeof saved !== "object") return { remain: 40, percent: 5 };
+    if (!saved || typeof saved !== "object") {
+      return { open: false, remain: 40, percent: 5 };
+    }
     return {
+      open: saved.open === true,
       remain: num(saved.remain, 40),
       percent: Math.min(num(saved.percent, 5), 100),
     };
@@ -130,6 +133,8 @@
   var itemsTitle = $("items-title");
   var itemsHint = $("items-hint");
   var itemsStepNo = $("items-step-no");
+  var addOnOpen = $("addon-open");
+  var addOnPanel = $("addon-panel");
   var addOnRemain = $("addon-remain");
   var addOnChips = $("addon-chips");
   var addOnInput = $("addon-input");
@@ -264,7 +269,19 @@
     });
   }
 
-  /* ---------- 追い足し計算（上の計算とは別枠） ---------- */
+  /* ---------- 追い足し（計量とは別枠。ボタンで開閉する） ---------- */
+
+  addOnOpen.addEventListener("click", function () {
+    addOn.open = !addOn.open;
+    syncAddOnOpen();
+    updateAddOn();
+  });
+
+  function syncAddOnOpen() {
+    addOnPanel.hidden = !addOn.open;
+    addOnOpen.setAttribute("aria-expanded", addOn.open ? "true" : "false");
+    addOnOpen.classList.toggle("open", addOn.open);
+  }
 
   ADD_ONS.forEach(function (percent) {
     var chip = button("chip", percent + "%");
@@ -330,6 +347,10 @@
 
   /** 追い足しだけを計算し直す（配合計算には触らない） */
   function updateAddOn() {
+    if (!addOn.open) {
+      writeStore(ADDON_KEY, addOn);
+      return;
+    }
     Array.prototype.forEach.call(addOnChips.children, function (chip) {
       chip.setAttribute(
         "aria-pressed",
@@ -866,6 +887,7 @@
     ratioCustom.value = String(state.oxRatio);
     addOnRemain.value = String(addOn.remain);
     addOnInput.value = String(addOn.percent);
+    syncAddOnOpen();
     totalInput.value = String(state.total);
     syncMode();
     syncRatio();
