@@ -151,12 +151,16 @@ register: {
 このリポジトリは公開設定なので、GitHub Pages で無料で公開できます。
 `.github/workflows/pages.yml` を用意してあるので、**一度だけ設定を切り替える**だけです。
 
-1. GitHub の Settings → Pages → Source を **GitHub Actions** にする
-2. Actions タブで `Deploy colormix to Pages` が緑になるのを待つ
-3. 公開URL: `https://<ユーザー名>.github.io/<リポジトリ名>/`
+1. Settings → Pages → Source を **GitHub Actions** にする
+2. Settings → Environments → **github-pages** → Deployment branches に、
+   公開したいブランチを追加する
+   （既定では default ブランチからしか公開できず、deploy ジョブが
+   ステップを1つも実行せずに失敗します）
+3. Actions タブで `Deploy colormix to Pages` が緑になるのを待つ
+4. 公開URL: `https://<ユーザー名>.github.io/<リポジトリ名>/`
 
 ワークフローは、テストが通ったときだけ公開します。
-別のブランチに移したときは `pages.yml` の `branches:` を書き換えてください。
+別のブランチに移したときは `pages.yml` の `branches:` も書き換えてください。
 
 > Pages は静的ホスティングなので、登録データを集めるには `mode: "form"`（下記 B）を使います。
 > `mode: "api"` の自前サーバーは Pages では動きません。
