@@ -78,8 +78,7 @@ const published = [
   "config.js",
   "app.js",
   "register.js",
-  "logo-mark.png",
-  "logo-mark-white.png",
+  "logo.png",
   "_headers",
 ];
 
