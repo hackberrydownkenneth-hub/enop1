@@ -208,8 +208,8 @@ links: {
 （空なら完了画面は出ず、そのまま計算機に進みます）。
 
 押してもらう動機として、完了画面で **初回 5% OFF（WhatsApp 注文限定）** を
-提示しています。文言は `i18n.js` の `reg.done.offer` / `reg.done.lead` /
-`reg.done.note` / `reg.done.whatsapp` にあります。**特典の内容や条件を変えるときは、
+提示しています。文言は `i18n.js` の `reg.done.lead` / `reg.done.note` /
+`reg.done.whatsapp`（緑のボタン）にあります。**特典の内容や条件を変えるときは、
 必ず `reg.done.note`（適用条件）も一緒に直してください。**
 
 > WhatsApp の一斉配信（ブロードキャスト）は、受信者があなたの番号を連絡先に

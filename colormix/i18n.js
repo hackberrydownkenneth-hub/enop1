@@ -158,7 +158,6 @@
     "reg.manage.pending": "（未送信・あとで再送します）",
 
     "reg.done.title": "ありがとうございます！",
-    "reg.done.offer": "初回 5% OFF",
     "reg.done.lead":
       "WhatsApp からご注文いただくと、DRIVE BLUE HONG KONG の商品が初回のみ 5% OFF になります。ボタンを押すとメッセージが用意されるので、そのまま送信してください。",
     "reg.done.note": "※ WhatsApp からのご注文のみ対象。お一人さま初回1回限り。",
@@ -290,10 +289,9 @@
     "reg.manage.deleted": "已刪除",
     "reg.manage.pending": "（尚未傳送，稍後重試）",
     "reg.done.title": "多謝您！",
-    "reg.done.offer": "首次購物WhatsApp 領取 5% OFF",
     "reg.done.lead": "透過 WhatsApp 訂購，DRIVE BLUE HONG KONG 的產品首次可享 5% 折扣。",
     "reg.done.note": "※ 只限透過 WhatsApp 訂購，每人限首次一次。",
-    "reg.done.whatsapp": "以 WhatsApp 領取 5% OFF",
+    "reg.done.whatsapp": "首次購物WhatsApp 領取 5% OFF",
     "reg.done.start": "開始使用計算機",
     "reg.whatsapp.message": "您好，我想使用 DRIVE BLUE 首次購物 5% OFF 優惠。Instagram: @{instagram}",
     "footer.whatsapp": "WhatsApp",

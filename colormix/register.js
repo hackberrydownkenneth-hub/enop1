@@ -436,7 +436,6 @@
 
     var check = el("p", "gate-done-mark", "✓");
     var title = el("h2", "gate-title", t("reg.done.title"));
-    var offer = el("p", "gate-offer", t("reg.done.offer"));
     var lead = el("p", "gate-lead", t("reg.done.lead"));
     var note = el("p", "gate-note", t("reg.done.note"));
 
@@ -453,7 +452,6 @@
 
     card.appendChild(check);
     card.appendChild(title);
-    card.appendChild(offer);
     card.appendChild(lead);
     card.appendChild(wa);
     card.appendChild(note);

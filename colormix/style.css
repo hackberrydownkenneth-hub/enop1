@@ -948,17 +948,6 @@ body.gate-open {
   font-weight: 800;
 }
 
-.gate-offer {
-  margin: 0;
-  padding: 6px 18px;
-  border-radius: 999px;
-  background: #25d366;
-  color: #04310f;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-}
-
 .gate-note {
   margin: -4px 0 0;
   color: var(--muted);
