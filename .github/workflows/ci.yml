@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: "20"
       - name: 計算ロジックと入力チェック
-        run: node --test colormix/calc.test.js colormix/profile.test.js
+        run: node --test colormix/calc.test.js colormix/profile.test.js colormix/i18n.test.js
       - name: ビルドが通り、1ファイル版が最新か
         run: |
           node colormix/build.js

@@ -176,6 +176,28 @@ register: {
 64色に減色、という手順です。SVG も書き出せますが 329KB（gzip 118KB）と重く、
 ページ全体の5倍近くになるため採用していません。
 
+### 公式サイト・Instagram への導線
+
+`config.js` の `links` に URL を入れると、次の3箇所から誘導できます（空なら非表示）。
+
+```js
+links: {
+  site: "https://drivebluehk.com",
+  instagram: "https://www.instagram.com/driveblue_hk/",
+},
+```
+
+| 場所 | 内容 |
+|------|------|
+| ヘッダーのロゴ | タップで公式サイトへ |
+| フッター | 「公式サイト」「Instagram」のボタン |
+| 登録画面 | `register.contact` に入れた問い合わせ先 |
+
+外部リンクはすべて別タブで開き（`target="_blank"`）、`rel="noopener noreferrer"` を
+付けています。計算の途中で戻れなくなることはありません。
+
+登録画面にはリンクを置いていません。登録を終える前に離脱させないためです。
+
 ### 集めたデータの扱い
 
 - 登録画面には「何に使うか」を明示しています。用途を変えるときは `i18n.js` の
@@ -267,7 +289,7 @@ python3 -m http.server 8000 --directory colormix
 ## テスト
 
 ```bash
-node --test colormix/calc.test.js colormix/profile.test.js   # 計算・入力チェック
+node --test colormix/calc.test.js colormix/profile.test.js colormix/i18n.test.js
 python -m pytest tests/test_colormix_register.py             # 登録API・管理画面
 ```
 

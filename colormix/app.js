@@ -683,19 +683,46 @@
     }, 1800);
   }
 
-  /** フッターの問い合わせ先（config.js の contact を設定したときだけ出す） */
-  function renderContact() {
-    var link = $("footer-contact");
-    if (!link) return;
-    var contact = (window.COLORMIX_CONFIG &&
-      window.COLORMIX_CONFIG.register &&
-      window.COLORMIX_CONFIG.register.contact) || "";
-    link.hidden = !contact;
-    if (!contact) return;
-    link.textContent = contact;
-    link.href = contact.indexOf("@") > 0 && contact.indexOf(" ") < 0
-      ? "mailto:" + contact
-      : contact;
+  /** 公式サイト・Instagram への導線（config.js の links を設定したときだけ出す） */
+  function renderLinks() {
+    var config = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.links) || {};
+    var host = $("footer-links");
+    var lead = $("footer-lead");
+    if (!host) return;
+
+    host.textContent = "";
+    var defined = [
+      { key: "site", url: config.site },
+      { key: "instagram", url: config.instagram },
+    ].filter(function (item) {
+      return item.url;
+    });
+
+    if (lead) lead.hidden = defined.length === 0;
+
+    defined.forEach(function (item) {
+      var link = document.createElement("a");
+      link.className = "footer-link";
+      link.href = item.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = t("footer." + item.key);
+      link.setAttribute("aria-label", t("footer.aria." + item.key));
+      host.appendChild(link);
+    });
+
+    // ヘッダーのロゴからも公式サイトへ行けるようにする
+    var brand = $("brand-link");
+    if (brand) {
+      if (config.site) {
+        brand.href = config.site;
+        brand.target = "_blank";
+        brand.rel = "noopener noreferrer";
+        brand.setAttribute("aria-label", "DRIVE BLUE HONG KONG");
+      } else {
+        brand.removeAttribute("href");
+      }
+    }
   }
 
   /* ---------- 更新 ---------- */
@@ -724,12 +751,13 @@
 
   I18N.onChange(function () {
     applyLang();
+    renderLinks();
     syncAll();
   });
 
   buildStepToggle();
   applyLang();
-  renderContact();
+  renderLinks();
   syncAll();
   watchResultCard();
 })();

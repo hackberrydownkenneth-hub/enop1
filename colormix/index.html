@@ -18,7 +18,7 @@
   <body>
     <header class="header">
       <p class="brand">
-        <span class="brand-logo" role="img" aria-label="DRIVE BLUE HONG KONG"></span>
+        <a class="brand-logo" id="brand-link" role="img" aria-label="DRIVE BLUE HONG KONG"></a>
       </p>
       <h1 data-i18n="app.title">🎨 カラー剤 計算機</h1>
       <p data-i18n="app.tagline">タップするだけ。1剤のグラム数を自動で出します。</p>
@@ -136,11 +136,14 @@
         <div class="manage" id="reg-manage" hidden></div>
       </details>
       <footer class="footer">
-        <span class="footer-by" data-i18n="footer.by">提供</span>
-        <span class="brand brand-footer">
-          <span class="brand-logo" role="img" aria-label="DRIVE BLUE HONG KONG"></span>
-        </span>
-        <a class="footer-contact" id="footer-contact" hidden></a>
+        <p class="footer-row">
+          <span class="footer-by" data-i18n="footer.by">提供</span>
+          <span class="brand brand-footer">
+            <span class="brand-logo" role="img" aria-label="DRIVE BLUE HONG KONG"></span>
+          </span>
+        </p>
+        <p class="footer-lead" id="footer-lead" data-i18n="footer.lead"></p>
+        <div class="footer-links" id="footer-links"></div>
       </footer>
     </main>
 

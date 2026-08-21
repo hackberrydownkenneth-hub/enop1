@@ -39,7 +39,13 @@ window.COLORMIX_CONFIG = {
       },
     },
 
-    // 画面に出す問い合わせ先（空なら非表示）
-    contact: "",
+    // 登録画面に出す問い合わせ先（空なら非表示）
+    contact: "@driveblue_hk",
+  },
+
+  // フッターとロゴから誘導する先（空なら非表示）
+  links: {
+    site: "https://drivebluehk.com",
+    instagram: "https://www.instagram.com/driveblue_hk/",
   },
 };

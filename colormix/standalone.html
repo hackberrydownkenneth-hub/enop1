@@ -634,20 +634,61 @@ body {
 /* フッター */
 .footer {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px 10px;
-  padding: 18px 8px 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 8px 8px;
   color: var(--muted);
   font-size: 12px;
 }
 
-.footer-contact {
-  flex-basis: 100%;
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.footer-lead {
+  margin: 0;
   text-align: center;
-  color: var(--brand);
-  overflow-wrap: anywhere;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-link:active {
+  background: var(--brand-soft);
+}
+
+.footer-link:focus-visible,
+.brand-logo:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+a.brand-logo {
+  cursor: pointer;
 }
 
 /* 下部固定バー */
@@ -948,7 +989,7 @@ body.gate-open {
   <body>
     <header class="header">
       <p class="brand">
-        <span class="brand-logo" role="img" aria-label="DRIVE BLUE HONG KONG"></span>
+        <a class="brand-logo" id="brand-link" role="img" aria-label="DRIVE BLUE HONG KONG"></a>
       </p>
       <h1 data-i18n="app.title">🎨 カラー剤 計算機</h1>
       <p data-i18n="app.tagline">タップするだけ。1剤のグラム数を自動で出します。</p>
@@ -1066,11 +1107,14 @@ body.gate-open {
         <div class="manage" id="reg-manage" hidden></div>
       </details>
       <footer class="footer">
-        <span class="footer-by" data-i18n="footer.by">提供</span>
-        <span class="brand brand-footer">
-          <span class="brand-logo" role="img" aria-label="DRIVE BLUE HONG KONG"></span>
-        </span>
-        <a class="footer-contact" id="footer-contact" hidden></a>
+        <p class="footer-row">
+          <span class="footer-by" data-i18n="footer.by">提供</span>
+          <span class="brand brand-footer">
+            <span class="brand-logo" role="img" aria-label="DRIVE BLUE HONG KONG"></span>
+          </span>
+        </p>
+        <p class="footer-lead" id="footer-lead" data-i18n="footer.lead"></p>
+        <div class="footer-links" id="footer-links"></div>
       </footer>
     </main>
 
@@ -1175,6 +1219,11 @@ body.gate-open {
       "小数が出る場合はグラム数を丸めますが、**合計量はいつもぴったり**になるよう調整しています。0.1g 単位ではかりたいときは、結果の下の「0.1g刻み」を選んでください。",
 
     "footer.by": "提供",
+    "footer.lead": "商品のご購入・お問い合わせはこちら",
+    "footer.site": "公式サイト",
+    "footer.instagram": "Instagram",
+    "footer.aria.site": "DRIVE BLUE HONG KONG の公式サイトを開く",
+    "footer.aria.instagram": "DRIVE BLUE HONG KONG の Instagram を開く",
     "sticky.base": "1剤",
     "sticky.ox": "2剤",
     "sticky.total": "合計",
@@ -1312,6 +1361,11 @@ body.gate-open {
       "有小數會四捨五入，但**總份量一定啱數**。想秤到 0.1g，就揀結果下面嘅「0.1g 為單位」。",
 
     "footer.by": "提供",
+    "footer.lead": "產品查詢・訂購",
+    "footer.site": "官方網站",
+    "footer.instagram": "Instagram",
+    "footer.aria.site": "打開 DRIVE BLUE HONG KONG 官方網站",
+    "footer.aria.instagram": "打開 DRIVE BLUE HONG KONG 嘅 Instagram",
     "sticky.base": "染膏",
     "sticky.ox": "雙氧奶",
     "sticky.total": "總共",
@@ -1922,8 +1976,14 @@ window.COLORMIX_CONFIG = {
       },
     },
 
-    // 画面に出す問い合わせ先（空なら非表示）
-    contact: "",
+    // 登録画面に出す問い合わせ先（空なら非表示）
+    contact: "@driveblue_hk",
+  },
+
+  // フッターとロゴから誘導する先（空なら非表示）
+  links: {
+    site: "https://drivebluehk.com",
+    instagram: "https://www.instagram.com/driveblue_hk/",
   },
 };
     </script>
@@ -2613,19 +2673,46 @@ window.COLORMIX_CONFIG = {
     }, 1800);
   }
 
-  /** フッターの問い合わせ先（config.js の contact を設定したときだけ出す） */
-  function renderContact() {
-    var link = $("footer-contact");
-    if (!link) return;
-    var contact = (window.COLORMIX_CONFIG &&
-      window.COLORMIX_CONFIG.register &&
-      window.COLORMIX_CONFIG.register.contact) || "";
-    link.hidden = !contact;
-    if (!contact) return;
-    link.textContent = contact;
-    link.href = contact.indexOf("@") > 0 && contact.indexOf(" ") < 0
-      ? "mailto:" + contact
-      : contact;
+  /** 公式サイト・Instagram への導線（config.js の links を設定したときだけ出す） */
+  function renderLinks() {
+    var config = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.links) || {};
+    var host = $("footer-links");
+    var lead = $("footer-lead");
+    if (!host) return;
+
+    host.textContent = "";
+    var defined = [
+      { key: "site", url: config.site },
+      { key: "instagram", url: config.instagram },
+    ].filter(function (item) {
+      return item.url;
+    });
+
+    if (lead) lead.hidden = defined.length === 0;
+
+    defined.forEach(function (item) {
+      var link = document.createElement("a");
+      link.className = "footer-link";
+      link.href = item.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = t("footer." + item.key);
+      link.setAttribute("aria-label", t("footer.aria." + item.key));
+      host.appendChild(link);
+    });
+
+    // ヘッダーのロゴからも公式サイトへ行けるようにする
+    var brand = $("brand-link");
+    if (brand) {
+      if (config.site) {
+        brand.href = config.site;
+        brand.target = "_blank";
+        brand.rel = "noopener noreferrer";
+        brand.setAttribute("aria-label", "DRIVE BLUE HONG KONG");
+      } else {
+        brand.removeAttribute("href");
+      }
+    }
   }
 
   /* ---------- 更新 ---------- */
@@ -2654,12 +2741,13 @@ window.COLORMIX_CONFIG = {
 
   I18N.onChange(function () {
     applyLang();
+    renderLinks();
     syncAll();
   });
 
   buildStepToggle();
   applyLang();
-  renderContact();
+  renderLinks();
   syncAll();
   watchResultCard();
 })();

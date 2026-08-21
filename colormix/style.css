@@ -622,20 +622,61 @@ body {
 /* フッター */
 .footer {
   display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: center;
-  gap: 4px 10px;
-  padding: 18px 8px 8px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 8px 8px;
   color: var(--muted);
   font-size: 12px;
 }
 
-.footer-contact {
-  flex-basis: 100%;
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 0;
+}
+
+.footer-lead {
+  margin: 0;
   text-align: center;
-  color: var(--brand);
-  overflow-wrap: anywhere;
+}
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 8px 18px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.footer-link:active {
+  background: var(--brand-soft);
+}
+
+.footer-link:focus-visible,
+.brand-logo:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+a.brand-logo {
+  cursor: pointer;
 }
 
 /* 下部固定バー */

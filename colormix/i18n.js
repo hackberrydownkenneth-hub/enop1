@@ -92,6 +92,11 @@
       "小数が出る場合はグラム数を丸めますが、**合計量はいつもぴったり**になるよう調整しています。0.1g 単位ではかりたいときは、結果の下の「0.1g刻み」を選んでください。",
 
     "footer.by": "提供",
+    "footer.lead": "商品のご購入・お問い合わせはこちら",
+    "footer.site": "公式サイト",
+    "footer.instagram": "Instagram",
+    "footer.aria.site": "DRIVE BLUE HONG KONG の公式サイトを開く",
+    "footer.aria.instagram": "DRIVE BLUE HONG KONG の Instagram を開く",
     "sticky.base": "1剤",
     "sticky.ox": "2剤",
     "sticky.total": "合計",
@@ -229,6 +234,11 @@
       "有小數會四捨五入，但**總份量一定啱數**。想秤到 0.1g，就揀結果下面嘅「0.1g 為單位」。",
 
     "footer.by": "提供",
+    "footer.lead": "產品查詢・訂購",
+    "footer.site": "官方網站",
+    "footer.instagram": "Instagram",
+    "footer.aria.site": "打開 DRIVE BLUE HONG KONG 官方網站",
+    "footer.aria.instagram": "打開 DRIVE BLUE HONG KONG 嘅 Instagram",
     "sticky.base": "染膏",
     "sticky.ox": "雙氧奶",
     "sticky.total": "總共",

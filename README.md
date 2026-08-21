@@ -149,7 +149,7 @@ python -m pytest
 
 ```bash
 # 計算ロジック・入力チェックのテスト
-node --test colormix/calc.test.js colormix/profile.test.js
+node --test colormix/calc.test.js colormix/profile.test.js colormix/i18n.test.js
 
 # 公開サーバー(計算機の配信 + 登録API + 管理画面)
 export COLORMIX_ADMIN_TOKEN="長めの合言葉"
