@@ -20,15 +20,16 @@ const SHARED_ON_PURPOSE = new Set([
 ]);
 
 test("キーが両言語で揃っている", () => {
-  const jaKeys = Object.keys(ja).sort();
-  const yueKeys = Object.keys(yue).sort();
+  // 空文字を持つキー（意図的に文言を消したもの）を「無い」と誤判定しないよう、
+  // 値の真偽ではなくキーの有無で見る
+  const has = (dict, key) => Object.prototype.hasOwnProperty.call(dict, key);
   assert.deepStrictEqual(
-    jaKeys.filter((k) => !yue[k]),
+    Object.keys(ja).filter((k) => !has(yue, k)),
     [],
     "繁體中文に無いキー"
   );
   assert.deepStrictEqual(
-    yueKeys.filter((k) => !ja[k]),
+    Object.keys(yue).filter((k) => !has(ja, k)),
     [],
     "日本語に無いキー"
   );
@@ -36,7 +37,7 @@ test("キーが両言語で揃っている", () => {
 
 test("翻訳し忘れ（両言語で同じ文言）が無い", () => {
   const same = Object.keys(ja).filter(
-    (key) => ja[key] === yue[key] && !SHARED_ON_PURPOSE.has(key)
+    (key) => ja[key] !== "" && ja[key] === yue[key] && !SHARED_ON_PURPOSE.has(key)
   );
   assert.deepStrictEqual(same, [], "繁體中文が日本語のままになっているキー");
 });
