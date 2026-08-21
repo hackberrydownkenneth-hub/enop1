@@ -623,6 +623,20 @@
     var name = window.prompt(t("prompt.save"), suggestion);
     if (name === null) return;
     name = name.trim() || suggestion;
+
+    // 同じ名前がすでにあれば、確認のうえ置き換える（同名が並ばないように）
+    var existing = -1;
+    for (var i = 0; i < recipes.length; i++) {
+      if (recipes[i].name === name) {
+        existing = i;
+        break;
+      }
+    }
+    if (existing >= 0) {
+      if (!window.confirm(t("confirm.overwrite", { name: name }))) return;
+      recipes.splice(existing, 1);
+    }
+
     recipes.unshift({ name: name, state: JSON.parse(JSON.stringify(state)) });
     recipes = recipes.slice(0, 30);
     writeStore(RECIPE_KEY, recipes);

@@ -78,6 +78,8 @@
     "action.reset": "↺ リセット",
 
     "recipes.title": "保存したレシピ",
+    "recipes.note": "保存したレシピはこの端末の中だけに残ります。DRIVE BLUE HONG KONG を含め、第三者に送信されることはありません。",
+    "confirm.overwrite": "「{name}」は既に保存されています。上書きしますか？",
     "recipe.aria.del": "{name} を削除",
 
     "how.summary": "使い方・計算方法",
@@ -223,6 +225,8 @@
     "action.save": "⭐ 儲存配方",
     "action.reset": "↺ 重設",
     "recipes.title": "已儲存的配方",
+    "recipes.note": "已儲存的配方只會保留在本機。不會傳送給 DRIVE BLUE HONG KONG 或任何第三方。",
+    "confirm.overwrite": "「{name}」已經儲存過，是否覆蓋？",
     "recipe.aria.del": "刪除 {name}",
     "how.summary": "使用方法及計算原理",
     "how.step1": "選擇**雙氧奶的比例**（1:1 / 1:2 / 1:3 等）",

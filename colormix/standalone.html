@@ -1144,6 +1144,7 @@ body.gate-open {
         <h2 class="step">
           <span class="step-no">★</span><span data-i18n="recipes.title">保存したレシピ</span>
         </h2>
+        <p class="hint" data-i18n="recipes.note"></p>
         <div id="recipes"></div>
       </section>
 
@@ -1258,6 +1259,8 @@ body.gate-open {
     "action.reset": "↺ リセット",
 
     "recipes.title": "保存したレシピ",
+    "recipes.note": "保存したレシピはこの端末の中だけに残ります。DRIVE BLUE HONG KONG を含め、第三者に送信されることはありません。",
+    "confirm.overwrite": "「{name}」は既に保存されています。上書きしますか？",
     "recipe.aria.del": "{name} を削除",
 
     "how.summary": "使い方・計算方法",
@@ -1403,6 +1406,8 @@ body.gate-open {
     "action.save": "⭐ 儲存配方",
     "action.reset": "↺ 重設",
     "recipes.title": "已儲存的配方",
+    "recipes.note": "已儲存的配方只會保留在本機。不會傳送給 DRIVE BLUE HONG KONG 或任何第三方。",
+    "confirm.overwrite": "「{name}」已經儲存過，是否覆蓋？",
     "recipe.aria.del": "刪除 {name}",
     "how.summary": "使用方法及計算原理",
     "how.step1": "選擇**雙氧奶的比例**（1:1 / 1:2 / 1:3 等）",
@@ -2669,6 +2674,20 @@ window.COLORMIX_CONFIG = {
     var name = window.prompt(t("prompt.save"), suggestion);
     if (name === null) return;
     name = name.trim() || suggestion;
+
+    // 同じ名前がすでにあれば、確認のうえ置き換える（同名が並ばないように）
+    var existing = -1;
+    for (var i = 0; i < recipes.length; i++) {
+      if (recipes[i].name === name) {
+        existing = i;
+        break;
+      }
+    }
+    if (existing >= 0) {
+      if (!window.confirm(t("confirm.overwrite", { name: name }))) return;
+      recipes.splice(existing, 1);
+    }
+
     recipes.unshift({ name: name, state: JSON.parse(JSON.stringify(state)) });
     recipes = recipes.slice(0, 30);
     writeStore(RECIPE_KEY, recipes);
