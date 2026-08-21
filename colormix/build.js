@@ -80,6 +80,7 @@ const published = [
   "register.js",
   "logo.png",
   "logo-white.png",
+  "ogp.png",
   "_headers",
 ];
 
