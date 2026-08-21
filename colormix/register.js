@@ -161,7 +161,10 @@
 
   /* ---------- 登録画面 ---------- */
 
-  function buildGate() {
+  function buildGate(previous) {
+    if (previous) {
+      state.affiliation = previous.affiliation || "";
+    }
     backdrop = el("div", "gate");
     backdrop.setAttribute("role", "dialog");
     backdrop.setAttribute("aria-modal", "true");
@@ -292,6 +295,11 @@
       }
     });
 
+    if (previous) {
+      refs.salon.value = previous.salon || "";
+      refs.instagram.value = previous.instagram || "";
+    }
+
     document.body.appendChild(backdrop);
     applyGateText();
     syncOptions();
@@ -385,12 +393,17 @@
       registeredAt: new Date().toISOString(),
     });
 
+    var collecting = collects();
     trySend(record).then(function (sent) {
-      var profile = Object.assign({}, record, { synced: sent || !collects() });
+      // collected: この登録が「集める」と伝えたうえで行われたかどうか
+      var profile = Object.assign({}, record, {
+        synced: sent || !collecting,
+        collected: collecting,
+      });
       writeProfile(profile);
       closeGate();
       renderManage();
-      if (collects() && !sent) notify(t("reg.warn.offline"));
+      if (collecting && !sent) notify(t("reg.warn.offline"));
     });
   }
 
@@ -457,8 +470,23 @@
     renderManage();
   });
 
-  if (config.mode !== "off" && !readProfile()) {
-    buildGate();
+  /**
+   * 登録画面を出すか。
+   *
+   * ・まだ登録していない人 … 出す
+   * ・「どこにも送信しません」と伝えた状態で登録した人が、収集を有効にした
+   *   あとに来た場合 … もう一度だけ出す。伝えた内容と違う扱いを黙って
+   *   することはしない（前回の入力は埋めた状態にする）
+   */
+  function needsGate(profile) {
+    if (config.mode === "off") return false;
+    if (!profile) return true;
+    return collects() && profile.collected !== true;
+  }
+
+  var stored = readProfile();
+  if (needsGate(stored)) {
+    buildGate(stored);
   } else {
     retryPending();
   }
