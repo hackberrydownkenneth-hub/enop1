@@ -9,7 +9,7 @@
  */
 window.COLORMIX_CONFIG = {
   register: {
-    mode: "local",
+    mode: "form",
 
     // mode: "api" のとき
     apiUrl: "/api/register",
@@ -24,7 +24,10 @@ window.COLORMIX_CONFIG = {
     //
     // 値から項目を見分けるので、entry.xxx のIDを自分で調べる必要はない。
     form: {
-      prefilledUrl: "",
+      prefilledUrl:
+        "https://docs.google.com/forms/d/e/1FAIpQLSf31na4a91pdr8b9YRhQWKsVBIoFGNpbY9ywucFGiU2zp4tsQ/viewform" +
+        "?usp=pp_url&entry.826897020=Affiliation&entry.813755346=Salon" +
+        "&entry.1102650107=Instagram&entry.1127699928=Lang",
 
       // prefilledUrl を使わず手で指定したいときはこちら
       actionUrl: "",
