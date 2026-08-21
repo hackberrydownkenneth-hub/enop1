@@ -56,8 +56,11 @@
 
   /* ---------- 送信 ---------- */
 
+  /** 送信先がちゃんと設定されているモードのときだけ「集める」と言う */
   function collects() {
-    return config.mode === "api" || config.mode === "form";
+    if (config.mode === "api") return Boolean(config.apiUrl);
+    if (config.mode === "form") return Boolean(config.form && config.form.actionUrl);
+    return false;
   }
 
   /** 送信できたら true。失敗しても例外は投げない */

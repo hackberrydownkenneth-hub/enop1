@@ -1,0 +1,66 @@
+# カラー剤計算機を GitHub Pages に公開する。
+#
+# 使う前に一度だけ: リポジトリの Settings → Pages → Source を
+# 「GitHub Actions」に切り替えてください。
+# 公開先: https://<ユーザー名>.github.io/<リポジトリ名>/
+name: Deploy colormix to Pages
+
+on:
+  push:
+    branches:
+      - claude/hair-color-mixer-calculator-qga3ey
+    paths:
+      - "colormix/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: 計算ロジックと入力チェックのテスト
+        run: node --test colormix/calc.test.js colormix/profile.test.js
+      - name: 1ファイル版が最新か確認
+        run: |
+          node colormix/build.js
+          git diff --exit-code colormix/standalone.html
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: 公開するファイルだけ集める
+        run: |
+          mkdir -p _site
+          cp colormix/index.html \
+             colormix/style.css \
+             colormix/i18n.js \
+             colormix/calc.js \
+             colormix/profile.js \
+             colormix/config.js \
+             colormix/app.js \
+             colormix/register.js \
+             _site/
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

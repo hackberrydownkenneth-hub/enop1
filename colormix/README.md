@@ -143,6 +143,21 @@ register: {
 
 ## 使い方
 
+### GitHub Pages で一般公開する
+
+このリポジトリは公開設定なので、GitHub Pages で無料で公開できます。
+`.github/workflows/pages.yml` を用意してあるので、**一度だけ設定を切り替える**だけです。
+
+1. GitHub の Settings → Pages → Source を **GitHub Actions** にする
+2. Actions タブで `Deploy colormix to Pages` が緑になるのを待つ
+3. 公開URL: `https://<ユーザー名>.github.io/<リポジトリ名>/`
+
+ワークフローは、テストが通ったときだけ公開します。
+別のブランチに移したときは `pages.yml` の `branches:` を書き換えてください。
+
+> Pages は静的ホスティングなので、登録データを集めるには `mode: "form"`（下記 B）を使います。
+> `mode: "api"` の自前サーバーは Pages では動きません。
+
 ### パソコン・スマホでそのまま開く
 
 `colormix` フォルダごと端末にコピーして、`index.html` をブラウザで開きます。
