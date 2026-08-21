@@ -50,7 +50,15 @@ if (!html.includes(cssTag) || !html.includes(scriptTags)) {
   process.exit(1);
 }
 
+// 1ファイル版は自己完結が要件なので、アイコンの参照を埋め込みの favicon に置き換える
+const iconsBlock = /<!-- icons:start -->[\s\S]*?<!-- icons:end -->/;
+const inlineFavicon =
+  '<link rel="icon" type="image/png" href="data:image/png;base64,' +
+  fs.readFileSync(path.join(dir, "favicon-32.png")).toString("base64") +
+  '" />';
+
 const out = html
+  .replace(iconsBlock, () => inlineFavicon)
   .replace(cssTag, () => "<style>\n" + css.trim() + "\n    </style>")
   .replace(
     scriptTags,
@@ -81,6 +89,11 @@ const published = [
   "logo.png",
   "logo-white.png",
   "ogp.png",
+  "apple-touch-icon.png",
+  "icon-192.png",
+  "icon-512.png",
+  "favicon-32.png",
+  "manifest.webmanifest",
   "_headers",
 ];
 

@@ -28,10 +28,16 @@
     <meta property="og:locale:alternate" content="ja_JP" />
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="stylesheet" href="style.css" />
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A8%3C/text%3E%3C/svg%3E"
-    />
+
+    <!-- ホーム画面に追加したときのアイコンと名前。
+         1ファイル版では build.js がこの範囲を data URI の favicon に置き換える -->
+    <!-- icons:start -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <!-- icons:end -->
+    <meta name="apple-mobile-web-app-title" content="染髮劑計算機" />
+    <meta name="application-name" content="染髮劑計算機" />
   </head>
   <body>
     <header class="header">

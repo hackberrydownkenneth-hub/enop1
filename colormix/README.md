@@ -196,6 +196,31 @@ WhatsApp や Instagram にURLを貼ったときに出るタイトル・説明・
 > **URL を変えたら `og:url` と `og:image` も直してください。** 絶対URLで
 > 書く必要があるため、ここだけドメインが埋め込まれています。
 
+### ホーム画面に追加したときのアイコン
+
+| ファイル | 用途 |
+|----------|------|
+| `apple-touch-icon.png` | iOS のホーム画面（180×180） |
+| `icon-192.png` / `icon-512.png` | Android のホーム画面・スプラッシュ |
+| `favicon-32.png` | ブラウザのタブ |
+| `manifest.webmanifest` | 名前・色・アイコンの定義 |
+
+紺 `#2E3092` の地に、白抜きしたエンブレムを配置しています。**白抜きは
+明度から不透明度を作る方式**です（紺→白、白→透明）。RGB を単純に反転すると
+紺が黄土色になるので使えません。
+
+ホーム画面での名前は **染髮劑計算機**（`apple-mobile-web-app-title` と
+manifest の `short_name`）。JavaScript が動く前に決まるため、主な利用者に
+合わせて繁體中文で固定しています。
+
+`apple-mobile-web-app-capable` は**あえて付けていません**。付けると iOS で
+ブラウザのUIが消え、公式サイトや WhatsApp のリンクを開いたときに戻れなく
+なる恐れがあるためです。Android では manifest の `display: standalone` が
+効きます。
+
+1ファイル版（`standalone.html`）では、`build.js` が `<!-- icons:start -->`
+から `<!-- icons:end -->` までを、埋め込みの favicon に置き換えます。
+
 ### 公式サイト・Instagram への導線
 
 `config.js` の `links` に URL を入れると、次の3箇所から誘導できます（空なら非表示）。
