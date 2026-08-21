@@ -683,6 +683,21 @@
     }, 1800);
   }
 
+  /** フッターの問い合わせ先（config.js の contact を設定したときだけ出す） */
+  function renderContact() {
+    var link = $("footer-contact");
+    if (!link) return;
+    var contact = (window.COLORMIX_CONFIG &&
+      window.COLORMIX_CONFIG.register &&
+      window.COLORMIX_CONFIG.register.contact) || "";
+    link.hidden = !contact;
+    if (!contact) return;
+    link.textContent = contact;
+    link.href = contact.indexOf("@") > 0 && contact.indexOf(" ") < 0
+      ? "mailto:" + contact
+      : contact;
+  }
+
   /* ---------- 更新 ---------- */
 
   var lastResult = { ok: false };
@@ -714,6 +729,7 @@
 
   buildStepToggle();
   applyLang();
+  renderContact();
   syncAll();
   watchResultCard();
 })();

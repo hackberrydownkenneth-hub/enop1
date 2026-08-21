@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#7c3aed" />
     <meta
       name="description"
-      content="美容師向け。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。日本語・廣東話対応。"
+      content="DRIVE BLUE HONG KONG がお届けする美容師向けツール。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。日本語・廣東話対応。"
     />
     <title>カラー剤 計算機</title>
     <style>
@@ -104,6 +104,33 @@ body {
   background: var(--brand);
   color: var(--brand-ink);
   text-align: center;
+}
+
+/* ブランド表記 */
+.brand {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  line-height: 1;
+}
+
+.brand-name {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.brand-place {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  opacity: 0.8;
+}
+
+.header .brand {
+  opacity: 0.9;
 }
 
 .header h1 {
@@ -600,6 +627,30 @@ body {
   font-size: 13px;
 }
 
+/* フッター */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 10px;
+  padding: 18px 8px 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.footer-brand,
+.brand-footer {
+  color: var(--ink);
+}
+
+.footer-contact {
+  flex-basis: 100%;
+  text-align: center;
+  color: var(--brand);
+  overflow-wrap: anywhere;
+}
+
 /* 下部固定バー */
 .sticky-bar {
   position: fixed;
@@ -897,6 +948,10 @@ body.gate-open {
   </head>
   <body>
     <header class="header">
+      <p class="brand" aria-label="DRIVE BLUE HONG KONG">
+        <span class="brand-name">DRIVE BLUE</span>
+        <span class="brand-place">HONG KONG</span>
+      </p>
       <h1 data-i18n="app.title">🎨 カラー剤 計算機</h1>
       <p data-i18n="app.tagline">タップするだけ。1剤のグラム数を自動で出します。</p>
       <div class="lang" id="lang-switch" role="group" data-i18n-aria="lang.aria"></div>
@@ -1012,6 +1067,14 @@ body.gate-open {
         <p class="how-note" data-i18n="how.note2"></p>
         <div class="manage" id="reg-manage" hidden></div>
       </details>
+      <footer class="footer">
+        <span class="footer-by" data-i18n="footer.by">提供</span>
+        <span class="brand brand-footer">
+          <span class="brand-name">DRIVE BLUE</span>
+          <span class="brand-place">HONG KONG</span>
+        </span>
+        <a class="footer-contact" id="footer-contact" hidden></a>
+      </footer>
     </main>
 
     <div class="sticky-bar" id="sticky-bar" hidden>
@@ -1043,7 +1106,7 @@ body.gate-open {
     "lang.tag": "ja",
     "lang.name": "日本語",
     "app.title": "🎨 カラー剤 計算機",
-    "app.docTitle": "カラー剤 計算機",
+    "app.docTitle": "カラー剤 計算機 | DRIVE BLUE HONG KONG",
     "app.tagline": "タップするだけ。1剤のグラム数を自動で出します。",
     "lang.aria": "言語",
 
@@ -1114,6 +1177,7 @@ body.gate-open {
     "how.note2":
       "小数が出る場合はグラム数を丸めますが、**合計量はいつもぴったり**になるよう調整しています。0.1g 単位ではかりたいときは、結果の下の「0.1g刻み」を選んでください。",
 
+    "footer.by": "提供",
     "sticky.base": "1剤",
     "sticky.ox": "2剤",
     "sticky.total": "合計",
@@ -1143,7 +1207,7 @@ body.gate-open {
 
     "reg.title": "はじめる前に",
     "reg.lead":
-      "美容師さん向けの無料ツールです。はじめて使うときだけ登録をお願いします（次回からは出ません）。",
+      "DRIVE BLUE HONG KONG がお届けする、美容師さん向けの無料ツールです。はじめて使うときだけ登録をお願いします（次回からは出ません）。",
     "reg.q1": "お仕事のスタイル",
     "reg.opt.salon": "サロン所属",
     "reg.opt.salon.sub": "お店に勤めている",
@@ -1156,7 +1220,7 @@ body.gate-open {
     "reg.instagram.ph": "your_id",
     "reg.consent": "上の使いみちに同意します",
     "reg.purpose.collect":
-      "いただいた情報（区分・サロン名・Instagram）は、このアプリの運営者がサービス改善とご連絡のためだけに使います。",
+      "いただいた情報（区分・サロン名・Instagram）は、運営者である DRIVE BLUE HONG KONG が、サービス改善とご連絡のためだけに使います。第三者には渡しません。",
     "reg.purpose.local":
       "※ プレビュー版です。入力した内容はこの端末の中だけに保存され、どこにも送信されません。",
     "reg.contact": "お問い合わせ: {contact}",
@@ -1179,7 +1243,7 @@ body.gate-open {
     "lang.tag": "yue-Hant-HK",
     "lang.name": "廣東話",
     "app.title": "🎨 染髮劑計算機",
-    "app.docTitle": "染髮劑計算機",
+    "app.docTitle": "染髮劑計算機 | DRIVE BLUE HONG KONG",
     "app.tagline": "撳幾下就得，自動計出每支染膏要幾多 g。",
     "lang.aria": "語言",
 
@@ -1250,6 +1314,7 @@ body.gate-open {
     "how.note2":
       "有小數會四捨五入，但**總份量一定啱數**。想秤到 0.1g，就揀結果下面嘅「0.1g 為單位」。",
 
+    "footer.by": "提供",
     "sticky.base": "染膏",
     "sticky.ox": "雙氧奶",
     "sticky.total": "總共",
@@ -1279,7 +1344,7 @@ body.gate-open {
 
     "reg.title": "開始之前",
     "reg.lead":
-      "呢個係美容師專用嘅免費工具。淨係第一次用要登記一次，之後唔會再出。",
+      "DRIVE BLUE HONG KONG 出品，美容師專用嘅免費工具。淨係第一次用要登記一次，之後唔會再出。",
     "reg.q1": "你嘅工作形式",
     "reg.opt.salon": "喺髮型屋返工",
     "reg.opt.salon.sub": "受聘於髮型屋",
@@ -1292,7 +1357,7 @@ body.gate-open {
     "reg.instagram.ph": "your_id",
     "reg.consent": "我同意上面講嘅用途",
     "reg.purpose.collect":
-      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者用嚟改善服務同聯絡你。",
+      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者 DRIVE BLUE HONG KONG 用嚟改善服務同聯絡你，唔會俾第三方。",
     "reg.purpose.local":
       "※ 呢個係預覽版。你填嘅嘢淨係擺喺呢部機入面，唔會傳去任何地方。",
     "reg.contact": "查詢: {contact}",
@@ -2548,6 +2613,21 @@ window.COLORMIX_CONFIG = {
     }, 1800);
   }
 
+  /** フッターの問い合わせ先（config.js の contact を設定したときだけ出す） */
+  function renderContact() {
+    var link = $("footer-contact");
+    if (!link) return;
+    var contact = (window.COLORMIX_CONFIG &&
+      window.COLORMIX_CONFIG.register &&
+      window.COLORMIX_CONFIG.register.contact) || "";
+    link.hidden = !contact;
+    if (!contact) return;
+    link.textContent = contact;
+    link.href = contact.indexOf("@") > 0 && contact.indexOf(" ") < 0
+      ? "mailto:" + contact
+      : contact;
+  }
+
   /* ---------- 更新 ---------- */
 
   var lastResult = { ok: false };
@@ -2579,6 +2659,7 @@ window.COLORMIX_CONFIG = {
 
   buildStepToggle();
   applyLang();
+  renderContact();
   syncAll();
   watchResultCard();
 })();

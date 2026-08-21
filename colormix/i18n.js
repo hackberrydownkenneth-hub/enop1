@@ -20,7 +20,7 @@
     "lang.tag": "ja",
     "lang.name": "日本語",
     "app.title": "🎨 カラー剤 計算機",
-    "app.docTitle": "カラー剤 計算機",
+    "app.docTitle": "カラー剤 計算機 | DRIVE BLUE HONG KONG",
     "app.tagline": "タップするだけ。1剤のグラム数を自動で出します。",
     "lang.aria": "言語",
 
@@ -91,6 +91,7 @@
     "how.note2":
       "小数が出る場合はグラム数を丸めますが、**合計量はいつもぴったり**になるよう調整しています。0.1g 単位ではかりたいときは、結果の下の「0.1g刻み」を選んでください。",
 
+    "footer.by": "提供",
     "sticky.base": "1剤",
     "sticky.ox": "2剤",
     "sticky.total": "合計",
@@ -120,7 +121,7 @@
 
     "reg.title": "はじめる前に",
     "reg.lead":
-      "美容師さん向けの無料ツールです。はじめて使うときだけ登録をお願いします（次回からは出ません）。",
+      "DRIVE BLUE HONG KONG がお届けする、美容師さん向けの無料ツールです。はじめて使うときだけ登録をお願いします（次回からは出ません）。",
     "reg.q1": "お仕事のスタイル",
     "reg.opt.salon": "サロン所属",
     "reg.opt.salon.sub": "お店に勤めている",
@@ -133,7 +134,7 @@
     "reg.instagram.ph": "your_id",
     "reg.consent": "上の使いみちに同意します",
     "reg.purpose.collect":
-      "いただいた情報（区分・サロン名・Instagram）は、このアプリの運営者がサービス改善とご連絡のためだけに使います。",
+      "いただいた情報（区分・サロン名・Instagram）は、運営者である DRIVE BLUE HONG KONG が、サービス改善とご連絡のためだけに使います。第三者には渡しません。",
     "reg.purpose.local":
       "※ プレビュー版です。入力した内容はこの端末の中だけに保存され、どこにも送信されません。",
     "reg.contact": "お問い合わせ: {contact}",
@@ -156,7 +157,7 @@
     "lang.tag": "yue-Hant-HK",
     "lang.name": "廣東話",
     "app.title": "🎨 染髮劑計算機",
-    "app.docTitle": "染髮劑計算機",
+    "app.docTitle": "染髮劑計算機 | DRIVE BLUE HONG KONG",
     "app.tagline": "撳幾下就得，自動計出每支染膏要幾多 g。",
     "lang.aria": "語言",
 
@@ -227,6 +228,7 @@
     "how.note2":
       "有小數會四捨五入，但**總份量一定啱數**。想秤到 0.1g，就揀結果下面嘅「0.1g 為單位」。",
 
+    "footer.by": "提供",
     "sticky.base": "染膏",
     "sticky.ox": "雙氧奶",
     "sticky.total": "總共",
@@ -256,7 +258,7 @@
 
     "reg.title": "開始之前",
     "reg.lead":
-      "呢個係美容師專用嘅免費工具。淨係第一次用要登記一次，之後唔會再出。",
+      "DRIVE BLUE HONG KONG 出品，美容師專用嘅免費工具。淨係第一次用要登記一次，之後唔會再出。",
     "reg.q1": "你嘅工作形式",
     "reg.opt.salon": "喺髮型屋返工",
     "reg.opt.salon.sub": "受聘於髮型屋",
@@ -269,7 +271,7 @@
     "reg.instagram.ph": "your_id",
     "reg.consent": "我同意上面講嘅用途",
     "reg.purpose.collect":
-      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者用嚟改善服務同聯絡你。",
+      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者 DRIVE BLUE HONG KONG 用嚟改善服務同聯絡你，唔會俾第三方。",
     "reg.purpose.local":
       "※ 呢個係預覽版。你填嘅嘢淨係擺喺呢部機入面，唔會傳去任何地方。",
     "reg.contact": "查詢: {contact}",

@@ -94,6 +94,33 @@ body {
   text-align: center;
 }
 
+/* ブランド表記 */
+.brand {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 6px;
+  line-height: 1;
+}
+
+.brand-name {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.brand-place {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  opacity: 0.8;
+}
+
+.header .brand {
+  opacity: 0.9;
+}
+
 .header h1 {
   margin: 0;
   font-size: 22px;
@@ -586,6 +613,30 @@ body {
 .how-note {
   color: var(--muted);
   font-size: 13px;
+}
+
+/* フッター */
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px 10px;
+  padding: 18px 8px 8px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.footer-brand,
+.brand-footer {
+  color: var(--ink);
+}
+
+.footer-contact {
+  flex-basis: 100%;
+  text-align: center;
+  color: var(--brand);
+  overflow-wrap: anywhere;
 }
 
 /* 下部固定バー */

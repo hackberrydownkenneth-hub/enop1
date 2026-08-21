@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#7c3aed" />
     <meta
       name="description"
-      content="美容師向け。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。日本語・廣東話対応。"
+      content="DRIVE BLUE HONG KONG がお届けする美容師向けツール。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。日本語・廣東話対応。"
     />
     <title>カラー剤 計算機</title>
     <link rel="stylesheet" href="style.css" />
@@ -17,6 +17,10 @@
   </head>
   <body>
     <header class="header">
+      <p class="brand" aria-label="DRIVE BLUE HONG KONG">
+        <span class="brand-name">DRIVE BLUE</span>
+        <span class="brand-place">HONG KONG</span>
+      </p>
       <h1 data-i18n="app.title">🎨 カラー剤 計算機</h1>
       <p data-i18n="app.tagline">タップするだけ。1剤のグラム数を自動で出します。</p>
       <div class="lang" id="lang-switch" role="group" data-i18n-aria="lang.aria"></div>
@@ -132,6 +136,14 @@
         <p class="how-note" data-i18n="how.note2"></p>
         <div class="manage" id="reg-manage" hidden></div>
       </details>
+      <footer class="footer">
+        <span class="footer-by" data-i18n="footer.by">提供</span>
+        <span class="brand brand-footer">
+          <span class="brand-name">DRIVE BLUE</span>
+          <span class="brand-place">HONG KONG</span>
+        </span>
+        <a class="footer-contact" id="footer-contact" hidden></a>
+      </footer>
     </main>
 
     <div class="sticky-bar" id="sticky-bar" hidden>
