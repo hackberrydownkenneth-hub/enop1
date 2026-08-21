@@ -128,7 +128,7 @@
 
     "reg.title": "始める前に",
     "reg.lead":
-      "DRIVE BLUE HONG KONG がお届けする、美容師さん向けの無料ツールです。初めて使うときだけ登録をお願いします（次回からは表示されません）。",
+      "DRIVE BLUE HONG KONG がお届けする、美容師さん向けの専門計算機です。初めて使うときだけ登録をお願いします（次回からは表示されません）。",
     "reg.q1": "お仕事のスタイル",
     "reg.opt.salon": "サロン所属",
     "reg.opt.salon.sub": "お店に勤めている",
@@ -264,7 +264,7 @@
     "copy.ox": "雙氧奶",
     "copy.total": "總共",
     "reg.title": "開始之前",
-    "reg.lead": "DRIVE BLUE HONG KONG 為髮型師提供的免費工具。只需首次使用時登記一次，其後不會再顯示。",
+    "reg.lead": "DRIVE BLUE HONG KONG 為髮型師提供的專業計算機。只需首次使用時登記一次，其後不會再顯示。",
     "reg.q1": "您的工作形式",
     "reg.opt.salon": "髮型屋任職",
     "reg.opt.salon.sub": "受聘於髮型屋",
