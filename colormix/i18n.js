@@ -158,15 +158,17 @@
     "reg.manage.pending": "（未送信・あとで再送します）",
 
     "reg.done.title": "ありがとうございます！",
+    "reg.done.offer": "初回 5% OFF",
     "reg.done.lead":
-      "WhatsApp でお知らせを受け取れます（任意）。ボタンを押すとメッセージが用意されるので、そのまま送信してください。",
-    "reg.done.whatsapp": "WhatsApp で受け取る",
+      "WhatsApp からご注文いただくと、DRIVE BLUE HONG KONG の商品が初回のみ 5% OFF になります。ボタンを押すとメッセージが用意されるので、そのまま送信してください。",
+    "reg.done.note": "※ WhatsApp からのご注文のみ対象。お一人さま初回1回限り。",
+    "reg.done.whatsapp": "WhatsApp で 5% OFF を受け取る",
     "reg.done.start": "計算機をはじめる",
     "reg.whatsapp.message":
-      "DRIVE BLUE の最新情報を受け取りたいです。Instagram: @{instagram}",
+      "DRIVE BLUE の初回 5% OFF を利用したいです。Instagram: @{instagram}",
     "footer.whatsapp": "WhatsApp",
     "footer.aria.whatsapp": "DRIVE BLUE HONG KONG に WhatsApp で連絡する",
-    "footer.whatsapp.message": "DRIVE BLUE の最新情報を受け取りたいです。",
+    "footer.whatsapp.message": "DRIVE BLUE の初回 5% OFF を利用したいです。",
   };
 
   var yue = {
@@ -311,15 +313,17 @@
     "reg.manage.pending": "（未傳送・遲啲會再試）",
 
     "reg.done.title": "多謝！",
+    "reg.done.offer": "首次購物 5% OFF",
     "reg.done.lead":
-      "可以用 WhatsApp 收最新消息（自願）。㩒個掣就會幫你打好訊息，直接 send 出嚟就得。",
-    "reg.done.whatsapp": "用 WhatsApp 接收",
+      "用 WhatsApp 落單，DRIVE BLUE HONG KONG 嘅產品首次可以平 5%。㩒個掣就會幫你打好訊息，直接 send 出嚟就得。",
+    "reg.done.note": "※ 只限用 WhatsApp 落單，每人限首次一次。",
+    "reg.done.whatsapp": "用 WhatsApp 攞 5% OFF",
     "reg.done.start": "開始用計算機",
     "reg.whatsapp.message":
-      "我想收 DRIVE BLUE 嘅最新消息。Instagram: @{instagram}",
+      "我想用 DRIVE BLUE 首次購物 5% OFF。Instagram: @{instagram}",
     "footer.whatsapp": "WhatsApp",
     "footer.aria.whatsapp": "用 WhatsApp 聯絡 DRIVE BLUE HONG KONG",
-    "footer.whatsapp.message": "我想收 DRIVE BLUE 嘅最新消息。",
+    "footer.whatsapp.message": "我想用 DRIVE BLUE 首次購物 5% OFF。",
   };
 
   var dictionaries = { ja: ja, yue: yue };
