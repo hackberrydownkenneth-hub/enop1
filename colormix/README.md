@@ -49,6 +49,16 @@
 `colormix` フォルダごと端末にコピーして、`index.html` をブラウザで開きます。
 スマホなら「ホーム画面に追加」しておくとアプリのように使えます。
 
+### 1ファイルで配る
+
+`standalone.html` は CSS / JS を全部埋め込んだ1ファイル版です。
+このファイルだけをスタッフに送れば、開くだけで同じアプリが動きます。
+
+```bash
+# index.html / style.css / *.js を編集したら作り直す
+node colormix/build.js
+```
+
 ### ローカルサーバーで開く（社内の共有端末など）
 
 ```bash
@@ -65,6 +75,8 @@ python3 -m http.server 8000 --directory colormix
 | `calc.js` | 配合計算ロジック（画面から独立した純粋関数） |
 | `app.js` | 入力・表示・保存の制御 |
 | `calc.test.js` | 計算ロジックのテスト |
+| `build.js` | 1ファイル版を生成するスクリプト |
+| `standalone.html` | 配布用の1ファイル版（`build.js` が生成） |
 
 ## テスト
 

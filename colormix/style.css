@@ -12,12 +12,14 @@
   --ox-soft: #e2f6f3;
   --warn: #b45309;
   --danger: #d02f4b;
+  --badge-ink: #7c3aed;
   --radius: 16px;
   --shadow: 0 2px 10px rgba(36, 31, 46, 0.07);
 }
 
+/* 端末がダークモード（テーマ未指定のとき） */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #17141d;
     --card: #221e2b;
     --ink: #f3f0f8;
@@ -30,8 +32,27 @@
     --ox-soft: #1e3a37;
     --warn: #fbbf24;
     --danger: #fb7185;
+    --badge-ink: #f3f0f8;
     --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
   }
+}
+
+/* テーマを明示的にダーク指定されたとき */
+:root[data-theme="dark"] {
+  --bg: #17141d;
+  --card: #221e2b;
+  --ink: #f3f0f8;
+  --muted: #a9a1b8;
+  --line: #362f45;
+  --brand: #a78bfa;
+  --brand-ink: #1b1524;
+  --brand-soft: #2e2540;
+  --ox: #5eead4;
+  --ox-soft: #1e3a37;
+  --warn: #fbbf24;
+  --danger: #fb7185;
+  --badge-ink: #f3f0f8;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -306,16 +327,10 @@ body {
   padding: 4px 10px;
   border-radius: 999px;
   background: var(--brand-soft);
-  color: var(--brand);
+  color: var(--badge-ink);
   font-size: 20px;
   font-weight: 800;
   white-space: nowrap;
-}
-
-@media (prefers-color-scheme: dark) {
-  .item-badge {
-    color: var(--ink);
-  }
 }
 
 .del-btn {
@@ -396,12 +411,6 @@ body {
   border-bottom: none;
   border-radius: 12px;
   color: var(--ox);
-}
-
-@media (prefers-color-scheme: dark) {
-  .rrow.ox {
-    color: var(--ox);
-  }
 }
 
 .rrow.sum {

@@ -1,7 +1,7 @@
 /**
  * ヘアカラー剤の配合計算ロジック（画面から独立した純粋関数）。
  *
- * ブラウザ: <script src="calc.js"> で window.ColorMix として参照
+ * ブラウザ: script タグで読み込むと window.ColorMix から参照できる
  * Node    : require("./calc.js")
  *
  * 用語

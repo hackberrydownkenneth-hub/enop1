@@ -1,0 +1,1629 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#7c3aed" />
+    <meta name="description" content="美容師向け。合計量と2剤の倍率を入れるだけで、1剤それぞれのグラム数を自動計算します。" />
+    <title>カラー剤 計算機</title>
+    <style>
+/* カラー剤計算機 — スマホ片手で使える大きめUI */
+:root {
+  --bg: #f6f4f9;
+  --card: #ffffff;
+  --ink: #241f2e;
+  --muted: #6f6880;
+  --line: #e4e0ec;
+  --brand: #7c3aed;
+  --brand-ink: #ffffff;
+  --brand-soft: #f0e9ff;
+  --ox: #0d9488;
+  --ox-soft: #e2f6f3;
+  --warn: #b45309;
+  --danger: #d02f4b;
+  --badge-ink: #7c3aed;
+  --radius: 16px;
+  --shadow: 0 2px 10px rgba(36, 31, 46, 0.07);
+}
+
+/* 端末がダークモード（テーマ未指定のとき） */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17141d;
+    --card: #221e2b;
+    --ink: #f3f0f8;
+    --muted: #a9a1b8;
+    --line: #362f45;
+    --brand: #a78bfa;
+    --brand-ink: #1b1524;
+    --brand-soft: #2e2540;
+    --ox: #5eead4;
+    --ox-soft: #1e3a37;
+    --warn: #fbbf24;
+    --danger: #fb7185;
+    --badge-ink: #f3f0f8;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+}
+
+/* テーマを明示的にダーク指定されたとき */
+:root[data-theme="dark"] {
+  --bg: #17141d;
+  --card: #221e2b;
+  --ink: #f3f0f8;
+  --muted: #a9a1b8;
+  --line: #362f45;
+  --brand: #a78bfa;
+  --brand-ink: #1b1524;
+  --brand-soft: #2e2540;
+  --ox: #5eead4;
+  --ox-soft: #1e3a37;
+  --warn: #fbbf24;
+  --danger: #fb7185;
+  --badge-ink: #f3f0f8;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0 0 96px;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Noto Sans JP",
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 17px;
+  line-height: 1.6;
+}
+
+.header {
+  padding: 20px 16px 14px;
+  background: var(--brand);
+  color: var(--brand-ink);
+  text-align: center;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.02em;
+}
+
+.header p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.main {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 14px 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* タブ */
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tab {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 8px;
+  min-height: 60px;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.tab strong {
+  font-size: 15px;
+}
+
+.tab small {
+  font-size: 11px;
+}
+
+.tab[aria-selected="true"] {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+/* カード */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 6px;
+  font-size: 17px;
+}
+
+.step-no {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.hint {
+  margin: 0 0 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* チップ（プリセットボタン） */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  flex: 1 1 auto;
+  min-width: 72px;
+  min-height: 52px;
+  padding: 6px 10px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chip[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+/* 入力まわり */
+.custom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+
+.custom-row label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.round {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border: 2px solid var(--line);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.round:active {
+  background: var(--brand-soft);
+}
+
+.num-input {
+  width: 88px;
+  height: 46px;
+  padding: 0 8px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.num-input.big {
+  width: 104px;
+  font-size: 24px;
+}
+
+.num-input:focus,
+.text-input:focus,
+.chip:focus-visible,
+.round:focus-visible,
+.tab:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+.unit {
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.ratio-view {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+  text-align: center;
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.ratio-view b {
+  color: var(--ink);
+  font-size: 20px;
+}
+
+/* 1剤の行 */
+.item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px 10px;
+  padding: 10px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.item:first-child {
+  padding-top: 0;
+}
+
+.text-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 10px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+}
+
+.item-controls {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.item-controls .label {
+  color: var(--muted);
+  font-size: 13px;
+  flex: none;
+}
+
+.item-badge {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--brand-soft);
+  color: var(--badge-ink);
+  font-size: 20px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.del-btn {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--danger);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.add-btn {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 12px;
+  border: 2px dashed var(--brand);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 結果 */
+.result {
+  border: 2px solid var(--brand);
+}
+
+.result-title {
+  margin: 0 0 10px;
+  font-size: 15px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.rrow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.rrow .rname {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.rrow .rname small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.rrow .rgram {
+  flex: none;
+  font-size: 34px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.rrow .rgram span {
+  font-size: 15px;
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+.rrow.ox {
+  background: var(--ox-soft);
+  margin: 6px -14px 0;
+  padding: 12px 14px;
+  border-bottom: none;
+  border-radius: 12px;
+  color: var(--ox);
+}
+
+.rrow.sum {
+  border-bottom: none;
+  padding-top: 12px;
+  color: var(--muted);
+}
+
+.rrow.sum .rgram {
+  font-size: 24px;
+  color: var(--ink);
+}
+
+.subtotal {
+  margin: 8px 0 0;
+  text-align: right;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.notice {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  color: var(--warn);
+  font-size: 13px;
+}
+
+.error {
+  margin: 0;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--brand-soft);
+  color: var(--danger);
+  font-weight: 700;
+  text-align: center;
+}
+
+.steps-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.steps-toggle .chip {
+  min-width: 0;
+  min-height: 38px;
+  padding: 2px 12px;
+  font-size: 14px;
+}
+
+/* 操作ボタン */
+.actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.action {
+  min-height: 48px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.action:active {
+  background: var(--brand-soft);
+}
+
+/* 保存レシピ */
+.recipe {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.recipe-load {
+  flex: 1;
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.recipe-load small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* つかいかた */
+.how summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.how ol {
+  padding-left: 1.2em;
+}
+
+.how-math {
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+.how-note {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* 下部固定バー */
+.sticky-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-around;
+  gap: 6px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: var(--card);
+  border-top: 2px solid var(--brand);
+  box-shadow: 0 -4px 14px rgba(36, 31, 46, 0.12);
+}
+
+.sticky-bar span {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.2;
+}
+
+.sticky-bar small {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.sticky-bar b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sticky-total b {
+  color: var(--brand);
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 92px;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--bg);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: var(--shadow);
+  z-index: 10;
+}
+    </style>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%A8%3C/text%3E%3C/svg%3E"
+    />
+  </head>
+  <body>
+    <header class="header">
+      <h1>🎨 カラー剤 計算機</h1>
+      <p>タップするだけ。1剤のグラム数を自動で出します。</p>
+    </header>
+
+    <main class="main">
+      <!-- 計算のむき -->
+      <div class="tabs" role="tablist" aria-label="計算のしかた">
+        <button class="tab" role="tab" data-mode="total" aria-selected="true">
+          <strong>合計量からきめる</strong>
+          <small>ぜんぶで◯g つくりたい</small>
+        </button>
+        <button class="tab" role="tab" data-mode="base" aria-selected="false">
+          <strong>1剤の量からきめる</strong>
+          <small>1剤を◯g 使いたい</small>
+        </button>
+      </div>
+
+      <!-- STEP 1 -->
+      <section class="card">
+        <h2 class="step"><span class="step-no">1</span>2剤のわりあい</h2>
+        <p class="hint">1剤 <b>1</b> に対して、2剤（オキシ）を何倍いれる？</p>
+        <div class="chips" id="ratio-chips"></div>
+        <div class="custom-row">
+          <label for="ratio-custom">その他の倍率</label>
+          <div class="stepper">
+            <button type="button" class="round" data-act="ratio-minus" aria-label="倍率を減らす">−</button>
+            <input
+              id="ratio-custom"
+              class="num-input"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="0.5"
+              aria-label="2剤の倍率"
+            />
+            <button type="button" class="round" data-act="ratio-plus" aria-label="倍率を増やす">＋</button>
+          </div>
+        </div>
+        <p class="ratio-view">1剤 : 2剤 ＝ <b id="ratio-view">1 : 1</b></p>
+      </section>
+
+      <!-- STEP 2（合計量モードのみ） -->
+      <section class="card" id="total-card">
+        <h2 class="step"><span class="step-no">2</span>ぜんぶで何g つくる？</h2>
+        <p class="hint">1剤と2剤をまぜたあとの合計量です。</p>
+        <div class="chips" id="total-chips"></div>
+        <div class="custom-row">
+          <label for="total-input">合計量</label>
+          <div class="stepper">
+            <button type="button" class="round" data-act="total-minus" aria-label="10g 減らす">−</button>
+            <input
+              id="total-input"
+              class="num-input big"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="10"
+              aria-label="合計量（g）"
+            />
+            <span class="unit">g</span>
+            <button type="button" class="round" data-act="total-plus" aria-label="10g 増やす">＋</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="card">
+        <h2 class="step"><span class="step-no" id="items-step-no">3</span><span id="items-title">1剤のミックス</span></h2>
+        <p class="hint" id="items-hint">まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。</p>
+        <div id="items"></div>
+        <button type="button" class="add-btn" id="add-item">＋ 1剤をふやす</button>
+      </section>
+
+      <!-- けっか -->
+      <section class="card result" id="result-card" aria-live="polite">
+        <h2 class="result-title">はかる量</h2>
+        <div id="result-body"></div>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="action" id="copy-btn">📋 コピー</button>
+        <button type="button" class="action" id="save-btn">⭐ レシピ保存</button>
+        <button type="button" class="action" id="reset-btn">↺ リセット</button>
+      </div>
+
+      <section class="card recipes" id="recipes-card" hidden>
+        <h2 class="step"><span class="step-no">★</span>保存したレシピ</h2>
+        <div id="recipes"></div>
+      </section>
+
+      <details class="card how">
+        <summary>つかいかた・計算のしくみ</summary>
+        <ol>
+          <li><b>2剤のわりあい</b>を選ぶ（1:1 / 1:2 / 1:3 など）</li>
+          <li><b>ぜんぶで何g</b> つくるか入れる</li>
+          <li>まぜる<b>1剤のわりあい</b>を入れる（例 ブラウン 2 : マット 1）</li>
+        </ol>
+        <p class="how-math">
+          1剤の合計 ＝ 合計量 ÷（1 ＋ 2剤の倍率）<br />
+          2剤 ＝ 合計量 − 1剤の合計<br />
+          各1剤 ＝ 1剤の合計 × その割合 ÷ 割合の合計
+        </p>
+        <p class="how-note">
+          例）合計 90g で 1:2 のとき → 1剤 30g、2剤 60g。1剤を 2:1 でまぜるなら 20g と 10g。
+        </p>
+        <p class="how-note">
+          小数が出る場合はグラム数を丸めますが、<b>合計量はいつもぴったり</b>になるよう調整しています。
+          0.1g 単位ではかりたいときは、結果の下の「0.1g刻み」を選んでください。
+        </p>
+      </details>
+    </main>
+
+    <div class="sticky-bar" id="sticky-bar" hidden>
+      <span><small>1剤</small><b id="sticky-base">-</b></span>
+      <span><small>2剤</small><b id="sticky-ox">-</b></span>
+      <span class="sticky-total"><small>合計</small><b id="sticky-total">-</b></span>
+    </div>
+
+    <script>
+/**
+ * ヘアカラー剤の配合計算ロジック（画面から独立した純粋関数）。
+ *
+ * ブラウザ: script タグで読み込むと window.ColorMix から参照できる
+ * Node    : require("./calc.js")
+ *
+ * 用語
+ *   1剤   … カラー剤本体。複数種類をミックスすることがある
+ *   2剤   … オキシ（過酸化水素水）。1剤の合計に対して 1:1 / 1:2 / 1:3 などで混ぜる
+ *   刻み  … 秤の最小単位（1g または 0.1g）
+ */
+(function (root, factory) {
+  var api = factory();
+  if (typeof module === "object" && module.exports) {
+    module.exports = api;
+  } else {
+    root.ColorMix = api;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  /** 使用できる秤の刻み（g） */
+  var STEPS = [1, 0.1];
+
+  /** グラム → 刻み単位の整数。以降の計算は整数で行い、誤差を出さない。 */
+  function toUnits(grams, step) {
+    return Math.round(grams / step + 1e-9);
+  }
+
+  /** 刻み単位の整数 → グラム */
+  function toGrams(units, step) {
+    return Number((units * step).toFixed(3));
+  }
+
+  /** 表示用の文字列（1g 刻みなら整数、0.1g 刻みなら小数第1位） */
+  function formatGrams(grams, step) {
+    return step < 1 ? grams.toFixed(1) : String(Math.round(grams));
+  }
+
+  function isPositiveNumber(value) {
+    return typeof value === "number" && isFinite(value) && value > 0;
+  }
+
+  function normalizeStep(step) {
+    return STEPS.indexOf(step) >= 0 ? step : 1;
+  }
+
+  /**
+   * total（刻み単位の整数）を parts の比率で配分する。
+   * 端数は最大剰余方式で割り振るので、戻り値の合計は必ず total と一致する。
+   */
+  function distribute(total, parts) {
+    var sum = parts.reduce(function (a, b) {
+      return a + b;
+    }, 0);
+    if (!(sum > 0) || total <= 0) {
+      return parts.map(function () {
+        return 0;
+      });
+    }
+
+    var allocated = [];
+    var remainders = [];
+    var used = 0;
+
+    parts.forEach(function (part, index) {
+      var exact = (total * part) / sum;
+      var floored = Math.floor(exact + 1e-9);
+      allocated.push(floored);
+      used += floored;
+      remainders.push({ index: index, frac: exact - floored, part: part });
+    });
+
+    // 端数が大きい順（同点なら配合比が大きい順 → 入力順）に 1 刻みずつ配る
+    remainders.sort(function (a, b) {
+      if (b.frac !== a.frac) return b.frac - a.frac;
+      if (b.part !== a.part) return b.part - a.part;
+      return a.index - b.index;
+    });
+
+    var left = total - used;
+    for (var i = 0; i < left && i < remainders.length; i++) {
+      allocated[remainders[i].index] += 1;
+    }
+    return allocated;
+  }
+
+  function error(message) {
+    return { ok: false, error: message };
+  }
+
+  /**
+   * 【合計量モード】1剤+2剤の合計量から、1剤それぞれと2剤のグラム数を出す。
+   *
+   * @param {object} input
+   * @param {number} input.total    つくりたい合計量（g）
+   * @param {number} input.oxRatio  1剤に対する2剤の倍率（1:2 なら 2）
+   * @param {Array}  input.items    [{ name, parts }] 1剤の配合比
+   * @param {number} [input.step]   秤の刻み（1 or 0.1）
+   */
+  function calcFromTotal(input) {
+    var step = normalizeStep(input && input.step);
+    var total = input ? Number(input.total) : NaN;
+    var oxRatio = input ? Number(input.oxRatio) : NaN;
+    var items = (input && input.items) || [];
+
+    if (!isPositiveNumber(total)) {
+      return error("つくる合計量を入力してください");
+    }
+    if (!(typeof oxRatio === "number" && isFinite(oxRatio) && oxRatio >= 0)) {
+      return error("2剤の倍率を入力してください");
+    }
+    if (items.length === 0) {
+      return error("1剤を1つ以上追加してください");
+    }
+
+    var parts = items.map(function (item) {
+      var value = Number(item.parts);
+      return isFinite(value) && value > 0 ? value : 0;
+    });
+    var partsSum = parts.reduce(function (a, b) {
+      return a + b;
+    }, 0);
+    if (!(partsSum > 0)) {
+      return error("1剤の配合比を入力してください");
+    }
+
+    var totalUnits = toUnits(total, step);
+    if (totalUnits <= 0) {
+      return error("合計量が少なすぎます");
+    }
+
+    // 合計量を最優先。1剤を四捨五入し、残り全部を2剤にすることで合計は必ずぴったりになる
+    var base1Units = Math.round(totalUnits / (1 + oxRatio));
+    var oxUnits = totalUnits - base1Units;
+    if (base1Units <= 0) {
+      return error("合計量が少なすぎて1剤が計れません");
+    }
+
+    var allocated = distribute(base1Units, parts);
+
+    return buildResult({
+      mode: "total",
+      step: step,
+      oxRatio: oxRatio,
+      requestedTotal: total,
+      totalUnits: totalUnits,
+      base1Units: base1Units,
+      oxUnits: oxUnits,
+      items: items,
+      parts: parts,
+      allocated: allocated,
+    });
+  }
+
+  /**
+   * 【1剤量モード】使う1剤のグラム数から、2剤と合計量を出す。
+   *
+   * @param {object} input
+   * @param {number} input.oxRatio  1剤に対する2剤の倍率
+   * @param {Array}  input.items    [{ name, grams }] 実際に使う1剤の量
+   * @param {number} [input.step]   秤の刻み（1 or 0.1）
+   */
+  function calcFromBase(input) {
+    var step = normalizeStep(input && input.step);
+    var oxRatio = input ? Number(input.oxRatio) : NaN;
+    var items = (input && input.items) || [];
+
+    if (!(typeof oxRatio === "number" && isFinite(oxRatio) && oxRatio >= 0)) {
+      return error("2剤の倍率を入力してください");
+    }
+    if (items.length === 0) {
+      return error("1剤を1つ以上追加してください");
+    }
+
+    var allocated = items.map(function (item) {
+      var grams = Number(item.grams);
+      return isFinite(grams) && grams > 0 ? toUnits(grams, step) : 0;
+    });
+    var base1Units = allocated.reduce(function (a, b) {
+      return a + b;
+    }, 0);
+    if (base1Units <= 0) {
+      return error("1剤の量を入力してください");
+    }
+
+    var oxUnits = Math.round(base1Units * oxRatio);
+
+    return buildResult({
+      mode: "base",
+      step: step,
+      oxRatio: oxRatio,
+      requestedTotal: null,
+      totalUnits: base1Units + oxUnits,
+      base1Units: base1Units,
+      oxUnits: oxUnits,
+      items: items,
+      parts: allocated.slice(),
+      allocated: allocated,
+    });
+  }
+
+  function buildResult(ctx) {
+    var step = ctx.step;
+    var total = toGrams(ctx.totalUnits, step);
+    var rows = ctx.items.map(function (item, index) {
+      var grams = toGrams(ctx.allocated[index], step);
+      return {
+        name: (item && item.name) || "",
+        parts: ctx.parts[index],
+        grams: grams,
+        text: formatGrams(grams, step),
+      };
+    });
+
+    return {
+      ok: true,
+      mode: ctx.mode,
+      step: step,
+      oxRatio: ctx.oxRatio,
+      requestedTotal: ctx.requestedTotal,
+      // 入力した合計量が刻みで丸められたときだけ true
+      adjusted:
+        ctx.requestedTotal !== null &&
+        Math.abs(ctx.requestedTotal - total) > 1e-9,
+      total: total,
+      base1: toGrams(ctx.base1Units, step),
+      ox: toGrams(ctx.oxUnits, step),
+      items: rows,
+    };
+  }
+
+  /** state.mode に応じて計算を振り分ける */
+  function calc(state) {
+    return state && state.mode === "base"
+      ? calcFromBase(state)
+      : calcFromTotal(state);
+  }
+
+  /** 「1 : 2」のような比率表示 */
+  function formatRatio(oxRatio) {
+    var value = Number(oxRatio);
+    if (!isFinite(value)) return "-";
+    var text = Number.isInteger(value) ? String(value) : String(value);
+    return "1 : " + text;
+  }
+
+  return {
+    STEPS: STEPS,
+    calc: calc,
+    calcFromTotal: calcFromTotal,
+    calcFromBase: calcFromBase,
+    distribute: distribute,
+    formatGrams: formatGrams,
+    formatRatio: formatRatio,
+    toUnits: toUnits,
+    toGrams: toGrams,
+  };
+});
+    </script>
+    <script>
+/* カラー剤計算機の画面制御。計算そのものは calc.js（ColorMix）に任せる。 */
+(function () {
+  "use strict";
+
+  var CM = window.ColorMix;
+  var RATIOS = [1, 1.5, 2, 3];
+  var TOTALS = [30, 60, 80, 100, 120, 150, 200];
+  var STATE_KEY = "colormix.state.v1";
+  var RECIPE_KEY = "colormix.recipes.v1";
+
+  var $ = function (id) {
+    return document.getElementById(id);
+  };
+
+  /* ---------- 保存（localStorage が使えなくても動く） ---------- */
+
+  function readStore(key, fallback) {
+    try {
+      var raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function writeStore(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      /* プライベートモードなどでは保存しないだけ */
+    }
+  }
+
+  /* ---------- 状態 ---------- */
+
+  function defaultState() {
+    return {
+      mode: "total",
+      oxRatio: 1,
+      total: 100,
+      step: 1,
+      items: [
+        { name: "", parts: 1, grams: 30 },
+        { name: "", parts: 1, grams: 30 },
+      ],
+    };
+  }
+
+  function sanitize(saved) {
+    var base = defaultState();
+    if (!saved || typeof saved !== "object") return base;
+    var items = Array.isArray(saved.items) ? saved.items : base.items;
+    return {
+      mode: saved.mode === "base" ? "base" : "total",
+      oxRatio: num(saved.oxRatio, 1),
+      total: num(saved.total, 100),
+      step: saved.step === 0.1 ? 0.1 : 1,
+      items: items.slice(0, 12).map(function (item) {
+        return {
+          name: typeof item.name === "string" ? item.name.slice(0, 40) : "",
+          parts: num(item.parts, 1),
+          grams: num(item.grams, 30),
+        };
+      }),
+    };
+  }
+
+  function num(value, fallback) {
+    var parsed = parseFloat(value);
+    return isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+  }
+
+  function parseInput(value) {
+    var parsed = parseFloat(value);
+    return isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  }
+
+  var state = sanitize(readStore(STATE_KEY, null));
+  if (state.items.length === 0) state.items = defaultState().items;
+  var recipes = readStore(RECIPE_KEY, []) || [];
+  var rows = [];
+
+  /* ---------- 画面部品 ---------- */
+
+  var ratioChips = $("ratio-chips");
+  var ratioCustom = $("ratio-custom");
+  var ratioView = $("ratio-view");
+  var totalCard = $("total-card");
+  var totalChips = $("total-chips");
+  var totalInput = $("total-input");
+  var itemsEl = $("items");
+  var itemsTitle = $("items-title");
+  var itemsHint = $("items-hint");
+  var itemsStepNo = $("items-step-no");
+  var resultCard = $("result-card");
+  var resultBody = $("result-body");
+  var recipesCard = $("recipes-card");
+  var recipesEl = $("recipes");
+  var stickyBar = $("sticky-bar");
+  var stepToggle = null;
+
+  function button(className, text) {
+    var el = document.createElement("button");
+    el.type = "button";
+    el.className = className;
+    el.textContent = text;
+    return el;
+  }
+
+  /* ---------- STEP 1: 2剤のわりあい ---------- */
+
+  RATIOS.forEach(function (ratio) {
+    var chip = button("chip", "1 : " + ratio);
+    chip.dataset.ratio = String(ratio);
+    chip.addEventListener("click", function () {
+      state.oxRatio = ratio;
+      ratioCustom.value = String(ratio);
+      syncRatio();
+      update();
+    });
+    ratioChips.appendChild(chip);
+  });
+
+  ratioCustom.addEventListener("input", function () {
+    state.oxRatio = parseInput(ratioCustom.value);
+    syncRatio();
+    update();
+  });
+
+  function bumpRatio(delta) {
+    state.oxRatio = Math.max(0, Math.round((state.oxRatio + delta) * 10) / 10);
+    ratioCustom.value = String(state.oxRatio);
+    syncRatio();
+    update();
+  }
+
+  function syncRatio() {
+    Array.prototype.forEach.call(ratioChips.children, function (chip) {
+      chip.setAttribute(
+        "aria-pressed",
+        Number(chip.dataset.ratio) === state.oxRatio ? "true" : "false"
+      );
+    });
+    ratioView.textContent = CM.formatRatio(state.oxRatio);
+  }
+
+  /* ---------- STEP 2: 合計量 ---------- */
+
+  TOTALS.forEach(function (total) {
+    var chip = button("chip", total + "g");
+    chip.dataset.total = String(total);
+    chip.addEventListener("click", function () {
+      state.total = total;
+      totalInput.value = String(total);
+      syncTotal();
+      update();
+    });
+    totalChips.appendChild(chip);
+  });
+
+  totalInput.addEventListener("input", function () {
+    state.total = parseInput(totalInput.value);
+    syncTotal();
+    update();
+  });
+
+  function bumpTotal(delta) {
+    state.total = Math.max(0, Math.round((state.total + delta) * 10) / 10);
+    totalInput.value = String(state.total);
+    syncTotal();
+    update();
+  }
+
+  function syncTotal() {
+    Array.prototype.forEach.call(totalChips.children, function (chip) {
+      chip.setAttribute(
+        "aria-pressed",
+        Number(chip.dataset.total) === state.total ? "true" : "false"
+      );
+    });
+  }
+
+  document.addEventListener("click", function (event) {
+    var act = event.target && event.target.dataset && event.target.dataset.act;
+    if (act === "ratio-minus") bumpRatio(-0.5);
+    if (act === "ratio-plus") bumpRatio(0.5);
+    if (act === "total-minus") bumpTotal(-10);
+    if (act === "total-plus") bumpTotal(10);
+  });
+
+  /* ---------- モード切り替え ---------- */
+
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (tab) {
+    tab.addEventListener("click", function () {
+      state.mode = tab.dataset.mode;
+      syncMode();
+      renderItems();
+      update();
+    });
+  });
+
+  function syncMode() {
+    var isTotal = state.mode === "total";
+    Array.prototype.forEach.call(document.querySelectorAll(".tab"), function (tab) {
+      tab.setAttribute("aria-selected", tab.dataset.mode === state.mode ? "true" : "false");
+    });
+    totalCard.hidden = !isTotal;
+    itemsStepNo.textContent = isTotal ? "3" : "2";
+    itemsTitle.textContent = isTotal ? "1剤のミックス" : "使う1剤の量";
+    itemsHint.textContent = isTotal
+      ? "まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。"
+      : "実際にはかる1剤のグラム数を入れてください。2剤と合計量を計算します。";
+  }
+
+  /* ---------- STEP 3: 1剤の行 ---------- */
+
+  function renderItems() {
+    var isTotal = state.mode === "total";
+    itemsEl.textContent = "";
+    rows = [];
+
+    state.items.forEach(function (item, index) {
+      var row = document.createElement("div");
+      row.className = "item";
+
+      var name = document.createElement("input");
+      name.type = "text";
+      name.className = "text-input";
+      name.placeholder = "1剤 " + (index + 1) + "（例 ブラウン6）";
+      name.value = item.name;
+      name.setAttribute("aria-label", (index + 1) + "番目の1剤の名前");
+      name.addEventListener("input", function () {
+        item.name = name.value;
+        update();
+      });
+      row.appendChild(name);
+
+      var del = button("del-btn", "✕");
+      del.setAttribute("aria-label", (index + 1) + "番目の1剤を削除");
+      del.disabled = state.items.length <= 1;
+      del.addEventListener("click", function () {
+        if (state.items.length <= 1) return;
+        state.items.splice(index, 1);
+        renderItems();
+        update();
+      });
+      row.appendChild(del);
+
+      var controls = document.createElement("div");
+      controls.className = "item-controls";
+
+      var label = document.createElement("span");
+      label.className = "label";
+      label.textContent = isTotal ? "わりあい" : "使う量";
+      controls.appendChild(label);
+
+      var minus = button("round", "−");
+      var value = document.createElement("input");
+      value.type = "number";
+      value.className = "num-input";
+      value.inputMode = "decimal";
+      value.min = "0";
+      value.step = isTotal ? "1" : "5";
+      value.value = String(isTotal ? item.parts : item.grams);
+      value.setAttribute("aria-label", (index + 1) + "番目の" + (isTotal ? "わりあい" : "使う量"));
+      var plus = button("round", "＋");
+      minus.setAttribute("aria-label", "減らす");
+      plus.setAttribute("aria-label", "増やす");
+
+      var stepSize = isTotal ? 1 : 5;
+      function setValue(next) {
+        var fixed = Math.max(0, Math.round(next * 10) / 10);
+        if (isTotal) item.parts = fixed;
+        else item.grams = fixed;
+        value.value = String(fixed);
+        update();
+      }
+      minus.addEventListener("click", function () {
+        setValue((isTotal ? item.parts : item.grams) - stepSize);
+      });
+      plus.addEventListener("click", function () {
+        setValue((isTotal ? item.parts : item.grams) + stepSize);
+      });
+      value.addEventListener("input", function () {
+        var parsed = parseInput(value.value);
+        if (isTotal) item.parts = parsed;
+        else item.grams = parsed;
+        update();
+      });
+
+      controls.appendChild(minus);
+      controls.appendChild(value);
+      controls.appendChild(plus);
+
+      if (!isTotal) {
+        var unit = document.createElement("span");
+        unit.className = "unit";
+        unit.textContent = "g";
+        controls.appendChild(unit);
+      }
+
+      var badge = document.createElement("span");
+      badge.className = "item-badge";
+      badge.textContent = "-";
+      if (!isTotal) badge.style.display = "none";
+      controls.appendChild(badge);
+
+      row.appendChild(controls);
+      itemsEl.appendChild(row);
+      rows.push({ badge: badge });
+    });
+  }
+
+  $("add-item").addEventListener("click", function () {
+    if (state.items.length >= 12) return;
+    state.items.push({ name: "", parts: 1, grams: 10 });
+    renderItems();
+    update();
+  });
+
+  /* ---------- 結果 ---------- */
+
+  function itemLabel(item, index) {
+    return item.name && item.name.trim() ? item.name : "1剤 " + (index + 1);
+  }
+
+  function resultRow(name, sub, grams, className) {
+    var row = document.createElement("div");
+    row.className = "rrow" + (className ? " " + className : "");
+
+    var left = document.createElement("div");
+    left.className = "rname";
+    left.appendChild(document.createTextNode(name));
+    if (sub) {
+      var small = document.createElement("small");
+      small.textContent = sub;
+      left.appendChild(small);
+    }
+
+    var right = document.createElement("div");
+    right.className = "rgram";
+    right.appendChild(document.createTextNode(grams));
+    var unit = document.createElement("span");
+    unit.textContent = "g";
+    right.appendChild(unit);
+
+    row.appendChild(left);
+    row.appendChild(right);
+    return row;
+  }
+
+  function renderResult(result) {
+    resultBody.textContent = "";
+
+    if (!result.ok) {
+      var err = document.createElement("p");
+      err.className = "error";
+      err.textContent = "⚠ " + result.error;
+      resultBody.appendChild(err);
+      return;
+    }
+
+    var step = result.step;
+    var partsSum = result.items.reduce(function (a, row) {
+      return a + row.parts;
+    }, 0);
+
+    result.items.forEach(function (row, index) {
+      var sub = "";
+      if (state.mode === "total" && result.items.length > 1 && partsSum > 0) {
+        sub = "わりあい " + row.parts + "（全体の " + Math.round((row.parts / partsSum) * 100) + "%）";
+      }
+      resultBody.appendChild(
+        resultRow(itemLabel(state.items[index], index), sub, row.text, "")
+      );
+    });
+
+    if (result.items.length > 1) {
+      var subtotal = document.createElement("p");
+      subtotal.className = "subtotal";
+      subtotal.textContent = "1剤 合計 " + CM.formatGrams(result.base1, step) + "g";
+      resultBody.appendChild(subtotal);
+    }
+
+    resultBody.appendChild(
+      resultRow("2剤（オキシ）", "1剤の " + result.oxRatio + " 倍", CM.formatGrams(result.ox, step), "ox")
+    );
+    resultBody.appendChild(
+      resultRow("ぜんぶで", "", CM.formatGrams(result.total, step), "sum")
+    );
+
+    if (result.adjusted) {
+      var notice = document.createElement("p");
+      notice.className = "notice";
+      notice.textContent =
+        "※ " + result.requestedTotal + "g は " + (step < 1 ? "0.1g" : "1g") +
+        " 刻みに丸めて " + CM.formatGrams(result.total, step) + "g で計算しました。";
+      resultBody.appendChild(notice);
+    }
+  }
+
+  function buildStepToggle() {
+    var wrap = document.createElement("div");
+    wrap.className = "steps-toggle";
+    var label = document.createElement("span");
+    label.textContent = "はかる細かさ";
+    wrap.appendChild(label);
+
+    CM.STEPS.forEach(function (step) {
+      var chip = button("chip", step < 1 ? "0.1g刻み" : "1g刻み");
+      chip.dataset.step = String(step);
+      chip.addEventListener("click", function () {
+        state.step = step;
+        syncStep();
+        update();
+      });
+      wrap.appendChild(chip);
+    });
+
+    resultCard.appendChild(wrap);
+    stepToggle = wrap;
+  }
+
+  function syncStep() {
+    if (!stepToggle) return;
+    Array.prototype.forEach.call(stepToggle.querySelectorAll(".chip"), function (chip) {
+      chip.setAttribute(
+        "aria-pressed",
+        Number(chip.dataset.step) === state.step ? "true" : "false"
+      );
+    });
+  }
+
+  function renderBadges(result) {
+    rows.forEach(function (row, index) {
+      if (state.mode !== "total") return;
+      var value = result.ok && result.items[index] ? result.items[index].text + "g" : "-";
+      row.badge.textContent = value;
+    });
+  }
+
+  function renderSticky(result) {
+    if (!result.ok) {
+      stickyBar.hidden = true;
+      return;
+    }
+    stickyBar.hidden = resultVisible;
+    var step = result.step;
+    $("sticky-base").textContent = CM.formatGrams(result.base1, step) + "g";
+    $("sticky-ox").textContent = CM.formatGrams(result.ox, step) + "g";
+    $("sticky-total").textContent = CM.formatGrams(result.total, step) + "g";
+  }
+
+  /* 結果カードが画面から外れているときだけ下部バーを出す */
+  var resultVisible = true;
+
+  function watchResultCard() {
+    if (!("IntersectionObserver" in window)) return;
+    var observer = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          resultVisible = entry.isIntersecting;
+          stickyBar.hidden = resultVisible || !lastResult.ok;
+        });
+      },
+      { threshold: 0.25 }
+    );
+    observer.observe(resultCard);
+  }
+
+  /* ---------- コピー・保存・リセット ---------- */
+
+  function resultText(result) {
+    if (!result.ok) return "";
+    var step = result.step;
+    var lines = ["【カラーレシピ】", "1剤 : 2剤 ＝ " + CM.formatRatio(result.oxRatio), ""];
+    result.items.forEach(function (row, index) {
+      lines.push(itemLabel(state.items[index], index) + "  " + row.text + "g");
+    });
+    lines.push("--------------------");
+    if (result.items.length > 1) {
+      lines.push("1剤 合計  " + CM.formatGrams(result.base1, step) + "g");
+    }
+    lines.push("2剤       " + CM.formatGrams(result.ox, step) + "g");
+    lines.push("ぜんぶで  " + CM.formatGrams(result.total, step) + "g");
+    return lines.join("\n");
+  }
+
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(
+        function () {
+          toast("コピーしました");
+        },
+        function () {
+          fallbackCopy(text);
+        }
+      );
+    } else {
+      fallbackCopy(text);
+    }
+  }
+
+  function fallbackCopy(text) {
+    var area = document.createElement("textarea");
+    area.value = text;
+    area.style.position = "fixed";
+    area.style.opacity = "0";
+    document.body.appendChild(area);
+    area.select();
+    var ok = false;
+    try {
+      ok = document.execCommand("copy");
+    } catch (e) {
+      ok = false;
+    }
+    document.body.removeChild(area);
+    toast(ok ? "コピーしました" : "コピーできませんでした");
+  }
+
+  $("copy-btn").addEventListener("click", function () {
+    var text = resultText(lastResult);
+    if (!text) {
+      toast("先に入力してください");
+      return;
+    }
+    copyText(text);
+  });
+
+  function recipeSummary(saved) {
+    var names = saved.state.items
+      .map(function (item, index) {
+        return itemLabelOf(item, index);
+      })
+      .join(" / ");
+    return CM.formatRatio(saved.state.oxRatio) + "　" + names;
+  }
+
+  function itemLabelOf(item, index) {
+    return item.name && item.name.trim() ? item.name : "1剤 " + (index + 1);
+  }
+
+  $("save-btn").addEventListener("click", function () {
+    var suggestion = itemLabelOf(state.items[0], 0);
+    var name = window.prompt("レシピの名前をつけてください", suggestion);
+    if (name === null) return;
+    name = name.trim() || suggestion;
+    recipes.unshift({ name: name, state: JSON.parse(JSON.stringify(state)) });
+    recipes = recipes.slice(0, 30);
+    writeStore(RECIPE_KEY, recipes);
+    renderRecipes();
+    toast("保存しました");
+  });
+
+  function renderRecipes() {
+    recipesEl.textContent = "";
+    recipesCard.hidden = recipes.length === 0;
+
+    recipes.forEach(function (saved, index) {
+      var row = document.createElement("div");
+      row.className = "recipe";
+
+      var load = button("recipe-load", "");
+      load.appendChild(document.createTextNode(saved.name));
+      var small = document.createElement("small");
+      small.textContent = recipeSummary(saved);
+      load.appendChild(small);
+      load.addEventListener("click", function () {
+        state = sanitize(saved.state);
+        syncAll();
+        toast("よびだしました");
+      });
+
+      var del = button("del-btn", "✕");
+      del.setAttribute("aria-label", saved.name + " を削除");
+      del.addEventListener("click", function () {
+        recipes.splice(index, 1);
+        writeStore(RECIPE_KEY, recipes);
+        renderRecipes();
+      });
+
+      row.appendChild(load);
+      row.appendChild(del);
+      recipesEl.appendChild(row);
+    });
+  }
+
+  $("reset-btn").addEventListener("click", function () {
+    if (!window.confirm("入力をリセットしますか？（保存したレシピは消えません）")) return;
+    state = defaultState();
+    syncAll();
+  });
+
+  var toastTimer = null;
+  function toast(message) {
+    var existing = document.querySelector(".toast");
+    if (existing) existing.remove();
+    var el = document.createElement("div");
+    el.className = "toast";
+    el.textContent = message;
+    document.body.appendChild(el);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () {
+      el.remove();
+    }, 1800);
+  }
+
+  /* ---------- 更新 ---------- */
+
+  var lastResult = { ok: false };
+
+  function update() {
+    lastResult = CM.calc(state);
+    renderResult(lastResult);
+    renderBadges(lastResult);
+    renderSticky(lastResult);
+    writeStore(STATE_KEY, state);
+  }
+
+  function syncAll() {
+    ratioCustom.value = String(state.oxRatio);
+    totalInput.value = String(state.total);
+    syncMode();
+    syncRatio();
+    syncTotal();
+    syncStep();
+    renderItems();
+    update();
+  }
+
+  buildStepToggle();
+  renderRecipes();
+  syncAll();
+  watchResultCard();
+})();
+    </script>
+  </body>
+</html>
