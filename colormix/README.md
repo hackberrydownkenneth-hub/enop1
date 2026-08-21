@@ -59,6 +59,88 @@
 
 します（例：合計 100g・1:2・1剤3種等分 → 11g + 11g + 11g、2剤 67g、合計ちょうど 100g）。
 
+## はじめて使う人の登録（顧客データ収集）
+
+外部に公開して使ってもらうとき、**はじめての人だけ**に登録画面を出せます。
+
+1. お仕事のスタイル … **サロン所属 / フリーランス** を選ぶ
+2. サロン名（サロン所属のときだけ・任意）
+3. **Instagram アカウント**（`@id` でも プロフィールURL 貼り付けでもOK）
+4. 使いみちへの同意チェック
+
+登録すると端末に記録され、**2回目からは出ません**。日本語・広東語の両方で表示されます。
+「つかいかた」の中から、自分の登録内容の確認と削除もできます。
+
+送信先は [`config.js`](config.js) の `register.mode` で切り替えます。
+
+| mode | 動き | 使う場面 |
+|------|------|----------|
+| `off` | 登録画面を出さない | 社内配布・1ファイル版 |
+| `local` | 画面は出すが端末内に保存するだけ | 見た目の確認（プレビュー） |
+| `api` | 自前サーバーへ送信 | データを自分で持ちたいとき |
+| `form` | Google フォームへ送信 | サーバーを立てたくないとき |
+
+> `local` のときは「この端末にしか保存されない」旨が登録画面に表示されます。
+> 集めるつもりで `local` のまま公開しないでください。
+
+### A. 自前サーバーで集める（`mode: "api"`）
+
+リポジトリ同梱の [`colormix_server`](../colormix_server) が、計算機の配信と登録の受け取りを両方やります。
+サーバーが `/config.js` を `mode: "api"` で返すので、`config.js` の書き換えは要りません。
+
+```bash
+pip install -r requirements.txt
+export COLORMIX_ADMIN_TOKEN="長めの合言葉"   # 管理画面のパスワード代わり
+python run_colormix.py                        # http://127.0.0.1:5001
+```
+
+| 環境変数 | 既定値 | 説明 |
+|----------|--------|------|
+| `COLORMIX_DB` | `colormix.db` | SQLite のパス |
+| `COLORMIX_ADMIN_TOKEN` | (なし) | 管理画面の合言葉。**未設定だと管理画面は開けません** |
+| `COLORMIX_CONTACT` | (なし) | 登録画面に出す問い合わせ先 |
+| `COLORMIX_ALLOWED_ORIGIN` | (なし) | 別ドメインの画面から登録を受けるとき |
+| `COLORMIX_RATE_LIMIT` | `20` | 1 IP あたり 1 時間の登録上限 |
+
+- 登録者一覧: `/admin?token=合言葉`（区分ごとの人数・一覧・CSV 出力）
+- 同じ Instagram アカウントは重複登録されず、内容が更新されます
+- 保存するのは 区分 / サロン名 / Instagram / 言語 / 日時 のみ。IP アドレスは保存しません
+
+### B. Google フォームで集める（`mode: "form"`）
+
+サーバーを立てずに、回答を Google スプレッドシートに溜められます。
+
+1. Google フォームを作り、「区分」「サロン名」「Instagram」「言語」の記述式項目を用意する
+2. フォームのプレビューを開き、HTML から `entry.1234567890` 形式のIDを控える
+3. `config.js` を書き換える
+
+```js
+register: {
+  mode: "form",
+  form: {
+    actionUrl: "https://docs.google.com/forms/d/e/xxxxx/formResponse",
+    fields: {
+      affiliation: "entry.1111111111",
+      salon: "entry.2222222222",
+      instagram: "entry.3333333333",
+      lang: "entry.4444444444",
+    },
+  },
+}
+```
+
+4. `colormix/` を静的ホスティング（GitHub Pages など）に置く
+
+> Google フォームは応答を返さない（CORS 非対応）ため、送信できたかどうかは確認できません。
+> 取りこぼしを確実に検知したい場合は A を選んでください。
+
+### 集めたデータの扱い
+
+- 登録画面には「何に使うか」を明示しています。用途を変えるときは `i18n.js` の
+  `reg.purpose.collect` を必ず書き換えてください。
+- `COLORMIX_CONTACT` に問い合わせ先を設定すると、登録画面に表示されます。
+- 管理画面は合言葉が未設定だと開きません（個人情報が素通しにならないようにするため）。
+
 ## 使い方
 
 ### パソコン・スマホでそのまま開く
@@ -90,8 +172,11 @@ python3 -m http.server 8000 --directory colormix
 | `index.html` | 画面 |
 | `style.css` | 見た目（ダークモード対応） |
 | `calc.js` | 配合計算ロジック（画面から独立した純粋関数） |
-| `i18n.js` | 画面の文言（日本語 / 廣東話） |
-| `app.js` | 入力・表示・保存の制御 |
+| `profile.js` | 利用登録の入力チェック（純粋関数） |
+| `i18n.js` | 画面の文言（日本語 / 廣東話）と言語の状態 |
+| `config.js` | 送信先などの設定（ここだけ書き換える） |
+| `app.js` | 計算機の入力・表示・保存の制御 |
+| `register.js` | はじめて使う人への登録画面 |
 | `calc.test.js` | 計算ロジックのテスト |
 | `build.js` | 1ファイル版を生成するスクリプト |
 | `standalone.html` | 配布用の1ファイル版（`build.js` が生成） |
@@ -99,10 +184,11 @@ python3 -m http.server 8000 --directory colormix
 ## テスト
 
 ```bash
-node --test colormix/calc.test.js
+node --test colormix/calc.test.js colormix/profile.test.js   # 計算・入力チェック
+python -m pytest tests/test_colormix_register.py             # 登録API・管理画面
 ```
 
-外部ライブラリは使っていません（Node 18 以降の標準テストランナーのみ）。
+計算機側に外部ライブラリは使っていません（Node 18 以降の標準テストランナーのみ）。
 
 ## 文言を足すとき
 

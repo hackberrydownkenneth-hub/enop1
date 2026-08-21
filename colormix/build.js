@@ -16,15 +16,26 @@ const html = read("index.html");
 const css = read("style.css");
 const i18n = read("i18n.js");
 const calc = read("calc.js");
+const profile = read("profile.js");
+const config = read("config.js");
 const app = read("app.js");
+const register = read("register.js");
 
 // インライン化する JS の中に </script> があるとそこで script が終わってしまう
 const inlineScript = (source) =>
   "<script>\n" + source.trim().replace(/<\/script/gi, "<\\/script") + "\n    </script>";
 
 const cssTag = '<link rel="stylesheet" href="style.css" />';
-const scriptTags =
-  '<script src="i18n.js"></script>\n    <script src="calc.js"></script>\n    <script src="app.js"></script>';
+const scriptTags = [
+  "i18n.js",
+  "calc.js",
+  "profile.js",
+  "config.js",
+  "app.js",
+  "register.js",
+]
+  .map((name) => '<script src="' + name + '"></script>')
+  .join("\n    ");
 
 if (!html.includes(cssTag) || !html.includes(scriptTags)) {
   console.error("index.html の参照タグが見つかりません。build.js を更新してください。");
@@ -35,7 +46,7 @@ const out = html
   .replace(cssTag, () => "<style>\n" + css.trim() + "\n    </style>")
   .replace(
     scriptTags,
-    () => [i18n, calc, app].map(inlineScript).join("\n    ")
+    () => [i18n, calc, profile, config, app, register].map(inlineScript).join("\n    ")
   );
 
 // data: 以外の外部参照が残っていたら 1ファイルとして成立しない

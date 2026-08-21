@@ -80,6 +80,11 @@
   box-sizing: border-box;
 }
 
+/* display を持つクラス（.sticky-bar / .gate-field など）に hidden 属性を効かせる */
+[hidden] {
+  display: none !important;
+}
+
 html {
   -webkit-text-size-adjust: 100%;
 }
@@ -645,6 +650,245 @@ body {
   box-shadow: var(--shadow);
   z-index: 10;
 }
+
+/* ===== はじめて使う人への登録画面 ===== */
+body.gate-open {
+  overflow: hidden;
+}
+
+.gate {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 16px 12px calc(16px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  background: rgba(22, 16, 34, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.gate-card {
+  width: 100%;
+  max-width: 460px;
+  margin: auto;
+  padding: 18px 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--card);
+  color: var(--ink);
+  border-radius: var(--radius);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.gate-lang {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+
+.gate-lang-btn {
+  min-height: 34px;
+  padding: 4px 16px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gate-lang-btn[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.gate-title {
+  margin: 0;
+  font-size: 20px;
+  text-wrap: balance;
+}
+
+.gate-lead {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.gate-q {
+  margin: 6px 0 0;
+  font-size: 15px;
+}
+
+.gate-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.gate-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 66px;
+  padding: 10px 8px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--muted);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.gate-option strong {
+  font-size: 15px;
+}
+
+.gate-option small {
+  font-size: 11px;
+}
+
+.gate-option[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--ink);
+}
+
+.gate-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gate-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gate-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.gate-ig {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gate-at {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--muted);
+}
+
+.gate-purpose {
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.gate-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.gate-consent input {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.gate-error {
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--brand-soft);
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.gate-submit {
+  min-height: 54px;
+  border: none;
+  border-radius: 12px;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font: inherit;
+  font-size: 17px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.gate-submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.gate-contact {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.gate-option:focus-visible,
+.gate-lang-btn:focus-visible,
+.gate-submit:focus-visible,
+.gate-consent input:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* 登録情報の確認・削除 */
+.manage {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+
+.manage-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.manage-who {
+  margin: 4px 0 8px;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.manage-del {
+  min-height: 40px;
+  padding: 4px 14px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--danger);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
     </style>
     <link
       rel="icon"
@@ -766,6 +1010,7 @@ body {
         <p class="how-math" data-i18n="how.math"></p>
         <p class="how-note" data-i18n="how.note1"></p>
         <p class="how-note" data-i18n="how.note2"></p>
+        <div class="manage" id="reg-manage" hidden></div>
       </details>
     </main>
 
@@ -895,6 +1140,39 @@ body {
     "copy.subtotal": "1剤 合計",
     "copy.ox": "2剤",
     "copy.total": "ぜんぶで",
+
+    "reg.title": "はじめる前に",
+    "reg.lead":
+      "美容師さん向けの無料ツールです。はじめて使うときだけ登録をお願いします（次回からは出ません）。",
+    "reg.q1": "お仕事のスタイル",
+    "reg.opt.salon": "サロン所属",
+    "reg.opt.salon.sub": "お店に勤めている",
+    "reg.opt.freelance": "フリーランス",
+    "reg.opt.freelance.sub": "面貸し・独立・業務委託",
+    "reg.salonName": "サロン名（任意）",
+    "reg.salonName.ph": "例）SALON TOKYO",
+    "reg.q2": "Instagram アカウント",
+    "reg.q2.hint": "@ のあとのIDを入れてください。プロフィールのURLを貼ってもOK。",
+    "reg.instagram.ph": "your_id",
+    "reg.consent": "上の使いみちに同意します",
+    "reg.purpose.collect":
+      "いただいた情報（区分・サロン名・Instagram）は、このアプリの運営者がサービス改善とご連絡のためだけに使います。",
+    "reg.purpose.local":
+      "※ プレビュー版です。入力した内容はこの端末の中だけに保存され、どこにも送信されません。",
+    "reg.contact": "お問い合わせ: {contact}",
+    "reg.submit": "同意してはじめる",
+    "reg.submitting": "送信中…",
+    "reg.err.affiliation": "お仕事のスタイルを選んでください",
+    "reg.err.instagram": "Instagram の ID を入れてください",
+    "reg.err.instagram_format": "使えるのは半角英数字と . _ です（30文字まで）",
+    "reg.err.consent": "同意にチェックを入れてください",
+    "reg.warn.offline": "いまは送信できませんでした。あとで自動的に送りなおします。",
+    "reg.manage.title": "登録情報",
+    "reg.aff.salon": "サロン所属",
+    "reg.aff.freelance": "フリーランス",
+    "reg.manage.delete": "この端末から削除",
+    "reg.manage.deleted": "削除しました",
+    "reg.manage.pending": "（未送信・あとで再送します）",
   };
 
   var yue = {
@@ -998,10 +1276,46 @@ body {
     "copy.subtotal": "染膏合計",
     "copy.ox": "雙氧奶",
     "copy.total": "總共",
+
+    "reg.title": "開始之前",
+    "reg.lead":
+      "呢個係美容師專用嘅免費工具。淨係第一次用要登記一次，之後唔會再出。",
+    "reg.q1": "你嘅工作形式",
+    "reg.opt.salon": "喺髮型屋返工",
+    "reg.opt.salon.sub": "受聘於髮型屋",
+    "reg.opt.freelance": "自由身",
+    "reg.opt.freelance.sub": "租位、獨立、外判",
+    "reg.salonName": "髮型屋名（可以唔填）",
+    "reg.salonName.ph": "例：SALON HK",
+    "reg.q2": "Instagram 帳戶",
+    "reg.q2.hint": "入 @ 後面嘅 ID，貼個人檔案嘅 URL 都得。",
+    "reg.instagram.ph": "your_id",
+    "reg.consent": "我同意上面講嘅用途",
+    "reg.purpose.collect":
+      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者用嚟改善服務同聯絡你。",
+    "reg.purpose.local":
+      "※ 呢個係預覽版。你填嘅嘢淨係擺喺呢部機入面，唔會傳去任何地方。",
+    "reg.contact": "查詢: {contact}",
+    "reg.submit": "同意，開始用",
+    "reg.submitting": "傳送緊…",
+    "reg.err.affiliation": "請揀你嘅工作形式",
+    "reg.err.instagram": "請入 Instagram ID",
+    "reg.err.instagram_format": "只可以用英文、數字同 . _（最多 30 個字）",
+    "reg.err.consent": "請剔咗同意先",
+    "reg.warn.offline": "而家傳送唔到，遲啲會自動再試。",
+    "reg.manage.title": "登記資料",
+    "reg.aff.salon": "喺髮型屋返工",
+    "reg.aff.freelance": "自由身",
+    "reg.manage.delete": "喺呢部機刪除",
+    "reg.manage.deleted": "已刪除",
+    "reg.manage.pending": "（未傳送・遲啲會再試）",
   };
 
   var dictionaries = { ja: ja, yue: yue };
   var order = ["ja", "yue"];
+  var LANG_KEY = "colormix.lang.v1";
+  var listeners = [];
+  var currentLang = null;
 
   /** 端末の言語設定から初期言語を決める */
   function detect(languages) {
@@ -1032,12 +1346,63 @@ body {
     });
   }
 
+  function readStored() {
+    try {
+      return JSON.parse(localStorage.getItem(LANG_KEY));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** いま使う言語。保存済み → 端末の言語設定 → 日本語 の順に決まる */
+  function current() {
+    if (currentLang) return currentLang;
+    var saved = readStored();
+    currentLang = has(saved)
+      ? saved
+      : detect(
+          (typeof navigator !== "undefined" &&
+            (navigator.languages || [navigator.language])) ||
+            []
+        );
+    return currentLang;
+  }
+
+  /** 言語を切り替えて、購読側（画面・登録フォーム）に知らせる */
+  function set(lang) {
+    if (!has(lang) || lang === current()) return;
+    currentLang = lang;
+    try {
+      localStorage.setItem(LANG_KEY, JSON.stringify(lang));
+    } catch (e) {
+      /* 保存できなくても切り替えは効く */
+    }
+    listeners.forEach(function (fn) {
+      fn(currentLang);
+    });
+  }
+
+  function onChange(fn) {
+    listeners.push(fn);
+  }
+
+  /** その言語で引く t() を作る */
+  function scoped(getLang) {
+    return function (key, params) {
+      return translate(getLang(), key, params);
+    };
+  }
+
   return {
     LANGS: order,
     dictionaries: dictionaries,
     detect: detect,
     has: has,
     translate: translate,
+    current: current,
+    set: set,
+    onChange: onChange,
+    scoped: scoped,
   };
 });
     </script>
@@ -1304,6 +1669,144 @@ body {
 });
     </script>
     <script>
+/**
+ * 利用登録の入力チェック（画面から独立した純粋関数）。
+ *
+ * ブラウザ: script タグで読み込むと window.ColorMixProfile から参照できる
+ * Node    : require("./profile.js")
+ */
+(function (root, factory) {
+  var api = factory();
+  if (typeof module === "object" && module.exports) {
+    module.exports = api;
+  } else {
+    root.ColorMixProfile = api;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  var AFFILIATIONS = ["salon", "freelance"];
+  var HANDLE_RE = /^[a-z0-9._]{1,30}$/;
+  var SALON_MAX = 80;
+
+  /**
+   * 入力された Instagram アカウントを ID だけに揃える。
+   * "@Foo_Bar" も "https://www.instagram.com/foo.bar/?hl=ja" も "foo.bar" になる。
+   */
+  function normalizeInstagram(raw) {
+    var text = String(raw === undefined || raw === null ? "" : raw).trim();
+    if (!text) return "";
+
+    var match = text.match(/instagram\.com\/([^/?#]+)/i);
+    if (match) {
+      text = match[1];
+    } else {
+      // URL ではないので @ とゴミだけ落とす
+      text = text.replace(/^https?:\/\//i, "").replace(/^@+/, "");
+      text = text.split(/[/?#]/)[0];
+    }
+    return text.trim().replace(/^@+/, "").toLowerCase();
+  }
+
+  function trimTo(value, max) {
+    return String(value === undefined || value === null ? "" : value)
+      .trim()
+      .slice(0, max);
+  }
+
+  /**
+   * 登録フォームの入力を検証する。
+   * @returns {{ok: boolean, errors: object, value: object}}
+   *          errors は { instagram: "instagram_format" } のようなコード。
+   */
+  function validate(input) {
+    var data = input || {};
+    var errors = {};
+
+    var affiliation = data.affiliation;
+    if (AFFILIATIONS.indexOf(affiliation) < 0) {
+      errors.affiliation = "affiliation";
+      affiliation = "";
+    }
+
+    var instagram = normalizeInstagram(data.instagram);
+    if (!instagram) {
+      errors.instagram = "instagram";
+    } else if (!HANDLE_RE.test(instagram)) {
+      errors.instagram = "instagram_format";
+    }
+
+    if (data.consent !== true) {
+      errors.consent = "consent";
+    }
+
+    return {
+      ok: Object.keys(errors).length === 0,
+      errors: errors,
+      value: {
+        affiliation: affiliation,
+        // サロン所属のときだけ店名を残す
+        salon: affiliation === "salon" ? trimTo(data.salon, SALON_MAX) : "",
+        instagram: instagram,
+      },
+    };
+  }
+
+  /** 保存・送信する形に整える */
+  function buildRecord(value, meta) {
+    var extra = meta || {};
+    return {
+      affiliation: value.affiliation,
+      salon: value.salon || "",
+      instagram: value.instagram,
+      lang: extra.lang || "",
+      registeredAt: extra.registeredAt || "",
+    };
+  }
+
+  return {
+    AFFILIATIONS: AFFILIATIONS,
+    SALON_MAX: SALON_MAX,
+    normalizeInstagram: normalizeInstagram,
+    validate: validate,
+    buildRecord: buildRecord,
+  };
+});
+    </script>
+    <script>
+/**
+ * 配置ごとの設定。ここだけ書き換えれば送信先を変えられる。
+ *
+ * register.mode
+ *   "off"   … 登録画面を出さない（社内配布・1ファイル版など）
+ *   "local" … 登録画面は出すが、入力はこの端末にだけ保存（プレビュー用）
+ *   "api"   … 自前サーバー（colormix_server）へ JSON で送る
+ *   "form"  … Google フォームへ送る（サーバー不要。回答はスプレッドシートに溜まる）
+ */
+window.COLORMIX_CONFIG = {
+  register: {
+    mode: "local",
+
+    // mode: "api" のとき
+    apiUrl: "/api/register",
+
+    // mode: "form" のとき（Google フォームの送信先と entry.xxx フィールドID）
+    form: {
+      actionUrl: "",
+      fields: {
+        affiliation: "",
+        salon: "",
+        instagram: "",
+        lang: "",
+      },
+    },
+
+    // 画面に出す問い合わせ先（空なら非表示）
+    contact: "",
+  },
+};
+    </script>
+    <script>
 /* カラー剤計算機の画面制御。計算は calc.js、文言は i18n.js に任せる。 */
 (function () {
   "use strict";
@@ -1314,7 +1817,6 @@ body {
   var TOTALS = [30, 60, 80, 100, 120, 150, 200];
   var STATE_KEY = "colormix.state.v1";
   var RECIPE_KEY = "colormix.recipes.v1";
-  var LANG_KEY = "colormix.lang.v1";
 
   var $ = function (id) {
     return document.getElementById(id);
@@ -1339,16 +1841,9 @@ body {
     }
   }
 
-  /* ---------- 言語 ---------- */
+  /* ---------- 言語（状態は i18n.js が持つ。登録画面と共有する） ---------- */
 
-  var lang = readStore(LANG_KEY, null);
-  if (!I18N.has(lang)) {
-    lang = I18N.detect(navigator.languages || [navigator.language || ""]);
-  }
-
-  function t(key, params) {
-    return I18N.translate(lang, key, params);
-  }
+  var t = I18N.scoped(I18N.current);
 
   /**
    * **強調** を <b> に変えながらテキストを流し込む。
@@ -1453,11 +1948,7 @@ body {
     var btn = button("lang-btn", I18N.translate(code, "lang.name"));
     btn.dataset.lang = code;
     btn.addEventListener("click", function () {
-      if (lang === code) return;
-      lang = code;
-      writeStore(LANG_KEY, lang);
-      applyLang();
-      syncAll();
+      I18N.set(code);
     });
     langSwitch.appendChild(btn);
   });
@@ -1480,7 +1971,10 @@ body {
       }
     );
     Array.prototype.forEach.call(langSwitch.children, function (btn) {
-      btn.setAttribute("aria-pressed", btn.dataset.lang === lang ? "true" : "false");
+      btn.setAttribute(
+        "aria-pressed",
+        btn.dataset.lang === I18N.current() ? "true" : "false"
+      );
     });
     if (stepToggle) {
       Array.prototype.forEach.call(stepToggle.querySelectorAll(".chip"), function (chip) {
@@ -2022,10 +2516,474 @@ body {
     update();
   }
 
+  I18N.onChange(function () {
+    applyLang();
+    syncAll();
+  });
+
   buildStepToggle();
   applyLang();
   syncAll();
   watchResultCard();
+})();
+    </script>
+    <script>
+/**
+ * はじめて使う人だけに出す利用登録。
+ *
+ * ・所属（サロン / フリーランス）と Instagram を聞いてから計算機を使えるようにする
+ * ・一度登録したら二度と出さない（端末の localStorage に記録）
+ * ・送信先は config.js の register.mode で切り替える
+ */
+(function () {
+  "use strict";
+
+  var I18N = window.ColorMixI18N;
+  var Profile = window.ColorMixProfile;
+  var PROFILE_KEY = "colormix.profile.v1";
+
+  var defaults = {
+    mode: "local",
+    apiUrl: "/api/register",
+    form: { actionUrl: "", fields: {} },
+    contact: "",
+  };
+  var config = Object.assign(
+    {},
+    defaults,
+    (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.register) || {}
+  );
+
+  var t = I18N.scoped(I18N.current);
+
+  /* ---------- 保存 ---------- */
+
+  function readProfile() {
+    try {
+      var raw = localStorage.getItem(PROFILE_KEY);
+      var parsed = raw ? JSON.parse(raw) : null;
+      return parsed && parsed.instagram ? parsed : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  function writeProfile(profile) {
+    try {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(profile));
+    } catch (e) {
+      /* 保存できなくても使えるようにはする */
+    }
+  }
+
+  function clearProfile() {
+    try {
+      localStorage.removeItem(PROFILE_KEY);
+    } catch (e) {
+      /* noop */
+    }
+  }
+
+  /* ---------- 送信 ---------- */
+
+  function collects() {
+    return config.mode === "api" || config.mode === "form";
+  }
+
+  /** 送信できたら true。失敗しても例外は投げない */
+  function send(record) {
+    if (config.mode === "api") {
+      return fetch(config.apiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(record),
+      }).then(function (response) {
+        return response.ok;
+      });
+    }
+
+    if (config.mode === "form" && config.form && config.form.actionUrl) {
+      var body = new FormData();
+      var fields = config.form.fields || {};
+      Object.keys(fields).forEach(function (key) {
+        if (fields[key]) body.append(fields[key], record[key] || "");
+      });
+      // Google フォームは CORS を返さないので結果は読めない。送れたら成功とみなす
+      return fetch(config.form.actionUrl, {
+        method: "POST",
+        mode: "no-cors",
+        body: body,
+      }).then(function () {
+        return true;
+      });
+    }
+
+    return Promise.resolve(false);
+  }
+
+  function trySend(record) {
+    if (!collects()) return Promise.resolve(false);
+    return send(record).catch(function () {
+      return false;
+    });
+  }
+
+  /** 前回送れなかった分をこっそり送りなおす */
+  function retryPending() {
+    var profile = readProfile();
+    if (!profile || profile.synced || !collects()) return;
+    trySend(Profile.buildRecord(profile, profile)).then(function (sent) {
+      if (!sent) return;
+      profile.synced = true;
+      writeProfile(profile);
+      renderManage();
+    });
+  }
+
+  /* ---------- 画面の下ごしらえ ---------- */
+
+  function el(tag, className, text) {
+    var node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  var backdrop = null;
+  var state = { affiliation: "", consent: false, busy: false };
+  var refs = {};
+
+  var pageParts = function () {
+    return [
+      document.querySelector(".header"),
+      document.querySelector(".main"),
+      document.getElementById("sticky-bar"),
+    ].filter(Boolean);
+  };
+
+  function setPageInert(on) {
+    pageParts().forEach(function (part) {
+      if (on) {
+        part.setAttribute("inert", "");
+        part.setAttribute("aria-hidden", "true");
+      } else {
+        part.removeAttribute("inert");
+        part.removeAttribute("aria-hidden");
+      }
+    });
+    document.body.classList.toggle("gate-open", on);
+  }
+
+  /* ---------- 登録画面 ---------- */
+
+  function buildGate() {
+    backdrop = el("div", "gate");
+    backdrop.setAttribute("role", "dialog");
+    backdrop.setAttribute("aria-modal", "true");
+
+    var card = el("div", "gate-card");
+    backdrop.appendChild(card);
+
+    // 言語切り替え（登録画面が最初に出るので、ここにも要る）
+    var langRow = el("div", "gate-lang");
+    langRow.setAttribute("role", "group");
+    refs.langButtons = I18N.LANGS.map(function (code) {
+      var btn = el("button", "gate-lang-btn", I18N.translate(code, "lang.name"));
+      btn.type = "button";
+      btn.addEventListener("click", function () {
+        I18N.set(code);
+      });
+      langRow.appendChild(btn);
+      return { code: code, btn: btn };
+    });
+    card.appendChild(langRow);
+
+    refs.title = el("h2", "gate-title");
+    refs.title.id = "gate-title";
+    backdrop.setAttribute("aria-labelledby", "gate-title");
+    card.appendChild(refs.title);
+
+    refs.lead = el("p", "gate-lead");
+    card.appendChild(refs.lead);
+
+    // 所属
+    refs.q1 = el("h3", "gate-q");
+    card.appendChild(refs.q1);
+    var options = el("div", "gate-options");
+    refs.options = Profile.AFFILIATIONS.map(function (value) {
+      var btn = el("button", "gate-option");
+      btn.type = "button";
+      btn.setAttribute("aria-pressed", "false");
+      var strong = el("strong");
+      var small = el("small");
+      btn.appendChild(strong);
+      btn.appendChild(small);
+      btn.addEventListener("click", function () {
+        state.affiliation = value;
+        syncOptions();
+        clearError();
+      });
+      options.appendChild(btn);
+      return { value: value, btn: btn, strong: strong, small: small };
+    });
+    card.appendChild(options);
+
+    // サロン名（サロン所属のときだけ）
+    refs.salonWrap = el("div", "gate-field");
+    refs.salonLabel = el("label", "gate-label");
+    refs.salonLabel.htmlFor = "gate-salon";
+    refs.salon = el("input", "text-input");
+    refs.salon.id = "gate-salon";
+    refs.salon.type = "text";
+    refs.salon.maxLength = Profile.SALON_MAX;
+    refs.salonWrap.appendChild(refs.salonLabel);
+    refs.salonWrap.appendChild(refs.salon);
+    card.appendChild(refs.salonWrap);
+
+    // Instagram
+    var igWrap = el("div", "gate-field");
+    refs.igLabel = el("label", "gate-label");
+    refs.igLabel.htmlFor = "gate-instagram";
+    refs.igHint = el("p", "gate-hint");
+    var igRow = el("div", "gate-ig");
+    igRow.appendChild(el("span", "gate-at", "@"));
+    refs.instagram = el("input", "text-input");
+    refs.instagram.id = "gate-instagram";
+    refs.instagram.type = "text";
+    refs.instagram.autocapitalize = "off";
+    refs.instagram.autocomplete = "off";
+    refs.instagram.spellcheck = false;
+    refs.instagram.addEventListener("input", clearError);
+    igRow.appendChild(refs.instagram);
+    igWrap.appendChild(refs.igLabel);
+    igWrap.appendChild(refs.igHint);
+    igWrap.appendChild(igRow);
+    card.appendChild(igWrap);
+
+    // 使いみち＋同意
+    refs.purpose = el("p", "gate-purpose");
+    card.appendChild(refs.purpose);
+
+    var consentRow = el("label", "gate-consent");
+    refs.consent = document.createElement("input");
+    refs.consent.type = "checkbox";
+    refs.consent.addEventListener("change", function () {
+      state.consent = refs.consent.checked;
+      clearError();
+    });
+    refs.consentText = el("span");
+    consentRow.appendChild(refs.consent);
+    consentRow.appendChild(refs.consentText);
+    card.appendChild(consentRow);
+
+    refs.error = el("p", "gate-error");
+    refs.error.setAttribute("role", "alert");
+    refs.error.hidden = true;
+    card.appendChild(refs.error);
+
+    refs.submit = el("button", "gate-submit");
+    refs.submit.type = "button";
+    refs.submit.addEventListener("click", onSubmit);
+    card.appendChild(refs.submit);
+
+    refs.contact = el("p", "gate-contact");
+    card.appendChild(refs.contact);
+
+    // タブ移動をカードの中だけに閉じ込める
+    backdrop.addEventListener("keydown", function (event) {
+      if (event.key !== "Tab") return;
+      var focusable = card.querySelectorAll(
+        'button, input, [href], select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    document.body.appendChild(backdrop);
+    applyGateText();
+    syncOptions();
+    setPageInert(true);
+    refs.options[0].btn.focus();
+  }
+
+  function applyGateText() {
+    if (!backdrop) return;
+    refs.title.textContent = t("reg.title");
+    refs.lead.textContent = t("reg.lead");
+    refs.q1.textContent = t("reg.q1");
+    refs.options.forEach(function (option) {
+      option.strong.textContent = t("reg.opt." + option.value);
+      option.small.textContent = t("reg.opt." + option.value + ".sub");
+    });
+    refs.salonLabel.textContent = t("reg.salonName");
+    refs.salon.placeholder = t("reg.salonName.ph");
+    refs.igLabel.textContent = t("reg.q2");
+    refs.igHint.textContent = t("reg.q2.hint");
+    refs.instagram.placeholder = t("reg.instagram.ph");
+    refs.instagram.setAttribute("aria-label", t("reg.q2"));
+    refs.purpose.textContent = t(collects() ? "reg.purpose.collect" : "reg.purpose.local");
+    refs.consentText.textContent = t("reg.consent");
+    refs.submit.textContent = t(state.busy ? "reg.submitting" : "reg.submit");
+    refs.contact.textContent = config.contact
+      ? t("reg.contact", { contact: config.contact })
+      : "";
+    refs.contact.hidden = !config.contact;
+    I18N.LANGS.forEach(function (code, index) {
+      refs.langButtons[index].btn.setAttribute(
+        "aria-pressed",
+        code === I18N.current() ? "true" : "false"
+      );
+    });
+    if (refs.error.dataset.code) {
+      refs.error.textContent = t("reg.err." + refs.error.dataset.code);
+    }
+  }
+
+  function syncOptions() {
+    refs.options.forEach(function (option) {
+      option.btn.setAttribute(
+        "aria-pressed",
+        option.value === state.affiliation ? "true" : "false"
+      );
+    });
+    refs.salonWrap.hidden = state.affiliation !== "salon";
+  }
+
+  function clearError() {
+    refs.error.hidden = true;
+    refs.error.textContent = "";
+    delete refs.error.dataset.code;
+  }
+
+  function showError(code, field) {
+    refs.error.dataset.code = code;
+    refs.error.textContent = t("reg.err." + code);
+    refs.error.hidden = false;
+    if (field && field.focus) field.focus();
+  }
+
+  function onSubmit() {
+    if (state.busy) return;
+
+    var result = Profile.validate({
+      affiliation: state.affiliation,
+      salon: refs.salon.value,
+      instagram: refs.instagram.value,
+      consent: state.consent,
+    });
+
+    if (!result.ok) {
+      if (result.errors.affiliation) {
+        showError(result.errors.affiliation, refs.options[0].btn);
+      } else if (result.errors.instagram) {
+        showError(result.errors.instagram, refs.instagram);
+      } else {
+        showError(result.errors.consent, refs.consent);
+      }
+      return;
+    }
+
+    state.busy = true;
+    refs.submit.disabled = true;
+    refs.submit.textContent = t("reg.submitting");
+
+    var record = Profile.buildRecord(result.value, {
+      lang: I18N.current(),
+      registeredAt: new Date().toISOString(),
+    });
+
+    trySend(record).then(function (sent) {
+      var profile = Object.assign({}, record, { synced: sent || !collects() });
+      writeProfile(profile);
+      closeGate();
+      renderManage();
+      if (collects() && !sent) notify(t("reg.warn.offline"));
+    });
+  }
+
+  function closeGate() {
+    if (!backdrop) return;
+    backdrop.remove();
+    backdrop = null;
+    state.busy = false;
+    setPageInert(false);
+  }
+
+  /** 画面下に短く出すお知らせ（app.js のトーストと同じ見た目） */
+  function notify(message) {
+    var existing = document.querySelector(".toast");
+    if (existing) existing.remove();
+    var toast = el("div", "toast", message);
+    document.body.appendChild(toast);
+    setTimeout(function () {
+      toast.remove();
+    }, 2600);
+  }
+
+  /* ---------- 登録情報の確認・削除 ---------- */
+
+  function renderManage() {
+    var host = document.getElementById("reg-manage");
+    if (!host) return;
+    host.textContent = "";
+
+    var profile = readProfile();
+    if (!profile) {
+      host.hidden = true;
+      return;
+    }
+    host.hidden = false;
+
+    var title = el("p", "manage-title", t("reg.manage.title"));
+    var who = el(
+      "p",
+      "manage-who",
+      t("reg.aff." + profile.affiliation) +
+        "・@" +
+        profile.instagram +
+        (profile.salon ? "・" + profile.salon : "") +
+        (profile.synced ? "" : t("reg.manage.pending"))
+    );
+    var del = el("button", "manage-del", t("reg.manage.delete"));
+    del.type = "button";
+    del.addEventListener("click", function () {
+      clearProfile();
+      renderManage();
+      notify(t("reg.manage.deleted"));
+    });
+
+    host.appendChild(title);
+    host.appendChild(who);
+    host.appendChild(del);
+  }
+
+  /* ---------- 起動 ---------- */
+
+  I18N.onChange(function () {
+    applyGateText();
+    renderManage();
+  });
+
+  if (config.mode !== "off" && !readProfile()) {
+    buildGate();
+  } else {
+    retryPending();
+  }
+  renderManage();
+
+  window.ColorMixRegister = {
+    getProfile: readProfile,
+    clearProfile: clearProfile,
+    collects: collects,
+  };
 })();
     </script>
   </body>

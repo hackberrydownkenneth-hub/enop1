@@ -117,6 +117,39 @@
     "copy.subtotal": "1剤 合計",
     "copy.ox": "2剤",
     "copy.total": "ぜんぶで",
+
+    "reg.title": "はじめる前に",
+    "reg.lead":
+      "美容師さん向けの無料ツールです。はじめて使うときだけ登録をお願いします（次回からは出ません）。",
+    "reg.q1": "お仕事のスタイル",
+    "reg.opt.salon": "サロン所属",
+    "reg.opt.salon.sub": "お店に勤めている",
+    "reg.opt.freelance": "フリーランス",
+    "reg.opt.freelance.sub": "面貸し・独立・業務委託",
+    "reg.salonName": "サロン名（任意）",
+    "reg.salonName.ph": "例）SALON TOKYO",
+    "reg.q2": "Instagram アカウント",
+    "reg.q2.hint": "@ のあとのIDを入れてください。プロフィールのURLを貼ってもOK。",
+    "reg.instagram.ph": "your_id",
+    "reg.consent": "上の使いみちに同意します",
+    "reg.purpose.collect":
+      "いただいた情報（区分・サロン名・Instagram）は、このアプリの運営者がサービス改善とご連絡のためだけに使います。",
+    "reg.purpose.local":
+      "※ プレビュー版です。入力した内容はこの端末の中だけに保存され、どこにも送信されません。",
+    "reg.contact": "お問い合わせ: {contact}",
+    "reg.submit": "同意してはじめる",
+    "reg.submitting": "送信中…",
+    "reg.err.affiliation": "お仕事のスタイルを選んでください",
+    "reg.err.instagram": "Instagram の ID を入れてください",
+    "reg.err.instagram_format": "使えるのは半角英数字と . _ です（30文字まで）",
+    "reg.err.consent": "同意にチェックを入れてください",
+    "reg.warn.offline": "いまは送信できませんでした。あとで自動的に送りなおします。",
+    "reg.manage.title": "登録情報",
+    "reg.aff.salon": "サロン所属",
+    "reg.aff.freelance": "フリーランス",
+    "reg.manage.delete": "この端末から削除",
+    "reg.manage.deleted": "削除しました",
+    "reg.manage.pending": "（未送信・あとで再送します）",
   };
 
   var yue = {
@@ -220,10 +253,46 @@
     "copy.subtotal": "染膏合計",
     "copy.ox": "雙氧奶",
     "copy.total": "總共",
+
+    "reg.title": "開始之前",
+    "reg.lead":
+      "呢個係美容師專用嘅免費工具。淨係第一次用要登記一次，之後唔會再出。",
+    "reg.q1": "你嘅工作形式",
+    "reg.opt.salon": "喺髮型屋返工",
+    "reg.opt.salon.sub": "受聘於髮型屋",
+    "reg.opt.freelance": "自由身",
+    "reg.opt.freelance.sub": "租位、獨立、外判",
+    "reg.salonName": "髮型屋名（可以唔填）",
+    "reg.salonName.ph": "例：SALON HK",
+    "reg.q2": "Instagram 帳戶",
+    "reg.q2.hint": "入 @ 後面嘅 ID，貼個人檔案嘅 URL 都得。",
+    "reg.instagram.ph": "your_id",
+    "reg.consent": "我同意上面講嘅用途",
+    "reg.purpose.collect":
+      "你填嘅資料（工作形式、髮型屋名、Instagram）淨係會俾營運者用嚟改善服務同聯絡你。",
+    "reg.purpose.local":
+      "※ 呢個係預覽版。你填嘅嘢淨係擺喺呢部機入面，唔會傳去任何地方。",
+    "reg.contact": "查詢: {contact}",
+    "reg.submit": "同意，開始用",
+    "reg.submitting": "傳送緊…",
+    "reg.err.affiliation": "請揀你嘅工作形式",
+    "reg.err.instagram": "請入 Instagram ID",
+    "reg.err.instagram_format": "只可以用英文、數字同 . _（最多 30 個字）",
+    "reg.err.consent": "請剔咗同意先",
+    "reg.warn.offline": "而家傳送唔到，遲啲會自動再試。",
+    "reg.manage.title": "登記資料",
+    "reg.aff.salon": "喺髮型屋返工",
+    "reg.aff.freelance": "自由身",
+    "reg.manage.delete": "喺呢部機刪除",
+    "reg.manage.deleted": "已刪除",
+    "reg.manage.pending": "（未傳送・遲啲會再試）",
   };
 
   var dictionaries = { ja: ja, yue: yue };
   var order = ["ja", "yue"];
+  var LANG_KEY = "colormix.lang.v1";
+  var listeners = [];
+  var currentLang = null;
 
   /** 端末の言語設定から初期言語を決める */
   function detect(languages) {
@@ -254,11 +323,62 @@
     });
   }
 
+  function readStored() {
+    try {
+      return JSON.parse(localStorage.getItem(LANG_KEY));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** いま使う言語。保存済み → 端末の言語設定 → 日本語 の順に決まる */
+  function current() {
+    if (currentLang) return currentLang;
+    var saved = readStored();
+    currentLang = has(saved)
+      ? saved
+      : detect(
+          (typeof navigator !== "undefined" &&
+            (navigator.languages || [navigator.language])) ||
+            []
+        );
+    return currentLang;
+  }
+
+  /** 言語を切り替えて、購読側（画面・登録フォーム）に知らせる */
+  function set(lang) {
+    if (!has(lang) || lang === current()) return;
+    currentLang = lang;
+    try {
+      localStorage.setItem(LANG_KEY, JSON.stringify(lang));
+    } catch (e) {
+      /* 保存できなくても切り替えは効く */
+    }
+    listeners.forEach(function (fn) {
+      fn(currentLang);
+    });
+  }
+
+  function onChange(fn) {
+    listeners.push(fn);
+  }
+
+  /** その言語で引く t() を作る */
+  function scoped(getLang) {
+    return function (key, params) {
+      return translate(getLang(), key, params);
+    };
+  }
+
   return {
     LANGS: order,
     dictionaries: dictionaries,
     detect: detect,
     has: has,
     translate: translate,
+    current: current,
+    set: set,
+    onChange: onChange,
+    scoped: scoped,
   };
 });

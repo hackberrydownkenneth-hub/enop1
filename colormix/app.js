@@ -8,7 +8,6 @@
   var TOTALS = [30, 60, 80, 100, 120, 150, 200];
   var STATE_KEY = "colormix.state.v1";
   var RECIPE_KEY = "colormix.recipes.v1";
-  var LANG_KEY = "colormix.lang.v1";
 
   var $ = function (id) {
     return document.getElementById(id);
@@ -33,16 +32,9 @@
     }
   }
 
-  /* ---------- 言語 ---------- */
+  /* ---------- 言語（状態は i18n.js が持つ。登録画面と共有する） ---------- */
 
-  var lang = readStore(LANG_KEY, null);
-  if (!I18N.has(lang)) {
-    lang = I18N.detect(navigator.languages || [navigator.language || ""]);
-  }
-
-  function t(key, params) {
-    return I18N.translate(lang, key, params);
-  }
+  var t = I18N.scoped(I18N.current);
 
   /**
    * **強調** を <b> に変えながらテキストを流し込む。
@@ -147,11 +139,7 @@
     var btn = button("lang-btn", I18N.translate(code, "lang.name"));
     btn.dataset.lang = code;
     btn.addEventListener("click", function () {
-      if (lang === code) return;
-      lang = code;
-      writeStore(LANG_KEY, lang);
-      applyLang();
-      syncAll();
+      I18N.set(code);
     });
     langSwitch.appendChild(btn);
   });
@@ -174,7 +162,10 @@
       }
     );
     Array.prototype.forEach.call(langSwitch.children, function (btn) {
-      btn.setAttribute("aria-pressed", btn.dataset.lang === lang ? "true" : "false");
+      btn.setAttribute(
+        "aria-pressed",
+        btn.dataset.lang === I18N.current() ? "true" : "false"
+      );
     });
     if (stepToggle) {
       Array.prototype.forEach.call(stepToggle.querySelectorAll(".chip"), function (chip) {
@@ -715,6 +706,11 @@
     renderRecipes();
     update();
   }
+
+  I18N.onChange(function () {
+    applyLang();
+    syncAll();
+  });
 
   buildStepToggle();
   applyLang();
