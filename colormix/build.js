@@ -79,6 +79,7 @@ const published = [
   "app.js",
   "register.js",
   "logo.png",
+  "logo-white.png",
   "_headers",
 ];
 
