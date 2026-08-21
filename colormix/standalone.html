@@ -40,6 +40,8 @@
   --brand-soft: #f0e9ff;
   --ox: #0d9488;
   --ox-soft: #e2f6f3;
+  --add: #c2410c;
+  --add-soft: #fdeadf;
   --warn: #b45309;
   --danger: #d02f4b;
   --badge-ink: #7c3aed;
@@ -63,6 +65,8 @@
     --brand-soft: #2e2540;
     --ox: #5eead4;
     --ox-soft: #1e3a37;
+    --add: #fdba74;
+    --add-soft: #3a2a1e;
     --warn: #fbbf24;
     --danger: #fb7185;
     --badge-ink: #f3f0f8;
@@ -83,6 +87,8 @@
   --brand-soft: #2e2540;
   --ox: #5eead4;
   --ox-soft: #1e3a37;
+  --add: #fdba74;
+  --add-soft: #3a2a1e;
   --warn: #fbbf24;
   --danger: #fb7185;
   --badge-ink: #f3f0f8;
@@ -535,6 +541,92 @@ body {
   text-align: right;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* 追い足し（オプション） */
+.addon-no {
+  background: var(--add);
+  color: var(--card);
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.switch input {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  accent-color: var(--add);
+}
+
+.switch.on,
+.switch:has(input:checked) {
+  border-color: var(--add);
+  background: var(--add-soft);
+  color: var(--add);
+}
+
+.addon-body {
+  margin-top: 12px;
+}
+
+.addon-body .chip[aria-pressed="true"] {
+  border-color: var(--add);
+  background: var(--add);
+  color: var(--card);
+}
+
+.addon-preview {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--add-soft);
+  color: var(--add);
+  font-size: 14px;
+  text-align: center;
+}
+
+.addon-preview b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rrow.addon {
+  background: var(--add-soft);
+  margin: 6px -14px 0;
+  padding: 12px 14px;
+  border-bottom: none;
+  border-radius: 12px;
+  color: var(--add);
+}
+
+.rrow.grand {
+  border-bottom: none;
+  padding-top: 12px;
+  color: var(--add);
+  font-weight: 700;
+}
+
+.rrow.grand .rgram {
+  font-size: 28px;
+  color: var(--add);
+}
+
+.addon-break {
+  margin: 6px 0 0;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .notice {
@@ -1148,6 +1240,40 @@ body.gate-open {
         <button type="button" class="add-btn" id="add-item" data-i18n="items.add">＋ 1剤をふやす</button>
       </section>
 
+      <!-- 追い足し（オプション） -->
+      <section class="card addon" id="addon-card">
+        <h2 class="step">
+          <span class="step-no addon-no">＋</span><span data-i18n="addon.title">追い足し（オプション）</span>
+        </h2>
+        <p class="hint" data-i18n="addon.hint"></p>
+        <label class="switch" for="addon-toggle">
+          <input type="checkbox" id="addon-toggle" />
+          <span data-i18n="addon.toggle">追い足しを使う</span>
+        </label>
+        <div class="addon-body" id="addon-body" hidden>
+          <div class="chips" id="addon-chips" data-i18n-aria="addon.aria.group" role="group"></div>
+          <div class="custom-row">
+            <label for="addon-input" data-i18n="addon.custom">その他の％</label>
+            <div class="stepper">
+              <button type="button" class="round" data-act="addon-minus" data-i18n-aria="addon.aria.minus">−</button>
+              <input
+                id="addon-input"
+                class="num-input"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                max="100"
+                step="1"
+                data-i18n-aria="addon.aria.input"
+              />
+              <span class="unit">%</span>
+              <button type="button" class="round" data-act="addon-plus" data-i18n-aria="addon.aria.plus">＋</button>
+            </div>
+          </div>
+          <p class="addon-preview" id="addon-preview"></p>
+        </div>
+      </section>
+
       <!-- けっか -->
       <section class="card result" id="result-card" aria-live="polite">
         <h2 class="result-title" data-i18n="result.title">はかる量</h2>
@@ -1178,6 +1304,7 @@ body.gate-open {
         <p class="how-math" data-i18n="how.math"></p>
         <p class="how-note" data-i18n="how.note1"></p>
         <p class="how-note" data-i18n="how.note2"></p>
+        <p class="how-note" data-i18n="how.note3"></p>
         <div class="manage" id="reg-manage" hidden></div>
       </details>
       <footer class="footer">
@@ -1263,6 +1390,17 @@ body.gate-open {
     "label.parts": "割合",
     "label.grams": "使う量",
 
+    "addon.title": "追い足し（オプション）",
+    "addon.hint":
+      "合計量に対して 5〜10% ほどの1剤を、あとから足す塗り方に対応します。使わないときはOFFのままでOK。",
+    "addon.toggle": "追い足しを使う",
+    "addon.custom": "その他の％",
+    "addon.aria.group": "追い足しの割合",
+    "addon.aria.input": "追い足しの割合（％）",
+    "addon.aria.minus": "1% 減らす",
+    "addon.aria.plus": "1% 増やす",
+    "addon.preview": "合計 {total}g に対して **＋{g}g** の1剤を追い足します",
+
     "result.title": "計量",
     "result.partsSub": "割合 {parts}（全体の {pct}%）",
     "result.subtotal": "1剤 合計 {g}g",
@@ -1270,6 +1408,10 @@ body.gate-open {
     "result.oxSub": "1剤の {r} 倍",
     "result.sum": "合計",
     "result.notice": "※ {req}g は {step} 刻みに丸めて {got}g で計算しました。",
+    "result.addon": "追い足し1剤",
+    "result.addonSub": "合計量の {pct}%",
+    "result.addonBreak": "追い足しの内訳 {list}",
+    "result.grand": "総量（追い足し込み）",
     "step.label": "計量の単位",
     "step.1": "1g刻み",
     "step.0.1": "0.1g刻み",
@@ -1293,6 +1435,8 @@ body.gate-open {
       "例）合計 90g で 1:2 のとき → 1剤 30g、2剤 60g。1剤を 2:1 で混ぜるなら 20g と 10g。",
     "how.note2":
       "小数が出る場合はグラム数を丸めますが、**合計量は常に一致**するよう調整しています。0.1g 単位で量りたい場合は、結果の下の「0.1g刻み」を選んでください。",
+    "how.note3":
+      "**追い足し**をONにすると、合計量の 5〜10% 分の1剤を追加で計算します（例：合計 120g で 5% なら ＋6g）。追い足し分も1剤の割合どおりに分けます。",
 
     "footer.by": "提供",
     "footer.lead": "商品のご購入・お問い合わせはこちら",
@@ -1326,6 +1470,8 @@ body.gate-open {
     "copy.subtotal": "1剤 合計",
     "copy.ox": "2剤",
     "copy.total": "合計",
+    "copy.addon": "追い足し1剤",
+    "copy.grand": "総量（追い足し込み）",
 
     "reg.title": "始める前に",
     "reg.lead":
@@ -1412,6 +1558,15 @@ body.gate-open {
     "item.aria.plus": "增加",
     "label.parts": "比例",
     "label.grams": "份量",
+    "addon.title": "追加染膏（選用）",
+    "addon.hint": "對應在總量之外，再額外加入約 5〜10% 染膏的塗法。不需要時保持關閉即可。",
+    "addon.toggle": "使用追加染膏",
+    "addon.custom": "其他百分比",
+    "addon.aria.group": "追加染膏的百分比",
+    "addon.aria.input": "追加染膏的百分比（%）",
+    "addon.aria.minus": "減 1%",
+    "addon.aria.plus": "加 1%",
+    "addon.preview": "以總量 {total}g 計算，額外加入 **＋{g}g** 染膏",
     "result.title": "配方份量",
     "result.partsSub": "比例 {parts}（佔 {pct}%）",
     "result.subtotal": "染膏合計 {g}g",
@@ -1419,6 +1574,10 @@ body.gate-open {
     "result.oxSub": "染膏的 {r} 倍",
     "result.sum": "總共",
     "result.notice": "※ {req}g 已按 {step} 為單位調整為 {got}g 計算。",
+    "result.addon": "追加染膏",
+    "result.addonSub": "總量的 {pct}%",
+    "result.addonBreak": "追加染膏分配 {list}",
+    "result.grand": "總量（連追加染膏）",
     "step.label": "秤量精度",
     "step.1": "1g 為單位",
     "step.0.1": "0.1g 為單位",
@@ -1436,6 +1595,7 @@ body.gate-open {
     "how.math": "染膏合計 ＝ 總份量 ÷（1 ＋ 雙氧奶倍數）\n雙氧奶 ＝ 總份量 － 染膏合計\n每支染膏 ＝ 染膏合計 × 該支的比例 ÷ 比例總和",
     "how.note1": "例：總共 90g、1:2 → 染膏 30g、雙氧奶 60g。染膏以 2:1 混合，即 20g 與 10g。",
     "how.note2": "出現小數時會四捨五入，但**總份量必定準確**。如需秤量至 0.1g，請於結果下方選擇「0.1g 為單位」。",
+    "how.note3": "開啟**追加染膏**後，系統會按總量的 5〜10% 計算額外的染膏用量（例：總量 120g、5% 即 ＋6g）。追加的份量同樣會按染膏比例分配。",
     "footer.by": "提供",
     "footer.lead": "產品查詢及訂購",
     "footer.site": "官方網站",
@@ -1464,6 +1624,8 @@ body.gate-open {
     "copy.subtotal": "染膏合計",
     "copy.ox": "雙氧奶",
     "copy.total": "總共",
+    "copy.addon": "追加染膏",
+    "copy.grand": "總量（連追加染膏）",
     "reg.title": "開始之前",
     "reg.lead": "DRIVE BLUE HONG KONG 為髮型師提供的免費專業計算機。只需首次使用時登記一次，其後不會再顯示。",
     "reg.q1": "您的工作形式",
@@ -1609,6 +1771,7 @@ body.gate-open {
  * 用語
  *   1剤   … カラー剤本体。複数種類をミックスすることがある
  *   2剤   … オキシ（過酸化水素水）。1剤の合計に対して 1:1 / 1:2 / 1:3 などで混ぜる
+ *   追い足し … 1剤+2剤の合計量に対して 5〜10% ほどの1剤をあとから足す最近のやり方
  *   刻み  … 秤の最小単位（1g または 0.1g）
  */
 (function (root, factory) {
@@ -1645,6 +1808,13 @@ body.gate-open {
 
   function normalizeStep(step) {
     return STEPS.indexOf(step) >= 0 ? step : 1;
+  }
+
+  /** 追い足しの％。未指定・範囲外は 0（＝追い足しなし）にする */
+  function normalizePercent(value) {
+    var pct = Number(value);
+    if (!isFinite(pct) || pct <= 0) return 0;
+    return Math.min(pct, 100);
   }
 
   /**
@@ -1700,9 +1870,11 @@ body.gate-open {
    * @param {number} input.oxRatio  1剤に対する2剤の倍率（1:2 なら 2）
    * @param {Array}  input.items    [{ name, parts }] 1剤の配合比
    * @param {number} [input.step]   秤の刻み（1 or 0.1）
+   * @param {number} [input.addOnPercent] 追い足す1剤の割合（合計量に対する％／0でなし）
    */
   function calcFromTotal(input) {
     var step = normalizeStep(input && input.step);
+    var addOnPercent = normalizePercent(input && input.addOnPercent);
     var total = input ? Number(input.total) : NaN;
     var oxRatio = input ? Number(input.oxRatio) : NaN;
     var items = (input && input.items) || [];
@@ -1745,6 +1917,7 @@ body.gate-open {
     return buildResult({
       mode: "total",
       step: step,
+      addOnPercent: addOnPercent,
       oxRatio: oxRatio,
       requestedTotal: total,
       totalUnits: totalUnits,
@@ -1763,9 +1936,11 @@ body.gate-open {
    * @param {number} input.oxRatio  1剤に対する2剤の倍率
    * @param {Array}  input.items    [{ name, grams }] 実際に使う1剤の量
    * @param {number} [input.step]   秤の刻み（1 or 0.1）
+   * @param {number} [input.addOnPercent] 追い足す1剤の割合（合計量に対する％／0でなし）
    */
   function calcFromBase(input) {
     var step = normalizeStep(input && input.step);
+    var addOnPercent = normalizePercent(input && input.addOnPercent);
     var oxRatio = input ? Number(input.oxRatio) : NaN;
     var items = (input && input.items) || [];
 
@@ -1792,6 +1967,7 @@ body.gate-open {
     return buildResult({
       mode: "base",
       step: step,
+      addOnPercent: addOnPercent,
       oxRatio: oxRatio,
       requestedTotal: null,
       totalUnits: base1Units + oxUnits,
@@ -1803,9 +1979,35 @@ body.gate-open {
     });
   }
 
+  /**
+   * 追い足し（1剤+2剤の合計量に対する％）を計算する。
+   * 追い足し分も配合比どおりに割り振るので、各行の合計は追い足しの合計と一致する。
+   */
+  function buildAddOn(ctx, step) {
+    var percent = normalizePercent(ctx.addOnPercent);
+    if (percent === 0) return null;
+
+    var units = Math.round((ctx.totalUnits * percent) / 100);
+    var allocated = distribute(units, ctx.parts);
+    var grams = toGrams(units, step);
+
+    return {
+      percent: percent,
+      units: units,
+      grams: grams,
+      text: formatGrams(grams, step),
+      allocated: allocated,
+      items: allocated.map(function (value) {
+        var itemGrams = toGrams(value, step);
+        return { grams: itemGrams, text: formatGrams(itemGrams, step) };
+      }),
+    };
+  }
+
   function buildResult(ctx) {
     var step = ctx.step;
     var total = toGrams(ctx.totalUnits, step);
+    var addOn = buildAddOn(ctx, step);
     var rows = ctx.items.map(function (item, index) {
       var grams = toGrams(ctx.allocated[index], step);
       return {
@@ -1813,8 +2015,15 @@ body.gate-open {
         parts: ctx.parts[index],
         grams: grams,
         text: formatGrams(grams, step),
+        // 追い足しを含めた、その1剤の最終的な量
+        withAddOn: toGrams(
+          ctx.allocated[index] + (addOn ? addOn.allocated[index] : 0),
+          step
+        ),
       };
     });
+
+    var addOnUnits = addOn ? addOn.units : 0;
 
     return {
       ok: true,
@@ -1830,6 +2039,10 @@ body.gate-open {
       base1: toGrams(ctx.base1Units, step),
       ox: toGrams(ctx.oxUnits, step),
       items: rows,
+      // 追い足し（使わないときは null）
+      addOn: addOn,
+      base1WithAddOn: toGrams(ctx.base1Units + addOnUnits, step),
+      grandTotal: toGrams(ctx.totalUnits + addOnUnits, step),
     };
   }
 
@@ -2077,6 +2290,7 @@ window.COLORMIX_CONFIG = {
   var I18N = window.ColorMixI18N;
   var RATIOS = [1, 1.5, 2, 3];
   var TOTALS = [30, 60, 80, 100, 120, 150, 200];
+  var ADD_ONS = [5, 7, 10];
   var STATE_KEY = "colormix.state.v1";
   var RECIPE_KEY = "colormix.recipes.v1";
 
@@ -2135,6 +2349,9 @@ window.COLORMIX_CONFIG = {
       oxRatio: 1,
       total: 100,
       step: 1,
+      // 追い足し（合計量に対して数％の1剤を足す最近の塗り方）
+      addOn: false,
+      addOnPercent: 5,
       items: [
         { name: "", parts: 1, grams: 30 },
         { name: "", parts: 1, grams: 30 },
@@ -2151,6 +2368,8 @@ window.COLORMIX_CONFIG = {
       oxRatio: num(saved.oxRatio, 1),
       total: num(saved.total, 100),
       step: saved.step === 0.1 ? 0.1 : 1,
+      addOn: saved.addOn === true,
+      addOnPercent: Math.min(num(saved.addOnPercent, 5), 100),
       items: items.slice(0, 12).map(function (item) {
         return {
           name: typeof item.name === "string" ? item.name.slice(0, 40) : "",
@@ -2189,6 +2408,11 @@ window.COLORMIX_CONFIG = {
   var itemsTitle = $("items-title");
   var itemsHint = $("items-hint");
   var itemsStepNo = $("items-step-no");
+  var addOnToggle = $("addon-toggle");
+  var addOnBody = $("addon-body");
+  var addOnChips = $("addon-chips");
+  var addOnInput = $("addon-input");
+  var addOnPreview = $("addon-preview");
   var resultCard = $("result-card");
   var resultBody = $("result-body");
   var recipesCard = $("recipes-card");
@@ -2319,12 +2543,75 @@ window.COLORMIX_CONFIG = {
     });
   }
 
+  /* ---------- 追い足し（オプション） ---------- */
+
+  ADD_ONS.forEach(function (percent) {
+    var chip = button("chip", percent + "%");
+    chip.dataset.addon = String(percent);
+    chip.addEventListener("click", function () {
+      state.addOnPercent = percent;
+      addOnInput.value = String(percent);
+      syncAddOn();
+      update();
+    });
+    addOnChips.appendChild(chip);
+  });
+
+  addOnToggle.addEventListener("change", function () {
+    state.addOn = addOnToggle.checked;
+    syncAddOn();
+    update();
+  });
+
+  addOnInput.addEventListener("input", function () {
+    state.addOnPercent = Math.min(parseInput(addOnInput.value), 100);
+    syncAddOn();
+    update();
+  });
+
+  function bumpAddOn(delta) {
+    state.addOnPercent = Math.min(
+      100,
+      Math.max(0, Math.round((state.addOnPercent + delta) * 10) / 10)
+    );
+    addOnInput.value = String(state.addOnPercent);
+    syncAddOn();
+    update();
+  }
+
+  function syncAddOn() {
+    addOnToggle.checked = state.addOn;
+    addOnBody.hidden = !state.addOn;
+    // :has() が使えないブラウザ向けに、見た目もクラスで切り替える
+    addOnToggle.parentNode.classList.toggle("on", state.addOn);
+    Array.prototype.forEach.call(addOnChips.children, function (chip) {
+      chip.setAttribute(
+        "aria-pressed",
+        Number(chip.dataset.addon) === state.addOnPercent ? "true" : "false"
+      );
+    });
+  }
+
+  /** 計算に渡す値。OFF のときは追い足しを 0% として扱う */
+  function calcInput() {
+    return {
+      mode: state.mode,
+      oxRatio: state.oxRatio,
+      total: state.total,
+      step: state.step,
+      items: state.items,
+      addOnPercent: state.addOn ? state.addOnPercent : 0,
+    };
+  }
+
   document.addEventListener("click", function (event) {
     var act = event.target && event.target.dataset && event.target.dataset.act;
     if (act === "ratio-minus") bumpRatio(-0.5);
     if (act === "ratio-plus") bumpRatio(0.5);
     if (act === "total-minus") bumpTotal(-10);
     if (act === "total-plus") bumpTotal(10);
+    if (act === "addon-minus") bumpAddOn(-1);
+    if (act === "addon-plus") bumpAddOn(1);
   });
 
   /* ---------- モード切り替え ---------- */
@@ -2540,6 +2827,39 @@ window.COLORMIX_CONFIG = {
       resultRow(t("result.sum"), "", CM.formatGrams(result.total, step), "sum")
     );
 
+    if (result.addOn) {
+      resultBody.appendChild(
+        resultRow(
+          t("result.addon"),
+          t("result.addonSub", { pct: result.addOn.percent }),
+          result.addOn.text,
+          "addon"
+        )
+      );
+
+      if (result.items.length > 1) {
+        var breakdown = document.createElement("p");
+        breakdown.className = "addon-break";
+        breakdown.textContent = t("result.addonBreak", {
+          list: result.addOn.items
+            .map(function (row, index) {
+              return itemLabel(state.items[index], index) + " " + row.text + "g";
+            })
+            .join(" / "),
+        });
+        resultBody.appendChild(breakdown);
+      }
+
+      resultBody.appendChild(
+        resultRow(
+          t("result.grand"),
+          "",
+          CM.formatGrams(result.grandTotal, step),
+          "grand"
+        )
+      );
+    }
+
     if (result.adjusted) {
       var notice = document.createElement("p");
       notice.className = "notice";
@@ -2550,6 +2870,21 @@ window.COLORMIX_CONFIG = {
       });
       resultBody.appendChild(notice);
     }
+  }
+
+  /** 追い足しカードの「＋◯g」プレビュー */
+  function renderAddOnPreview(result) {
+    if (!state.addOn || !result.ok || !result.addOn) {
+      addOnPreview.textContent = "";
+      return;
+    }
+    setText(
+      addOnPreview,
+      t("addon.preview", {
+        total: CM.formatGrams(result.total, result.step),
+        g: result.addOn.text,
+      })
+    );
   }
 
   function buildStepToggle() {
@@ -2587,8 +2922,9 @@ window.COLORMIX_CONFIG = {
   function renderBadges(result) {
     rows.forEach(function (row, index) {
       if (state.mode !== "total") return;
-      var value = result.ok && result.items[index] ? result.items[index].text + "g" : "-";
-      row.badge.textContent = value;
+      // 結果カードの行と同じ数字にする（追い足し分は結果カード側で別に出す）
+      var item = result.ok && result.items[index];
+      row.badge.textContent = item ? item.text + "g" : "-";
     });
   }
 
@@ -2599,9 +2935,10 @@ window.COLORMIX_CONFIG = {
     }
     stickyBar.hidden = resultVisible;
     var step = result.step;
-    $("sticky-base").textContent = CM.formatGrams(result.base1, step) + "g";
+    $("sticky-base").textContent =
+      CM.formatGrams(result.base1WithAddOn, step) + "g";
     $("sticky-ox").textContent = CM.formatGrams(result.ox, step) + "g";
-    $("sticky-total").textContent = CM.formatGrams(result.total, step) + "g";
+    $("sticky-total").textContent = CM.formatGrams(result.grandTotal, step) + "g";
   }
 
   /* 結果カードが画面から外れているときだけ下部バーを出す */
@@ -2636,6 +2973,25 @@ window.COLORMIX_CONFIG = {
     }
     lines.push(t("copy.ox") + "  " + CM.formatGrams(result.ox, step) + "g");
     lines.push(t("copy.total") + "  " + CM.formatGrams(result.total, step) + "g");
+    if (result.addOn) {
+      lines.push("");
+      lines.push(
+        t("copy.addon") +
+          " (" +
+          result.addOn.percent +
+          "%)  " +
+          result.addOn.text +
+          "g"
+      );
+      if (result.items.length > 1) {
+        result.addOn.items.forEach(function (row, index) {
+          lines.push("  " + itemLabel(state.items[index], index) + "  " + row.text + "g");
+        });
+      }
+      lines.push(
+        t("copy.grand") + "  " + CM.formatGrams(result.grandTotal, step) + "g"
+      );
+    }
     return lines.join("\n");
   }
 
@@ -2823,8 +3179,9 @@ window.COLORMIX_CONFIG = {
   var lastResult = { ok: false };
 
   function update() {
-    lastResult = CM.calc(state);
+    lastResult = CM.calc(calcInput());
     renderResult(lastResult);
+    renderAddOnPreview(lastResult);
     renderBadges(lastResult);
     renderSticky(lastResult);
     writeStore(STATE_KEY, state);
@@ -2833,9 +3190,11 @@ window.COLORMIX_CONFIG = {
   function syncAll() {
     ratioCustom.value = String(state.oxRatio);
     totalInput.value = String(state.total);
+    addOnInput.value = String(state.addOnPercent);
     syncMode();
     syncRatio();
     syncTotal();
+    syncAddOn();
     syncStep();
     renderItems();
     renderRecipes();

@@ -128,6 +128,40 @@
         <button type="button" class="add-btn" id="add-item" data-i18n="items.add">＋ 1剤をふやす</button>
       </section>
 
+      <!-- 追い足し（オプション） -->
+      <section class="card addon" id="addon-card">
+        <h2 class="step">
+          <span class="step-no addon-no">＋</span><span data-i18n="addon.title">追い足し（オプション）</span>
+        </h2>
+        <p class="hint" data-i18n="addon.hint"></p>
+        <label class="switch" for="addon-toggle">
+          <input type="checkbox" id="addon-toggle" />
+          <span data-i18n="addon.toggle">追い足しを使う</span>
+        </label>
+        <div class="addon-body" id="addon-body" hidden>
+          <div class="chips" id="addon-chips" data-i18n-aria="addon.aria.group" role="group"></div>
+          <div class="custom-row">
+            <label for="addon-input" data-i18n="addon.custom">その他の％</label>
+            <div class="stepper">
+              <button type="button" class="round" data-act="addon-minus" data-i18n-aria="addon.aria.minus">−</button>
+              <input
+                id="addon-input"
+                class="num-input"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                max="100"
+                step="1"
+                data-i18n-aria="addon.aria.input"
+              />
+              <span class="unit">%</span>
+              <button type="button" class="round" data-act="addon-plus" data-i18n-aria="addon.aria.plus">＋</button>
+            </div>
+          </div>
+          <p class="addon-preview" id="addon-preview"></p>
+        </div>
+      </section>
+
       <!-- けっか -->
       <section class="card result" id="result-card" aria-live="polite">
         <h2 class="result-title" data-i18n="result.title">はかる量</h2>
@@ -158,6 +192,7 @@
         <p class="how-math" data-i18n="how.math"></p>
         <p class="how-note" data-i18n="how.note1"></p>
         <p class="how-note" data-i18n="how.note2"></p>
+        <p class="how-note" data-i18n="how.note3"></p>
         <div class="manage" id="reg-manage" hidden></div>
       </details>
       <footer class="footer">

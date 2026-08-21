@@ -10,6 +10,8 @@
   --brand-soft: #f0e9ff;
   --ox: #0d9488;
   --ox-soft: #e2f6f3;
+  --add: #c2410c;
+  --add-soft: #fdeadf;
   --warn: #b45309;
   --danger: #d02f4b;
   --badge-ink: #7c3aed;
@@ -33,6 +35,8 @@
     --brand-soft: #2e2540;
     --ox: #5eead4;
     --ox-soft: #1e3a37;
+    --add: #fdba74;
+    --add-soft: #3a2a1e;
     --warn: #fbbf24;
     --danger: #fb7185;
     --badge-ink: #f3f0f8;
@@ -53,6 +57,8 @@
   --brand-soft: #2e2540;
   --ox: #5eead4;
   --ox-soft: #1e3a37;
+  --add: #fdba74;
+  --add-soft: #3a2a1e;
   --warn: #fbbf24;
   --danger: #fb7185;
   --badge-ink: #f3f0f8;
@@ -505,6 +511,92 @@ body {
   text-align: right;
   color: var(--muted);
   font-size: 13px;
+}
+
+/* 追い足し（オプション） */
+.addon-no {
+  background: var(--add);
+  color: var(--card);
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 8px 12px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.switch input {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  accent-color: var(--add);
+}
+
+.switch.on,
+.switch:has(input:checked) {
+  border-color: var(--add);
+  background: var(--add-soft);
+  color: var(--add);
+}
+
+.addon-body {
+  margin-top: 12px;
+}
+
+.addon-body .chip[aria-pressed="true"] {
+  border-color: var(--add);
+  background: var(--add);
+  color: var(--card);
+}
+
+.addon-preview {
+  margin: 12px 0 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: var(--add-soft);
+  color: var(--add);
+  font-size: 14px;
+  text-align: center;
+}
+
+.addon-preview b {
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rrow.addon {
+  background: var(--add-soft);
+  margin: 6px -14px 0;
+  padding: 12px 14px;
+  border-bottom: none;
+  border-radius: 12px;
+  color: var(--add);
+}
+
+.rrow.grand {
+  border-bottom: none;
+  padding-top: 12px;
+  color: var(--add);
+  font-weight: 700;
+}
+
+.rrow.grand .rgram {
+  font-size: 28px;
+  color: var(--add);
+}
+
+.addon-break {
+  margin: 6px 0 0;
+  text-align: right;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .notice {

@@ -7,6 +7,7 @@
  * 用語
  *   1剤   … カラー剤本体。複数種類をミックスすることがある
  *   2剤   … オキシ（過酸化水素水）。1剤の合計に対して 1:1 / 1:2 / 1:3 などで混ぜる
+ *   追い足し … 1剤+2剤の合計量に対して 5〜10% ほどの1剤をあとから足す最近のやり方
  *   刻み  … 秤の最小単位（1g または 0.1g）
  */
 (function (root, factory) {
@@ -43,6 +44,13 @@
 
   function normalizeStep(step) {
     return STEPS.indexOf(step) >= 0 ? step : 1;
+  }
+
+  /** 追い足しの％。未指定・範囲外は 0（＝追い足しなし）にする */
+  function normalizePercent(value) {
+    var pct = Number(value);
+    if (!isFinite(pct) || pct <= 0) return 0;
+    return Math.min(pct, 100);
   }
 
   /**
@@ -98,9 +106,11 @@
    * @param {number} input.oxRatio  1剤に対する2剤の倍率（1:2 なら 2）
    * @param {Array}  input.items    [{ name, parts }] 1剤の配合比
    * @param {number} [input.step]   秤の刻み（1 or 0.1）
+   * @param {number} [input.addOnPercent] 追い足す1剤の割合（合計量に対する％／0でなし）
    */
   function calcFromTotal(input) {
     var step = normalizeStep(input && input.step);
+    var addOnPercent = normalizePercent(input && input.addOnPercent);
     var total = input ? Number(input.total) : NaN;
     var oxRatio = input ? Number(input.oxRatio) : NaN;
     var items = (input && input.items) || [];
@@ -143,6 +153,7 @@
     return buildResult({
       mode: "total",
       step: step,
+      addOnPercent: addOnPercent,
       oxRatio: oxRatio,
       requestedTotal: total,
       totalUnits: totalUnits,
@@ -161,9 +172,11 @@
    * @param {number} input.oxRatio  1剤に対する2剤の倍率
    * @param {Array}  input.items    [{ name, grams }] 実際に使う1剤の量
    * @param {number} [input.step]   秤の刻み（1 or 0.1）
+   * @param {number} [input.addOnPercent] 追い足す1剤の割合（合計量に対する％／0でなし）
    */
   function calcFromBase(input) {
     var step = normalizeStep(input && input.step);
+    var addOnPercent = normalizePercent(input && input.addOnPercent);
     var oxRatio = input ? Number(input.oxRatio) : NaN;
     var items = (input && input.items) || [];
 
@@ -190,6 +203,7 @@
     return buildResult({
       mode: "base",
       step: step,
+      addOnPercent: addOnPercent,
       oxRatio: oxRatio,
       requestedTotal: null,
       totalUnits: base1Units + oxUnits,
@@ -201,9 +215,35 @@
     });
   }
 
+  /**
+   * 追い足し（1剤+2剤の合計量に対する％）を計算する。
+   * 追い足し分も配合比どおりに割り振るので、各行の合計は追い足しの合計と一致する。
+   */
+  function buildAddOn(ctx, step) {
+    var percent = normalizePercent(ctx.addOnPercent);
+    if (percent === 0) return null;
+
+    var units = Math.round((ctx.totalUnits * percent) / 100);
+    var allocated = distribute(units, ctx.parts);
+    var grams = toGrams(units, step);
+
+    return {
+      percent: percent,
+      units: units,
+      grams: grams,
+      text: formatGrams(grams, step),
+      allocated: allocated,
+      items: allocated.map(function (value) {
+        var itemGrams = toGrams(value, step);
+        return { grams: itemGrams, text: formatGrams(itemGrams, step) };
+      }),
+    };
+  }
+
   function buildResult(ctx) {
     var step = ctx.step;
     var total = toGrams(ctx.totalUnits, step);
+    var addOn = buildAddOn(ctx, step);
     var rows = ctx.items.map(function (item, index) {
       var grams = toGrams(ctx.allocated[index], step);
       return {
@@ -211,8 +251,15 @@
         parts: ctx.parts[index],
         grams: grams,
         text: formatGrams(grams, step),
+        // 追い足しを含めた、その1剤の最終的な量
+        withAddOn: toGrams(
+          ctx.allocated[index] + (addOn ? addOn.allocated[index] : 0),
+          step
+        ),
       };
     });
+
+    var addOnUnits = addOn ? addOn.units : 0;
 
     return {
       ok: true,
@@ -228,6 +275,10 @@
       base1: toGrams(ctx.base1Units, step),
       ox: toGrams(ctx.oxUnits, step),
       items: rows,
+      // 追い足し（使わないときは null）
+      addOn: addOn,
+      base1WithAddOn: toGrams(ctx.base1Units + addOnUnits, step),
+      grandTotal: toGrams(ctx.totalUnits + addOnUnits, step),
     };
   }
 
