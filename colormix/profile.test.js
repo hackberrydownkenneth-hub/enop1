@@ -99,7 +99,7 @@ test("Instagram に使えない文字ははじく", () => {
 });
 
 test("でたらめな Instagram の ID ははじく", () => {
-  for (const handle of ["123", "111", "1234", "0000", "aaa", "ab", "test", "abc", ".foo", "foo."]) {
+  for (const handle of ["123", "111", "1234", "0000", "aaa", "ab", "test", "abc", ".foo", "foo.", "drive..blue"]) {
     const result = Profile.validate({
       affiliation: "freelance",
       instagram: handle,
@@ -111,7 +111,11 @@ test("でたらめな Instagram の ID ははじく", () => {
 });
 
 test("実在しそうな ID は通す", () => {
-  for (const handle of ["kenneth_hk", "drive.blue", "a1b2c3", "hair_by_ken", "ken1"]) {
+  // 一部だけの繰り返し・連番（driveblue111 / hellooo）は本物として通す
+  for (const handle of [
+    "kenneth_hk", "drive.blue", "a1b2c3", "hair_by_ken", "ken1",
+    "driveblue111", "hellooo", "1111hair", "hair2000", "xxx_salon",
+  ]) {
     const result = Profile.validate({
       affiliation: "freelance",
       instagram: handle,

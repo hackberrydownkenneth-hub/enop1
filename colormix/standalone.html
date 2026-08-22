@@ -2387,10 +2387,11 @@ body.gate-open {
     if (isRepeated(handle)) return true;
     if (isSequential(handle)) return true;
     if (JUNK_HANDLES.indexOf(handle) >= 0) return true;
-    // Instagram は先頭・末尾のピリオドを認めていない
+    // Instagram は先頭・末尾のピリオド、ピリオドの連続を認めていない
     if (handle.charAt(0) === "." || handle.charAt(handle.length - 1) === ".") {
       return true;
     }
+    if (handle.indexOf("..") >= 0) return true;
     return false;
   }
 

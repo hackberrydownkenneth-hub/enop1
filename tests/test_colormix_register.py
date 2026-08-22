@@ -135,7 +135,7 @@ def test_same_instagram_updates_instead_of_duplicating(client, db_path):
 
 
 @pytest.mark.parametrize(
-    "handle", ["123", "111", "1234", "0000", "aaa", "ab", "test", "abc", ".foo", "foo."]
+    "handle", ["123", "111", "1234", "0000", "aaa", "ab", "test", "abc", ".foo", "foo.", "drive..blue"]
 )
 def test_validate_rejects_fake_instagram(handle):
     with pytest.raises(ValidationError) as excinfo:
@@ -147,7 +147,20 @@ def test_validate_rejects_fake_instagram(handle):
 
 @pytest.mark.parametrize(
     "handle",
-    ["kenneth_hk", "drive.blue", "a1b2c3", "hair_by_ken", "salon.tokyo.hk", "ken1"],
+    [
+        "kenneth_hk",
+        "drive.blue",
+        "a1b2c3",
+        "hair_by_ken",
+        "salon.tokyo.hk",
+        "ken1",
+        # 一部だけの繰り返し・連番は本物としてありうる
+        "driveblue111",
+        "hellooo",
+        "1111hair",
+        "hair2000",
+        "xxx_salon",
+    ],
 )
 def test_validate_accepts_real_looking_instagram(handle):
     record = validate_registration(

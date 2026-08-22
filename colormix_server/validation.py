@@ -55,8 +55,8 @@ def looks_fake(handle: str) -> bool:
         return True
     if handle in JUNK_HANDLES:
         return True
-    # Instagram は先頭・末尾のピリオドを認めていない
-    return handle.startswith(".") or handle.endswith(".")
+    # Instagram は先頭・末尾のピリオド、ピリオドの連続を認めていない
+    return handle.startswith(".") or handle.endswith(".") or ".." in handle
 
 
 def normalize_instagram(raw: object) -> str:
