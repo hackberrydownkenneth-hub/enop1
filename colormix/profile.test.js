@@ -166,6 +166,32 @@ test("サロン名は80文字で切る", () => {
   assert.strictEqual(result.value.salon.length, Profile.SALON_MAX);
 });
 
+test("ご要望フォームの事前入力URLも読み取れる", () => {
+  const url =
+    "https://docs.google.com/forms/d/e/X/viewform?usp=pp_url" +
+    "&entry.111=Message&entry.222=Instagram&entry.333=Lang";
+  const parsed = Profile.parseGoogleForm(url, {
+    keys: ["message", "instagram", "lang"],
+    required: ["message"],
+  });
+  assert.deepStrictEqual(parsed, {
+    actionUrl: "https://docs.google.com/forms/d/e/X/formResponse",
+    fields: { message: "entry.111", instagram: "entry.222", lang: "entry.333" },
+  });
+
+  // 本文の欄が無ければ設定なし扱い
+  assert.strictEqual(
+    Profile.parseGoogleForm(
+      "https://docs.google.com/forms/d/e/X/viewform?entry.222=Instagram",
+      { keys: ["message", "instagram"], required: ["message"] }
+    ),
+    null
+  );
+
+  // 既定の合言葉（登録フォーム）では読み取れない
+  assert.strictEqual(Profile.parseGoogleForm(url), null);
+});
+
 test("送信レコードを組み立てる", () => {
   const { value } = Profile.validate({
     affiliation: "freelance",

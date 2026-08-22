@@ -147,6 +147,7 @@
 
   // 事前入力URLの各欄に入れてもらう合言葉。この値で項目を見分ける
   var FORM_KEYS = ["affiliation", "salon", "instagram", "lang"];
+  var FORM_REQUIRED = ["affiliation", "instagram"];
 
   /**
    * Google フォームの「事前入力したURLを取得」で出てくるURLから、
@@ -155,9 +156,15 @@
    * 各欄に affiliation / salon / instagram / lang と入れておくと、
    * どの entry がどの項目かを値から判定できるので、IDを手で調べる必要がない。
    *
+   * 改善のご要望フォームのように別の項目を読み取りたいときは、
+   * options で合言葉（keys）と必須の項目（required）を渡す。
+   *
    * @returns {{actionUrl: string, fields: object}|null} 読み取れなければ null
    */
-  function parseGoogleForm(prefilledUrl) {
+  function parseGoogleForm(prefilledUrl, options) {
+    var opts = options || {};
+    var keys = opts.keys || FORM_KEYS;
+    var required = opts.required || FORM_REQUIRED;
     var text = String(prefilledUrl === undefined || prefilledUrl === null ? "" : prefilledUrl).trim();
     var mark = text.indexOf("?");
     if (mark < 0) return null;
@@ -177,11 +184,13 @@
         var value = decodeURIComponent(pair.slice(eq + 1).replace(/\+/g, " "))
           .trim()
           .toLowerCase();
-        if (FORM_KEYS.indexOf(value) >= 0 && !fields[value]) fields[value] = key;
+        if (keys.indexOf(value) >= 0 && !fields[value]) fields[value] = key;
       });
 
-    // 区分と Instagram が取れないと登録の意味がないので、設定なし扱いにする
-    if (!fields.affiliation || !fields.instagram) return null;
+    // 必須の項目が取れないと送っても意味がないので、設定なし扱いにする
+    for (var i = 0; i < required.length; i++) {
+      if (!fields[required[i]]) return null;
+    }
     return { actionUrl: actionUrl, fields: fields };
   }
 

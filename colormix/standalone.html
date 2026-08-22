@@ -1493,7 +1493,7 @@ body.gate-open {
           </button>
         </h2>
         <div class="fold-body" id="feedback-body">
-          <p class="hint" data-i18n="feedback.hint"></p>
+          <p class="hint" id="feedback-hint"></p>
           <textarea
             id="feedback-text"
             class="text-input feedback-text"
@@ -1504,7 +1504,7 @@ body.gate-open {
           <button type="button" class="feedback-send" id="feedback-send" data-i18n="feedback.send">
             WhatsApp で送る
           </button>
-          <p class="feedback-note" data-i18n="feedback.note"></p>
+          <p class="feedback-note" id="feedback-note"></p>
         </div>
       </section>
 
@@ -1653,12 +1653,20 @@ body.gate-open {
     "feedback.title": "改善のご要望",
     "feedback.hint":
       "使いにくいところ、こんな機能がほしい、というご要望をお聞かせください。WhatsApp が開いて、書いた内容がそのまま入ります。",
+    "feedback.hint.form":
+      "使いにくいところ、こんな機能がほしい、というご要望をお聞かせください。**WhatsApp は使いません**（電話番号は送信されません）。",
     "feedback.aria.text": "改善のご要望",
     "feedback.placeholder": "例）0.5g 刻みも選べるようにしてほしい",
     "feedback.send": "WhatsApp で送る",
+    "feedback.send.form": "送信する",
+    "feedback.sending": "送信中…",
     "feedback.note": "※ ボタンを押すと WhatsApp が開きます。送信するまでは届きません。",
+    "feedback.note.form": "※ このアプリの中だけで送信が完了します。電話番号は送られません。",
+    "feedback.note.form.ig": "※ このアプリの中だけで送信が完了します。電話番号は送られず、ご登録の Instagram（@{id}）だけを添えて送ります。",
     "feedback.message": "【カラー剤計算機 ご要望】\n{text}",
     "toast.feedback_empty": "ご要望を入力してください",
+    "toast.feedback_sent": "送信しました。ありがとうございます！",
+    "toast.feedback_failed": "送信できませんでした。通信環境をご確認ください",
     "footer.lead": "商品のご購入・お問い合わせはこちら",
     "footer.site": "公式サイト",
     "footer.instagram": "Instagram",
@@ -1830,12 +1838,19 @@ body.gate-open {
     "footer.by": "提供",
     "feedback.title": "改善建議",
     "feedback.hint": "如有不便之處或希望增加的功能，歡迎告訴我們。按下按鈕後會開啟 WhatsApp，並自動填入您輸入的內容。",
+    "feedback.hint.form": "如有不便之處或希望增加的功能，歡迎告訴我們。**不需使用 WhatsApp**（不會傳送電話號碼）。",
     "feedback.aria.text": "改善建議",
     "feedback.placeholder": "例：希望可以選擇 0.5g 為單位",
     "feedback.send": "以 WhatsApp 傳送",
+    "feedback.send.form": "提交",
+    "feedback.sending": "傳送中…",
     "feedback.note": "※ 按下按鈕只會開啟 WhatsApp，需要您按傳送才會送出。",
+    "feedback.note.form": "※ 於此應用程式內即可完成提交，不會傳送電話號碼。",
+    "feedback.note.form.ig": "※ 於此應用程式內即可完成提交。不會傳送電話號碼，只會附上您登記的 Instagram（@{id}）。",
     "feedback.message": "【染髮劑計算機 改善建議】\n{text}",
     "toast.feedback_empty": "請輸入您的建議",
+    "toast.feedback_sent": "已提交，多謝您的意見！",
+    "toast.feedback_failed": "提交失敗，請檢查網絡連線",
     "footer.lead": "產品查詢及訂購",
     "footer.site": "官方網站",
     "footer.instagram": "Instagram",
@@ -2468,6 +2483,7 @@ body.gate-open {
 
   // 事前入力URLの各欄に入れてもらう合言葉。この値で項目を見分ける
   var FORM_KEYS = ["affiliation", "salon", "instagram", "lang"];
+  var FORM_REQUIRED = ["affiliation", "instagram"];
 
   /**
    * Google フォームの「事前入力したURLを取得」で出てくるURLから、
@@ -2476,9 +2492,15 @@ body.gate-open {
    * 各欄に affiliation / salon / instagram / lang と入れておくと、
    * どの entry がどの項目かを値から判定できるので、IDを手で調べる必要がない。
    *
+   * 改善のご要望フォームのように別の項目を読み取りたいときは、
+   * options で合言葉（keys）と必須の項目（required）を渡す。
+   *
    * @returns {{actionUrl: string, fields: object}|null} 読み取れなければ null
    */
-  function parseGoogleForm(prefilledUrl) {
+  function parseGoogleForm(prefilledUrl, options) {
+    var opts = options || {};
+    var keys = opts.keys || FORM_KEYS;
+    var required = opts.required || FORM_REQUIRED;
     var text = String(prefilledUrl === undefined || prefilledUrl === null ? "" : prefilledUrl).trim();
     var mark = text.indexOf("?");
     if (mark < 0) return null;
@@ -2498,11 +2520,13 @@ body.gate-open {
         var value = decodeURIComponent(pair.slice(eq + 1).replace(/\+/g, " "))
           .trim()
           .toLowerCase();
-        if (FORM_KEYS.indexOf(value) >= 0 && !fields[value]) fields[value] = key;
+        if (keys.indexOf(value) >= 0 && !fields[value]) fields[value] = key;
       });
 
-    // 区分と Instagram が取れないと登録の意味がないので、設定なし扱いにする
-    if (!fields.affiliation || !fields.instagram) return null;
+    // 必須の項目が取れないと送っても意味がないので、設定なし扱いにする
+    for (var i = 0; i < required.length; i++) {
+      if (!fields[required[i]]) return null;
+    }
     return { actionUrl: actionUrl, fields: fields };
   }
 
@@ -2576,6 +2600,38 @@ window.COLORMIX_CONFIG = {
     contact: "@driveblue_hk",
   },
 
+  /**
+   * アプリ内の「改善のご要望」欄の送信先。
+   *
+   * mode
+   *   "form"     … Google フォームへ匿名で送る（アプリ内で完結。おすすめ）
+   *   "whatsapp" … WhatsApp を開いて本人に送ってもらう（相手に電話番号が伝わる）
+   *   "off"      … 欄そのものを出さない
+   *
+   * form のいちばん簡単なやり方:
+   *   1. Google フォームに「段落」の項目を1つ作る（ご要望の本文）
+   *      ＋必要なら記述式を2つ（Instagram / 言語）
+   *   2. 右上の「⋮」→「事前入力したURLを取得」を開く
+   *   3. 各欄に message / instagram / lang とそのまま入力する
+   *   4. 「リンクを取得」で出てきたURLを prefilledUrl に貼る
+   *
+   * prefilledUrl が空のときは自動で WhatsApp に切り替わる。
+   */
+  feedback: {
+    mode: "form",
+    form: {
+      prefilledUrl: "",
+
+      // prefilledUrl を使わず手で指定したいときはこちら
+      actionUrl: "",
+      fields: {
+        message: "",
+        instagram: "",
+        lang: "",
+      },
+    },
+  },
+
   // フッターとロゴから誘導する先（空なら非表示）
   links: {
     site: "https://drivebluehk.com",
@@ -2593,6 +2649,7 @@ window.COLORMIX_CONFIG = {
   "use strict";
 
   var CM = window.ColorMix;
+  var Profile = window.ColorMixProfile;
   var I18N = window.ColorMixI18N;
   var RATIOS = [1, 1.5, 2, 3];
   var TOTALS = [30, 60, 80, 100, 120, 150, 200];
@@ -3511,31 +3568,97 @@ window.COLORMIX_CONFIG = {
     }
   }
 
-  /* ---------- 改善のご要望（WhatsApp で送ってもらう） ---------- */
+  /* ---------- 改善のご要望 ---------- */
 
   function whatsappLink(message) {
-    var config = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.links) || {};
-    if (!config.whatsapp) return "";
+    var links = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.links) || {};
+    if (!links.whatsapp) return "";
     return (
       "https://wa.me/" +
-      String(config.whatsapp).replace(/[^0-9]/g, "") +
+      String(links.whatsapp).replace(/[^0-9]/g, "") +
       "?text=" +
       encodeURIComponent(message)
     );
   }
 
+  /**
+   * ご要望の送り先を決める。
+   * Google フォームが設定されていればアプリ内で匿名送信、
+   * 無ければ WhatsApp を開く方式にフォールバックする。
+   */
+  function feedbackTarget() {
+    var config = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.feedback) || {};
+    if (config.mode === "off") return null;
+
+    if (config.mode !== "whatsapp") {
+      var form = config.form || {};
+      var parsed = form.prefilledUrl
+        ? Profile.parseGoogleForm(form.prefilledUrl, {
+            keys: ["message", "instagram", "lang"],
+            required: ["message"],
+          })
+        : null;
+      if (!parsed && form.actionUrl && form.fields && form.fields.message) {
+        parsed = { actionUrl: form.actionUrl, fields: form.fields };
+      }
+      if (parsed) return { mode: "form", form: parsed };
+    }
+
+    return whatsappLink("x") ? { mode: "whatsapp" } : null;
+  }
+
+  var feedbackMode = null;
+
   function renderFeedback() {
     var card = $("feedback-card");
     var input = $("feedback-text");
     if (!card) return;
-    card.hidden = !whatsappLink("x");
+
+    var target = feedbackTarget();
+    feedbackMode = target ? target.mode : null;
+    card.hidden = !target;
+    if (!target) return;
+
+    var form = feedbackMode === "form";
     input.placeholder = t("feedback.placeholder");
+    setText($("feedback-hint"), t(form ? "feedback.hint.form" : "feedback.hint"));
+    $("feedback-send").textContent = t(form ? "feedback.send.form" : "feedback.send");
+
+    // Instagram を添えて送るときは、そのことを注記にも書く
+    var profile = readStore("colormix.profile.v1", null);
+    var withIg =
+      form && target.form.fields.instagram && profile && profile.instagram;
+    setText(
+      $("feedback-note"),
+      form
+        ? withIg
+          ? t("feedback.note.form.ig", { id: profile.instagram })
+          : t("feedback.note.form")
+        : t("feedback.note")
+    );
+  }
+
+  /** Google フォームへ送る。CORS が返らないので、送れたかどうかは分からない */
+  function sendFeedbackForm(form, text) {
+    var body = new FormData();
+    body.append(form.fields.message, text);
+    if (form.fields.instagram) {
+      var profile = readStore("colormix.profile.v1", null);
+      body.append(
+        form.fields.instagram,
+        profile && profile.instagram ? "@" + profile.instagram : ""
+      );
+    }
+    if (form.fields.lang) body.append(form.fields.lang, I18N.current());
+
+    return fetch(form.actionUrl, { method: "POST", mode: "no-cors", body: body });
   }
 
   (function setupFeedback() {
     var send = $("feedback-send");
     var input = $("feedback-text");
     if (!send) return;
+
     send.addEventListener("click", function () {
       var text = input.value.trim();
       if (!text) {
@@ -3543,14 +3666,37 @@ window.COLORMIX_CONFIG = {
         input.focus();
         return;
       }
-      // 登録済みなら誰からの要望か分かるように Instagram も添える
-      var profile = readStore("colormix.profile.v1", null);
-      var message = t("feedback.message", { text: text });
-      if (profile && profile.instagram) {
-        message += "\n\nInstagram: @" + profile.instagram;
+
+      var target = feedbackTarget();
+      if (!target) return;
+
+      if (target.mode === "whatsapp") {
+        // 登録済みなら誰からの要望か分かるように Instagram も添える
+        var profile = readStore("colormix.profile.v1", null);
+        var message = t("feedback.message", { text: text });
+        if (profile && profile.instagram) {
+          message += "\n\nInstagram: @" + profile.instagram;
+        }
+        var url = whatsappLink(message);
+        if (url) window.open(url, "_blank", "noopener");
+        return;
       }
-      var url = whatsappLink(message);
-      if (url) window.open(url, "_blank", "noopener");
+
+      send.disabled = true;
+      send.textContent = t("feedback.sending");
+      sendFeedbackForm(target.form, text).then(
+        function () {
+          input.value = "";
+          send.disabled = false;
+          send.textContent = t("feedback.send.form");
+          toast(t("toast.feedback_sent"));
+        },
+        function () {
+          send.disabled = false;
+          send.textContent = t("feedback.send.form");
+          toast(t("toast.feedback_failed"));
+        }
+      );
     });
   })();
 

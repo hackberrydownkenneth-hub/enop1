@@ -43,6 +43,38 @@ window.COLORMIX_CONFIG = {
     contact: "@driveblue_hk",
   },
 
+  /**
+   * アプリ内の「改善のご要望」欄の送信先。
+   *
+   * mode
+   *   "form"     … Google フォームへ匿名で送る（アプリ内で完結。おすすめ）
+   *   "whatsapp" … WhatsApp を開いて本人に送ってもらう（相手に電話番号が伝わる）
+   *   "off"      … 欄そのものを出さない
+   *
+   * form のいちばん簡単なやり方:
+   *   1. Google フォームに「段落」の項目を1つ作る（ご要望の本文）
+   *      ＋必要なら記述式を2つ（Instagram / 言語）
+   *   2. 右上の「⋮」→「事前入力したURLを取得」を開く
+   *   3. 各欄に message / instagram / lang とそのまま入力する
+   *   4. 「リンクを取得」で出てきたURLを prefilledUrl に貼る
+   *
+   * prefilledUrl が空のときは自動で WhatsApp に切り替わる。
+   */
+  feedback: {
+    mode: "form",
+    form: {
+      prefilledUrl: "",
+
+      // prefilledUrl を使わず手で指定したいときはこちら
+      actionUrl: "",
+      fields: {
+        message: "",
+        instagram: "",
+        lang: "",
+      },
+    },
+  },
+
   // フッターとロゴから誘導する先（空なら非表示）
   links: {
     site: "https://drivebluehk.com",

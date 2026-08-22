@@ -3,6 +3,7 @@
   "use strict";
 
   var CM = window.ColorMix;
+  var Profile = window.ColorMixProfile;
   var I18N = window.ColorMixI18N;
   var RATIOS = [1, 1.5, 2, 3];
   var TOTALS = [30, 60, 80, 100, 120, 150, 200];
@@ -921,31 +922,97 @@
     }
   }
 
-  /* ---------- 改善のご要望（WhatsApp で送ってもらう） ---------- */
+  /* ---------- 改善のご要望 ---------- */
 
   function whatsappLink(message) {
-    var config = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.links) || {};
-    if (!config.whatsapp) return "";
+    var links = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.links) || {};
+    if (!links.whatsapp) return "";
     return (
       "https://wa.me/" +
-      String(config.whatsapp).replace(/[^0-9]/g, "") +
+      String(links.whatsapp).replace(/[^0-9]/g, "") +
       "?text=" +
       encodeURIComponent(message)
     );
   }
 
+  /**
+   * ご要望の送り先を決める。
+   * Google フォームが設定されていればアプリ内で匿名送信、
+   * 無ければ WhatsApp を開く方式にフォールバックする。
+   */
+  function feedbackTarget() {
+    var config = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.feedback) || {};
+    if (config.mode === "off") return null;
+
+    if (config.mode !== "whatsapp") {
+      var form = config.form || {};
+      var parsed = form.prefilledUrl
+        ? Profile.parseGoogleForm(form.prefilledUrl, {
+            keys: ["message", "instagram", "lang"],
+            required: ["message"],
+          })
+        : null;
+      if (!parsed && form.actionUrl && form.fields && form.fields.message) {
+        parsed = { actionUrl: form.actionUrl, fields: form.fields };
+      }
+      if (parsed) return { mode: "form", form: parsed };
+    }
+
+    return whatsappLink("x") ? { mode: "whatsapp" } : null;
+  }
+
+  var feedbackMode = null;
+
   function renderFeedback() {
     var card = $("feedback-card");
     var input = $("feedback-text");
     if (!card) return;
-    card.hidden = !whatsappLink("x");
+
+    var target = feedbackTarget();
+    feedbackMode = target ? target.mode : null;
+    card.hidden = !target;
+    if (!target) return;
+
+    var form = feedbackMode === "form";
     input.placeholder = t("feedback.placeholder");
+    setText($("feedback-hint"), t(form ? "feedback.hint.form" : "feedback.hint"));
+    $("feedback-send").textContent = t(form ? "feedback.send.form" : "feedback.send");
+
+    // Instagram を添えて送るときは、そのことを注記にも書く
+    var profile = readStore("colormix.profile.v1", null);
+    var withIg =
+      form && target.form.fields.instagram && profile && profile.instagram;
+    setText(
+      $("feedback-note"),
+      form
+        ? withIg
+          ? t("feedback.note.form.ig", { id: profile.instagram })
+          : t("feedback.note.form")
+        : t("feedback.note")
+    );
+  }
+
+  /** Google フォームへ送る。CORS が返らないので、送れたかどうかは分からない */
+  function sendFeedbackForm(form, text) {
+    var body = new FormData();
+    body.append(form.fields.message, text);
+    if (form.fields.instagram) {
+      var profile = readStore("colormix.profile.v1", null);
+      body.append(
+        form.fields.instagram,
+        profile && profile.instagram ? "@" + profile.instagram : ""
+      );
+    }
+    if (form.fields.lang) body.append(form.fields.lang, I18N.current());
+
+    return fetch(form.actionUrl, { method: "POST", mode: "no-cors", body: body });
   }
 
   (function setupFeedback() {
     var send = $("feedback-send");
     var input = $("feedback-text");
     if (!send) return;
+
     send.addEventListener("click", function () {
       var text = input.value.trim();
       if (!text) {
@@ -953,14 +1020,37 @@
         input.focus();
         return;
       }
-      // 登録済みなら誰からの要望か分かるように Instagram も添える
-      var profile = readStore("colormix.profile.v1", null);
-      var message = t("feedback.message", { text: text });
-      if (profile && profile.instagram) {
-        message += "\n\nInstagram: @" + profile.instagram;
+
+      var target = feedbackTarget();
+      if (!target) return;
+
+      if (target.mode === "whatsapp") {
+        // 登録済みなら誰からの要望か分かるように Instagram も添える
+        var profile = readStore("colormix.profile.v1", null);
+        var message = t("feedback.message", { text: text });
+        if (profile && profile.instagram) {
+          message += "\n\nInstagram: @" + profile.instagram;
+        }
+        var url = whatsappLink(message);
+        if (url) window.open(url, "_blank", "noopener");
+        return;
       }
-      var url = whatsappLink(message);
-      if (url) window.open(url, "_blank", "noopener");
+
+      send.disabled = true;
+      send.textContent = t("feedback.sending");
+      sendFeedbackForm(target.form, text).then(
+        function () {
+          input.value = "";
+          send.disabled = false;
+          send.textContent = t("feedback.send.form");
+          toast(t("toast.feedback_sent"));
+        },
+        function () {
+          send.disabled = false;
+          send.textContent = t("feedback.send.form");
+          toast(t("toast.feedback_failed"));
+        }
+      );
     });
   })();
 
