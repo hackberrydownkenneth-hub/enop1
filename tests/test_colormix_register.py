@@ -74,11 +74,16 @@ def test_validate_keeps_salon_only_for_salon_stylists():
     [
         ({}, "affiliation"),
         ({"affiliation": "owner", "instagram": "me"}, "affiliation"),
-        ({"affiliation": "salon"}, "instagram"),
-        ({"affiliation": "salon", "instagram": "  "}, "instagram"),
-        ({"affiliation": "salon", "instagram": "だめな名前"}, "instagram_format"),
-        ({"affiliation": "salon", "instagram": "a" * 31}, "instagram_format"),
-        ({"affiliation": "salon", "instagram": "has space"}, "instagram_format"),
+        # サロン所属は店名が必須
+        ({"affiliation": "salon", "instagram": "me"}, "salon"),
+        ({"affiliation": "salon", "salon": "   ", "instagram": "me"}, "salon"),
+        ({"affiliation": "salon", "salon": "S"}, "instagram"),
+        ({"affiliation": "salon", "salon": "S", "instagram": "  "}, "instagram"),
+        ({"affiliation": "salon", "salon": "S", "instagram": "だめな名前"}, "instagram_format"),
+        ({"affiliation": "salon", "salon": "S", "instagram": "a" * 31}, "instagram_format"),
+        ({"affiliation": "salon", "salon": "S", "instagram": "has space"}, "instagram_format"),
+        # フリーランスは店名なしでよい
+        ({"affiliation": "freelance"}, "instagram"),
     ],
 )
 def test_validate_rejects_bad_input(payload, code):
@@ -130,9 +135,13 @@ def test_same_instagram_updates_instead_of_duplicating(client, db_path):
 
 
 def test_register_rejects_bad_input(client, db_path):
-    response = post(client, affiliation="salon", instagram="ダメ")
+    response = post(client, affiliation="salon", salon="SALON TOKYO", instagram="ダメ")
     assert response.status_code == 400
     assert response.get_json()["error"] == "instagram_format"
+
+    response = post(client, affiliation="salon", instagram="me")
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "salon"
     assert db.list_registrations(db_path) == []
 
 

@@ -390,6 +390,8 @@
     if (!result.ok) {
       if (result.errors.affiliation) {
         showError(result.errors.affiliation, refs.options[0].btn);
+      } else if (result.errors.salon) {
+        showError(result.errors.salon, refs.salon);
       } else if (result.errors.instagram) {
         showError(result.errors.instagram, refs.instagram);
       } else {

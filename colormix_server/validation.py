@@ -54,15 +54,18 @@ def validate_registration(payload: object) -> dict:
     if affiliation not in AFFILIATIONS:
         raise ValidationError("affiliation")
 
+    # サロン所属なら店名は必須
+    salon = ""
+    if affiliation == "salon":
+        salon = ("" if data.get("salon") is None else str(data["salon"])).strip()[:SALON_MAX]
+        if not salon:
+            raise ValidationError("salon")
+
     instagram = normalize_instagram(data.get("instagram"))
     if not instagram:
         raise ValidationError("instagram")
     if not _HANDLE_RE.match(instagram):
         raise ValidationError("instagram_format")
-
-    salon = ""
-    if affiliation == "salon":
-        salon = ("" if data.get("salon") is None else str(data["salon"])).strip()[:SALON_MAX]
 
     lang = data.get("lang")
     if lang not in LANGUAGES:

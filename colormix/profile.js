@@ -61,6 +61,12 @@
       affiliation = "";
     }
 
+    // サロン所属を選んだときは店名が必須
+    var salon = trimTo(data.salon, SALON_MAX);
+    if (affiliation === "salon" && !salon) {
+      errors.salon = "salon";
+    }
+
     var instagram = normalizeInstagram(data.instagram);
     if (!instagram) {
       errors.instagram = "instagram";
@@ -78,7 +84,7 @@
       value: {
         affiliation: affiliation,
         // サロン所属のときだけ店名を残す
-        salon: affiliation === "salon" ? trimTo(data.salon, SALON_MAX) : "",
+        salon: affiliation === "salon" ? salon : "",
         instagram: instagram,
       },
     };

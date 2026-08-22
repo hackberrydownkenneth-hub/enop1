@@ -86,11 +86,46 @@ test("Instagram に使えない文字ははじく", () => {
   }
   // 30文字ちょうどは通る
   assert.strictEqual(
-    Profile.validate({ affiliation: "salon", instagram: "a".repeat(30), consent: true }).ok,
+    Profile.validate({
+      affiliation: "salon",
+      salon: "SALON TOKYO",
+      instagram: "a".repeat(30),
+      consent: true,
+    }).ok,
     true
   );
   // スラッシュ以降は URL のパスとみなして落とす
   assert.strictEqual(Profile.normalizeInstagram("foo/bar"), "foo");
+});
+
+test("サロン所属ならサロン名は必須", () => {
+  const missing = Profile.validate({
+    affiliation: "salon",
+    salon: "   ",
+    instagram: "id",
+    consent: true,
+  });
+  assert.strictEqual(missing.ok, false);
+  assert.strictEqual(missing.errors.salon, "salon");
+
+  const filled = Profile.validate({
+    affiliation: "salon",
+    salon: "SALON TOKYO",
+    instagram: "id",
+    consent: true,
+  });
+  assert.strictEqual(filled.ok, true);
+  assert.strictEqual(filled.errors.salon, undefined);
+});
+
+test("フリーランスはサロン名なしでも登録できる", () => {
+  const result = Profile.validate({
+    affiliation: "freelance",
+    instagram: "id",
+    consent: true,
+  });
+  assert.strictEqual(result.ok, true);
+  assert.strictEqual(result.value.salon, "");
 });
 
 test("サロン名は80文字で切る", () => {
