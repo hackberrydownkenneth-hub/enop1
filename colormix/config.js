@@ -63,7 +63,9 @@ window.COLORMIX_CONFIG = {
   feedback: {
     mode: "form",
     form: {
-      prefilledUrl: "",
+      prefilledUrl:
+        "https://docs.google.com/forms/d/e/1FAIpQLScsRqw6FgKgAAntZ3jNqwk3D9b5CHUWoB0FCRPMrTop7NcLHQ/viewform" +
+        "?usp=pp_url&entry.1865864835=message&entry.1611775190=instagram",
 
       // prefilledUrl を使わず手で指定したいときはこちら
       actionUrl: "",
