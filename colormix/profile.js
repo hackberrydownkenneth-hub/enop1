@@ -22,6 +22,58 @@
   var SALON_MAX = 80;
 
   /**
+   * 明らかに実在しない入力（123 / 111 / test など）を弾くための決まり。
+   * Instagram の実在確認まではできないので、ここでは「まず本物ではない」
+   * ものだけを落とす。
+   */
+  var HANDLE_MIN = 3;
+  var JUNK_HANDLES = [
+    "abc", "abcd", "abcde", "asd", "asdf", "asdfgh", "qwe", "qwer", "qwerty",
+    "test", "tester", "testing", "tests", "sample", "example", "demo", "dummy",
+    "none", "nothing", "null", "nil", "nan", "unknown", "anonymous", "anon",
+    "user", "users", "guest", "hello", "hi", "hey", "me", "you", "my", "mine",
+    "ig", "insta", "instagram", "private", "secret", "no", "nope", "yes", "ok",
+    "aaa", "bbb", "ccc", "xxx", "yyy", "zzz", "www", "qaz", "zxc",
+  ];
+
+  /** 「1」「a」だけの繰り返し（111 / aaaa / .... など） */
+  function isRepeated(text) {
+    return /^(.)\1*$/.test(text);
+  }
+
+  /** 連番（123 / 1234 / abcd の並び） */
+  function isSequential(text) {
+    if (text.length < 3) return false;
+    var up = 0;
+    var down = 0;
+    for (var i = 1; i < text.length; i++) {
+      var diff = text.charCodeAt(i) - text.charCodeAt(i - 1);
+      if (diff === 1) up++;
+      else if (diff === -1) down++;
+    }
+    return up === text.length - 1 || down === text.length - 1;
+  }
+
+  /**
+   * 形は正しくても、中身が明らかにでたらめかどうか。
+   * true なら登録させない。
+   */
+  function looksFake(handle) {
+    if (!handle) return false;
+    if (handle.length < HANDLE_MIN) return true;
+    // 記号だけ、数字だけは実在アカウントとして扱わない
+    if (!/[a-z]/.test(handle)) return true;
+    if (isRepeated(handle)) return true;
+    if (isSequential(handle)) return true;
+    if (JUNK_HANDLES.indexOf(handle) >= 0) return true;
+    // Instagram は先頭・末尾のピリオドを認めていない
+    if (handle.charAt(0) === "." || handle.charAt(handle.length - 1) === ".") {
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * 入力された Instagram アカウントを ID だけに揃える。
    * "@Foo_Bar" も "https://www.instagram.com/foo.bar/?hl=ja" も "foo.bar" になる。
    */
@@ -72,6 +124,8 @@
       errors.instagram = "instagram";
     } else if (!HANDLE_RE.test(instagram)) {
       errors.instagram = "instagram_format";
+    } else if (looksFake(instagram)) {
+      errors.instagram = "instagram_fake";
     }
 
     if (data.consent !== true) {
@@ -147,6 +201,7 @@
     SALON_MAX: SALON_MAX,
     FORM_KEYS: FORM_KEYS,
     normalizeInstagram: normalizeInstagram,
+    looksFake: looksFake,
     parseGoogleForm: parseGoogleForm,
     validate: validate,
     buildRecord: buildRecord,

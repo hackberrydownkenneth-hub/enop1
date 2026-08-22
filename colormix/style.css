@@ -248,6 +248,15 @@ body {
   font-weight: 700;
 }
 
+.gate-ig-check {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 /* 改善のご要望 */
 .feedback-no {
   background: var(--ox);

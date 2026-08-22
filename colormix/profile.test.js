@@ -89,7 +89,7 @@ test("Instagram に使えない文字ははじく", () => {
     Profile.validate({
       affiliation: "salon",
       salon: "SALON TOKYO",
-      instagram: "a".repeat(30),
+      instagram: "a" + "b".repeat(29),
       consent: true,
     }).ok,
     true
@@ -98,11 +98,35 @@ test("Instagram に使えない文字ははじく", () => {
   assert.strictEqual(Profile.normalizeInstagram("foo/bar"), "foo");
 });
 
+test("でたらめな Instagram の ID ははじく", () => {
+  for (const handle of ["123", "111", "1234", "0000", "aaa", "ab", "test", "abc", ".foo", "foo."]) {
+    const result = Profile.validate({
+      affiliation: "freelance",
+      instagram: handle,
+      consent: true,
+    });
+    assert.strictEqual(result.ok, false, handle);
+    assert.strictEqual(result.errors.instagram, "instagram_fake", handle);
+  }
+});
+
+test("実在しそうな ID は通す", () => {
+  for (const handle of ["kenneth_hk", "drive.blue", "a1b2c3", "hair_by_ken", "ken1"]) {
+    const result = Profile.validate({
+      affiliation: "freelance",
+      instagram: handle,
+      consent: true,
+    });
+    assert.strictEqual(result.ok, true, handle);
+    assert.strictEqual(result.value.instagram, handle);
+  }
+});
+
 test("サロン所属ならサロン名は必須", () => {
   const missing = Profile.validate({
     affiliation: "salon",
     salon: "   ",
-    instagram: "id",
+    instagram: "stylist_id",
     consent: true,
   });
   assert.strictEqual(missing.ok, false);
@@ -111,7 +135,7 @@ test("サロン所属ならサロン名は必須", () => {
   const filled = Profile.validate({
     affiliation: "salon",
     salon: "SALON TOKYO",
-    instagram: "id",
+    instagram: "stylist_id",
     consent: true,
   });
   assert.strictEqual(filled.ok, true);
@@ -121,7 +145,7 @@ test("サロン所属ならサロン名は必須", () => {
 test("フリーランスはサロン名なしでも登録できる", () => {
   const result = Profile.validate({
     affiliation: "freelance",
-    instagram: "id",
+    instagram: "stylist_id",
     consent: true,
   });
   assert.strictEqual(result.ok, true);
@@ -132,7 +156,7 @@ test("サロン名は80文字で切る", () => {
   const result = Profile.validate({
     affiliation: "salon",
     salon: "あ".repeat(200),
-    instagram: "id",
+    instagram: "stylist_id",
     consent: true,
   });
   assert.strictEqual(result.value.salon.length, Profile.SALON_MAX);
@@ -141,14 +165,14 @@ test("サロン名は80文字で切る", () => {
 test("送信レコードを組み立てる", () => {
   const { value } = Profile.validate({
     affiliation: "freelance",
-    instagram: "@id",
+    instagram: "@stylist_id",
     consent: true,
   });
   const record = Profile.buildRecord(value, { lang: "yue", registeredAt: "2026-08-21T00:00:00Z" });
   assert.deepStrictEqual(record, {
     affiliation: "freelance",
     salon: "",
-    instagram: "id",
+    instagram: "stylist_id",
     lang: "yue",
     registeredAt: "2026-08-21T00:00:00Z",
   });

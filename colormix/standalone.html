@@ -278,6 +278,15 @@ body {
   font-weight: 700;
 }
 
+.gate-ig-check {
+  display: inline-block;
+  margin-top: 8px;
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 /* 改善のご要望 */
 .feedback-no {
   background: var(--ox);
@@ -1693,7 +1702,9 @@ body.gate-open {
     "reg.salonName": "サロン名（必須）",
     "reg.salonName.ph": "例）SALON TOKYO",
     "reg.q2": "Instagram アカウント",
-    "reg.q2.hint": "@ の後のIDを入力してください。プロフィールのURLを貼ってもOK。",
+    "reg.q2.hint":
+      "@ の後のIDを入力してください。プロフィールのURLを貼ってもOK。実在するアカウントのみ有効です。",
+    "reg.q2.check": "@{id} を開いて確認",
     "reg.instagram.ph": "your_id",
     "reg.consent": "上記の利用目的に同意します",
     "reg.purpose.collect":
@@ -1707,6 +1718,7 @@ body.gate-open {
     "reg.err.salon": "サロン名を入力してください",
     "reg.err.instagram": "Instagram の ID を入力してください",
     "reg.err.instagram_format": "使えるのは半角英数字と . _ です（30文字まで）",
+    "reg.err.instagram_fake": "実在する Instagram の ID を入力してください",
     "reg.err.consent": "同意にチェックを入れてください",
     "reg.warn.offline": "現在は送信できませんでした。後ほど自動的に再送します。",
     "reg.manage.title": "登録情報",
@@ -1861,7 +1873,8 @@ body.gate-open {
     "reg.salonName": "髮型屋名稱（必填）",
     "reg.salonName.ph": "例：SALON HK",
     "reg.q2": "Instagram 帳戶",
-    "reg.q2.hint": "請輸入 @ 後面的 ID，亦可貼上個人檔案的網址。",
+    "reg.q2.hint": "請輸入 @ 後面的 ID，亦可貼上個人檔案的網址。必須為真實存在的帳戶。",
+    "reg.q2.check": "開啟 @{id} 確認",
     "reg.instagram.ph": "your_id",
     "reg.consent": "本人同意上述用途",
     "reg.purpose.collect": "您提供的資料（工作形式、髮型屋名稱、Instagram）僅由營運者 DRIVE BLUE HONG KONG 用於改善服務、聯絡及發送最新消息，不會提供予第三方。",
@@ -1873,6 +1886,7 @@ body.gate-open {
     "reg.err.salon": "請輸入髮型屋名稱",
     "reg.err.instagram": "請輸入 Instagram ID",
     "reg.err.instagram_format": "只可使用英文、數字及 . _（最多 30 個字元）",
+    "reg.err.instagram_fake": "請輸入真實的 Instagram 帳戶",
     "reg.err.consent": "請先剔選同意",
     "reg.warn.offline": "暫時無法傳送，稍後會自動重試。",
     "reg.manage.title": "登記資料",
@@ -2329,6 +2343,58 @@ body.gate-open {
   var SALON_MAX = 80;
 
   /**
+   * 明らかに実在しない入力（123 / 111 / test など）を弾くための決まり。
+   * Instagram の実在確認まではできないので、ここでは「まず本物ではない」
+   * ものだけを落とす。
+   */
+  var HANDLE_MIN = 3;
+  var JUNK_HANDLES = [
+    "abc", "abcd", "abcde", "asd", "asdf", "asdfgh", "qwe", "qwer", "qwerty",
+    "test", "tester", "testing", "tests", "sample", "example", "demo", "dummy",
+    "none", "nothing", "null", "nil", "nan", "unknown", "anonymous", "anon",
+    "user", "users", "guest", "hello", "hi", "hey", "me", "you", "my", "mine",
+    "ig", "insta", "instagram", "private", "secret", "no", "nope", "yes", "ok",
+    "aaa", "bbb", "ccc", "xxx", "yyy", "zzz", "www", "qaz", "zxc",
+  ];
+
+  /** 「1」「a」だけの繰り返し（111 / aaaa / .... など） */
+  function isRepeated(text) {
+    return /^(.)\1*$/.test(text);
+  }
+
+  /** 連番（123 / 1234 / abcd の並び） */
+  function isSequential(text) {
+    if (text.length < 3) return false;
+    var up = 0;
+    var down = 0;
+    for (var i = 1; i < text.length; i++) {
+      var diff = text.charCodeAt(i) - text.charCodeAt(i - 1);
+      if (diff === 1) up++;
+      else if (diff === -1) down++;
+    }
+    return up === text.length - 1 || down === text.length - 1;
+  }
+
+  /**
+   * 形は正しくても、中身が明らかにでたらめかどうか。
+   * true なら登録させない。
+   */
+  function looksFake(handle) {
+    if (!handle) return false;
+    if (handle.length < HANDLE_MIN) return true;
+    // 記号だけ、数字だけは実在アカウントとして扱わない
+    if (!/[a-z]/.test(handle)) return true;
+    if (isRepeated(handle)) return true;
+    if (isSequential(handle)) return true;
+    if (JUNK_HANDLES.indexOf(handle) >= 0) return true;
+    // Instagram は先頭・末尾のピリオドを認めていない
+    if (handle.charAt(0) === "." || handle.charAt(handle.length - 1) === ".") {
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * 入力された Instagram アカウントを ID だけに揃える。
    * "@Foo_Bar" も "https://www.instagram.com/foo.bar/?hl=ja" も "foo.bar" になる。
    */
@@ -2379,6 +2445,8 @@ body.gate-open {
       errors.instagram = "instagram";
     } else if (!HANDLE_RE.test(instagram)) {
       errors.instagram = "instagram_format";
+    } else if (looksFake(instagram)) {
+      errors.instagram = "instagram_fake";
     }
 
     if (data.consent !== true) {
@@ -2454,6 +2522,7 @@ body.gate-open {
     SALON_MAX: SALON_MAX,
     FORM_KEYS: FORM_KEYS,
     normalizeInstagram: normalizeInstagram,
+    looksFake: looksFake,
     parseGoogleForm: parseGoogleForm,
     validate: validate,
     buildRecord: buildRecord,
@@ -3786,11 +3855,23 @@ window.COLORMIX_CONFIG = {
     refs.instagram.autocapitalize = "off";
     refs.instagram.autocomplete = "off";
     refs.instagram.spellcheck = false;
-    refs.instagram.addEventListener("input", clearError);
+    refs.instagram.addEventListener("input", function () {
+      clearError();
+      syncIgCheck();
+    });
     igRow.appendChild(refs.instagram);
+
+    // 入力したIDのプロフィールをその場で開けるようにして、打ち間違い・
+    // でたらめな入力に気づいてもらう
+    refs.igCheck = el("a", "gate-ig-check");
+    refs.igCheck.target = "_blank";
+    refs.igCheck.rel = "noopener noreferrer";
+    refs.igCheck.hidden = true;
+
     igWrap.appendChild(refs.igLabel);
     igWrap.appendChild(refs.igHint);
     igWrap.appendChild(igRow);
+    igWrap.appendChild(refs.igCheck);
     card.appendChild(igWrap);
 
     // 使いみち＋同意
@@ -3867,6 +3948,7 @@ window.COLORMIX_CONFIG = {
     refs.igHint.textContent = t("reg.q2.hint");
     refs.instagram.placeholder = t("reg.instagram.ph");
     refs.instagram.setAttribute("aria-label", t("reg.q2"));
+    syncIgCheck();
     refs.purpose.textContent = t(collects() ? "reg.purpose.collect" : "reg.purpose.local");
     refs.consentText.textContent = t("reg.consent");
     refs.submit.textContent = t(state.busy ? "reg.submitting" : "reg.submit");
@@ -3883,6 +3965,17 @@ window.COLORMIX_CONFIG = {
     if (refs.error.dataset.code) {
       refs.error.textContent = t("reg.err." + refs.error.dataset.code);
     }
+  }
+
+  /** 入力中のIDから「開いて確認」リンクを作る */
+  function syncIgCheck() {
+    if (!refs.igCheck) return;
+    var handle = Profile.normalizeInstagram(refs.instagram.value);
+    var usable = handle && !Profile.looksFake(handle);
+    refs.igCheck.hidden = !usable;
+    if (!usable) return;
+    refs.igCheck.href = "https://www.instagram.com/" + handle + "/";
+    refs.igCheck.textContent = t("reg.q2.check", { id: handle });
   }
 
   function syncOptions() {

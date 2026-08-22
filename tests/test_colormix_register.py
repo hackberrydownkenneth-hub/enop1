@@ -54,17 +54,17 @@ def test_normalize_instagram(raw, expected):
 
 def test_validate_keeps_salon_only_for_salon_stylists():
     salon = validate_registration(
-        {"affiliation": "salon", "salon": " SALON TOKYO ", "instagram": "@Me", "lang": "ja"}
+        {"affiliation": "salon", "salon": " SALON TOKYO ", "instagram": "@Stylist_Me", "lang": "ja"}
     )
     assert salon == {
         "affiliation": "salon",
         "salon": "SALON TOKYO",
-        "instagram": "me",
+        "instagram": "stylist_me",
         "lang": "ja",
     }
 
     freelance = validate_registration(
-        {"affiliation": "freelance", "salon": "消える", "instagram": "me", "lang": "yue"}
+        {"affiliation": "freelance", "salon": "消える", "instagram": "stylist_me", "lang": "yue"}
     )
     assert freelance["salon"] == ""
 
@@ -94,14 +94,14 @@ def test_validate_rejects_bad_input(payload, code):
 
 def test_unknown_language_is_dropped():
     record = validate_registration(
-        {"affiliation": "freelance", "instagram": "me", "lang": "klingon"}
+        {"affiliation": "freelance", "instagram": "stylist_me", "lang": "klingon"}
     )
     assert record["lang"] == ""
 
 
 def test_salon_name_is_truncated():
     record = validate_registration(
-        {"affiliation": "salon", "salon": "あ" * 200, "instagram": "me"}
+        {"affiliation": "salon", "salon": "あ" * 200, "instagram": "stylist_me"}
     )
     assert len(record["salon"]) == 80
 
@@ -122,8 +122,8 @@ def test_register_saves_new_stylist(client, db_path):
 
 
 def test_same_instagram_updates_instead_of_duplicating(client, db_path):
-    post(client, affiliation="salon", salon="前の店", instagram="me", lang="ja")
-    response = post(client, affiliation="freelance", instagram="@ME", lang="yue")
+    post(client, affiliation="salon", salon="前の店", instagram="stylist_me", lang="ja")
+    response = post(client, affiliation="freelance", instagram="@STYLIST_ME", lang="yue")
 
     assert response.status_code == 200
     assert response.get_json()["created"] is False
@@ -134,12 +134,41 @@ def test_same_instagram_updates_instead_of_duplicating(client, db_path):
     assert rows[0]["salon"] == ""
 
 
+@pytest.mark.parametrize(
+    "handle", ["123", "111", "1234", "0000", "aaa", "ab", "test", "abc", ".foo", "foo."]
+)
+def test_validate_rejects_fake_instagram(handle):
+    with pytest.raises(ValidationError) as excinfo:
+        validate_registration(
+            {"affiliation": "freelance", "instagram": handle, "lang": "ja"}
+        )
+    assert excinfo.value.code == "instagram_fake"
+
+
+@pytest.mark.parametrize(
+    "handle",
+    ["kenneth_hk", "drive.blue", "a1b2c3", "hair_by_ken", "salon.tokyo.hk", "ken1"],
+)
+def test_validate_accepts_real_looking_instagram(handle):
+    record = validate_registration(
+        {"affiliation": "freelance", "instagram": handle, "lang": "ja"}
+    )
+    assert record["instagram"] == handle
+
+
+def test_register_rejects_fake_instagram(client, db_path):
+    response = post(client, affiliation="freelance", instagram="123")
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "instagram_fake"
+    assert db.list_registrations(db_path) == []
+
+
 def test_register_rejects_bad_input(client, db_path):
     response = post(client, affiliation="salon", salon="SALON TOKYO", instagram="ダメ")
     assert response.status_code == 400
     assert response.get_json()["error"] == "instagram_format"
 
-    response = post(client, affiliation="salon", instagram="me")
+    response = post(client, affiliation="salon", instagram="stylist_me")
     assert response.status_code == 400
     assert response.get_json()["error"] == "salon"
     assert db.list_registrations(db_path) == []
@@ -166,7 +195,7 @@ def test_cors_header_only_when_configured(db_path, monkeypatch):
     monkeypatch.setenv("COLORMIX_ALLOWED_ORIGIN", "https://salon.example")
     client = create_app(db_path).test_client()
 
-    response = post(client, affiliation="freelance", instagram="me")
+    response = post(client, affiliation="freelance", instagram="stylist_me")
     assert response.headers["Access-Control-Allow-Origin"] == "https://salon.example"
     assert client.open("/api/register", method="OPTIONS").status_code == 204
 

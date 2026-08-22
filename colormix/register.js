@@ -255,11 +255,23 @@
     refs.instagram.autocapitalize = "off";
     refs.instagram.autocomplete = "off";
     refs.instagram.spellcheck = false;
-    refs.instagram.addEventListener("input", clearError);
+    refs.instagram.addEventListener("input", function () {
+      clearError();
+      syncIgCheck();
+    });
     igRow.appendChild(refs.instagram);
+
+    // 入力したIDのプロフィールをその場で開けるようにして、打ち間違い・
+    // でたらめな入力に気づいてもらう
+    refs.igCheck = el("a", "gate-ig-check");
+    refs.igCheck.target = "_blank";
+    refs.igCheck.rel = "noopener noreferrer";
+    refs.igCheck.hidden = true;
+
     igWrap.appendChild(refs.igLabel);
     igWrap.appendChild(refs.igHint);
     igWrap.appendChild(igRow);
+    igWrap.appendChild(refs.igCheck);
     card.appendChild(igWrap);
 
     // 使いみち＋同意
@@ -336,6 +348,7 @@
     refs.igHint.textContent = t("reg.q2.hint");
     refs.instagram.placeholder = t("reg.instagram.ph");
     refs.instagram.setAttribute("aria-label", t("reg.q2"));
+    syncIgCheck();
     refs.purpose.textContent = t(collects() ? "reg.purpose.collect" : "reg.purpose.local");
     refs.consentText.textContent = t("reg.consent");
     refs.submit.textContent = t(state.busy ? "reg.submitting" : "reg.submit");
@@ -352,6 +365,17 @@
     if (refs.error.dataset.code) {
       refs.error.textContent = t("reg.err." + refs.error.dataset.code);
     }
+  }
+
+  /** 入力中のIDから「開いて確認」リンクを作る */
+  function syncIgCheck() {
+    if (!refs.igCheck) return;
+    var handle = Profile.normalizeInstagram(refs.instagram.value);
+    var usable = handle && !Profile.looksFake(handle);
+    refs.igCheck.hidden = !usable;
+    if (!usable) return;
+    refs.igCheck.href = "https://www.instagram.com/" + handle + "/";
+    refs.igCheck.textContent = t("reg.q2.check", { id: handle });
   }
 
   function syncOptions() {

@@ -14,6 +14,50 @@ SALON_MAX = 80
 _HANDLE_RE = re.compile(r"^[a-z0-9._]{1,30}$")
 _URL_RE = re.compile(r"instagram\.com/([^/?#]+)", re.IGNORECASE)
 
+# 明らかに実在しない入力（123 / 111 / test など）を弾くための決まり。
+# Instagram の実在確認まではできないので、まず本物ではないものだけを落とす。
+HANDLE_MIN = 3
+JUNK_HANDLES = frozenset(
+    """
+    abc abcd abcde asd asdf asdfgh qwe qwer qwerty
+    test tester testing tests sample example demo dummy
+    none nothing null nil nan unknown anonymous anon
+    user users guest hello hi hey me you my mine
+    ig insta instagram private secret no nope yes ok
+    aaa bbb ccc xxx yyy zzz www qaz zxc
+    """.split()
+)
+
+
+def _is_repeated(text: str) -> bool:
+    """「111」「aaaa」のように1文字の繰り返しか。"""
+    return len(set(text)) == 1
+
+
+def _is_sequential(text: str) -> bool:
+    """「123」「abcd」のような連番か。"""
+    if len(text) < 3:
+        return False
+    diffs = {ord(b) - ord(a) for a, b in zip(text, text[1:])}
+    return diffs in ({1}, {-1})
+
+
+def looks_fake(handle: str) -> bool:
+    """形は正しくても中身が明らかにでたらめなら True。"""
+    if not handle:
+        return False
+    if len(handle) < HANDLE_MIN:
+        return True
+    # 記号だけ、数字だけは実在アカウントとして扱わない
+    if not re.search(r"[a-z]", handle):
+        return True
+    if _is_repeated(handle) or _is_sequential(handle):
+        return True
+    if handle in JUNK_HANDLES:
+        return True
+    # Instagram は先頭・末尾のピリオドを認めていない
+    return handle.startswith(".") or handle.endswith(".")
+
 
 def normalize_instagram(raw: object) -> str:
     """入力された Instagram アカウントを ID だけに揃える。
@@ -66,6 +110,8 @@ def validate_registration(payload: object) -> dict:
         raise ValidationError("instagram")
     if not _HANDLE_RE.match(instagram):
         raise ValidationError("instagram_format")
+    if looks_fake(instagram):
+        raise ValidationError("instagram_fake")
 
     lang = data.get("lang")
     if lang not in LANGUAGES:
