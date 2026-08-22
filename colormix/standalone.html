@@ -278,6 +278,39 @@ body {
   font-weight: 700;
 }
 
+/* 改善のご要望 */
+.feedback-no {
+  background: var(--ox);
+  color: var(--card);
+}
+
+.feedback-text {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  font: inherit;
+}
+
+.feedback-send {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: #25d366;
+  color: #08331b;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.feedback-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* 折りたたみできるカードの見出し */
 .fold-head {
   display: flex;
@@ -1441,6 +1474,31 @@ body.gate-open {
         <p class="how-note" data-i18n="how.note3"></p>
         <div class="manage" id="reg-manage" hidden></div>
       </details>
+      <!-- 改善のご要望（WhatsApp で送ってもらう） -->
+      <section class="card feedback" id="feedback-card" data-fold="feedback" hidden>
+        <h2 class="step">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="feedback-body">
+            <span class="step-no feedback-no" aria-hidden="true">✎</span>
+            <span class="fold-title" data-i18n="feedback.title">改善のご要望</span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="feedback-body">
+          <p class="hint" data-i18n="feedback.hint"></p>
+          <textarea
+            id="feedback-text"
+            class="text-input feedback-text"
+            rows="4"
+            maxlength="500"
+            data-i18n-aria="feedback.aria.text"
+          ></textarea>
+          <button type="button" class="feedback-send" id="feedback-send" data-i18n="feedback.send">
+            WhatsApp で送る
+          </button>
+          <p class="feedback-note" data-i18n="feedback.note"></p>
+        </div>
+      </section>
+
       <footer class="footer">
         <p class="footer-row">
           <span class="footer-by" data-i18n="footer.by">提供</span>
@@ -1583,6 +1641,15 @@ body.gate-open {
       "**追い足し計算**は上の計算とは別枠です。残ったカラー剤のグラム数を入れると、その 5〜10% にあたる1剤の量が出ます（例：残り 40g で 5% なら ＋2g）。",
 
     "footer.by": "提供",
+    "feedback.title": "改善のご要望",
+    "feedback.hint":
+      "使いにくいところ、こんな機能がほしい、というご要望をお聞かせください。WhatsApp が開いて、書いた内容がそのまま入ります。",
+    "feedback.aria.text": "改善のご要望",
+    "feedback.placeholder": "例）0.5g 刻みも選べるようにしてほしい",
+    "feedback.send": "WhatsApp で送る",
+    "feedback.note": "※ ボタンを押すと WhatsApp が開きます。送信するまでは届きません。",
+    "feedback.message": "【カラー剤計算機 ご要望】\n{text}",
+    "toast.feedback_empty": "ご要望を入力してください",
     "footer.lead": "商品のご購入・お問い合わせはこちら",
     "footer.site": "公式サイト",
     "footer.instagram": "Instagram",
@@ -1749,6 +1816,14 @@ body.gate-open {
     "how.note2": "出現小數時會四捨五入，但**總份量必定準確**。如需秤量至 0.1g，請於結果下方選擇「0.1g 為單位」。",
     "how.note3": "**追加染膏計算**是獨立的功能。輸入餘下染劑的克數，即可算出相當於 5〜10% 的染膏用量（例：餘下 40g、5% 即 ＋2g）。",
     "footer.by": "提供",
+    "feedback.title": "改善建議",
+    "feedback.hint": "如有不便之處或希望增加的功能，歡迎告訴我們。按下按鈕後會開啟 WhatsApp，並自動填入您輸入的內容。",
+    "feedback.aria.text": "改善建議",
+    "feedback.placeholder": "例：希望可以選擇 0.5g 為單位",
+    "feedback.send": "以 WhatsApp 傳送",
+    "feedback.note": "※ 按下按鈕只會開啟 WhatsApp，需要您按傳送才會送出。",
+    "feedback.message": "【染髮劑計算機 改善建議】\n{text}",
+    "toast.feedback_empty": "請輸入您的建議",
     "footer.lead": "產品查詢及訂購",
     "footer.site": "官方網站",
     "footer.instagram": "Instagram",
@@ -2566,6 +2641,8 @@ window.COLORMIX_CONFIG = {
   var recipes = readStore(RECIPE_KEY, []) || [];
   /* 閉じているカード（既定はすべて開いた状態） */
   var folded = readStore(FOLD_KEY, {}) || {};
+  // ご要望の欄だけは既定で閉じておく（普段は使わないため）
+  if (folded.feedback === undefined) folded.feedback = true;
   var rows = [];
 
   /* ---------- 画面部品 ---------- */
@@ -3364,6 +3441,49 @@ window.COLORMIX_CONFIG = {
     }
   }
 
+  /* ---------- 改善のご要望（WhatsApp で送ってもらう） ---------- */
+
+  function whatsappLink(message) {
+    var config = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.links) || {};
+    if (!config.whatsapp) return "";
+    return (
+      "https://wa.me/" +
+      String(config.whatsapp).replace(/[^0-9]/g, "") +
+      "?text=" +
+      encodeURIComponent(message)
+    );
+  }
+
+  function renderFeedback() {
+    var card = $("feedback-card");
+    var input = $("feedback-text");
+    if (!card) return;
+    card.hidden = !whatsappLink("x");
+    input.placeholder = t("feedback.placeholder");
+  }
+
+  (function setupFeedback() {
+    var send = $("feedback-send");
+    var input = $("feedback-text");
+    if (!send) return;
+    send.addEventListener("click", function () {
+      var text = input.value.trim();
+      if (!text) {
+        toast(t("toast.feedback_empty"));
+        input.focus();
+        return;
+      }
+      // 登録済みなら誰からの要望か分かるように Instagram も添える
+      var profile = readStore("colormix.profile.v1", null);
+      var message = t("feedback.message", { text: text });
+      if (profile && profile.instagram) {
+        message += "\n\nInstagram: @" + profile.instagram;
+      }
+      var url = whatsappLink(message);
+      if (url) window.open(url, "_blank", "noopener");
+    });
+  })();
+
   /* ---------- 更新 ---------- */
 
   var lastResult = { ok: false };
@@ -3396,12 +3516,14 @@ window.COLORMIX_CONFIG = {
   I18N.onChange(function () {
     applyLang();
     renderLinks();
+    renderFeedback();
     syncAll();
   });
 
   buildStepToggle();
   applyLang();
   renderLinks();
+  renderFeedback();
   syncAll();
   watchResultCard();
 })();

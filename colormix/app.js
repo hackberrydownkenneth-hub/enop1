@@ -121,6 +121,8 @@
   var recipes = readStore(RECIPE_KEY, []) || [];
   /* 閉じているカード（既定はすべて開いた状態） */
   var folded = readStore(FOLD_KEY, {}) || {};
+  // ご要望の欄だけは既定で閉じておく（普段は使わないため）
+  if (folded.feedback === undefined) folded.feedback = true;
   var rows = [];
 
   /* ---------- 画面部品 ---------- */
@@ -919,6 +921,49 @@
     }
   }
 
+  /* ---------- 改善のご要望（WhatsApp で送ってもらう） ---------- */
+
+  function whatsappLink(message) {
+    var config = (window.COLORMIX_CONFIG && window.COLORMIX_CONFIG.links) || {};
+    if (!config.whatsapp) return "";
+    return (
+      "https://wa.me/" +
+      String(config.whatsapp).replace(/[^0-9]/g, "") +
+      "?text=" +
+      encodeURIComponent(message)
+    );
+  }
+
+  function renderFeedback() {
+    var card = $("feedback-card");
+    var input = $("feedback-text");
+    if (!card) return;
+    card.hidden = !whatsappLink("x");
+    input.placeholder = t("feedback.placeholder");
+  }
+
+  (function setupFeedback() {
+    var send = $("feedback-send");
+    var input = $("feedback-text");
+    if (!send) return;
+    send.addEventListener("click", function () {
+      var text = input.value.trim();
+      if (!text) {
+        toast(t("toast.feedback_empty"));
+        input.focus();
+        return;
+      }
+      // 登録済みなら誰からの要望か分かるように Instagram も添える
+      var profile = readStore("colormix.profile.v1", null);
+      var message = t("feedback.message", { text: text });
+      if (profile && profile.instagram) {
+        message += "\n\nInstagram: @" + profile.instagram;
+      }
+      var url = whatsappLink(message);
+      if (url) window.open(url, "_blank", "noopener");
+    });
+  })();
+
   /* ---------- 更新 ---------- */
 
   var lastResult = { ok: false };
@@ -951,12 +996,14 @@
   I18N.onChange(function () {
     applyLang();
     renderLinks();
+    renderFeedback();
     syncAll();
   });
 
   buildStepToggle();
   applyLang();
   renderLinks();
+  renderFeedback();
   syncAll();
   watchResultCard();
 })();

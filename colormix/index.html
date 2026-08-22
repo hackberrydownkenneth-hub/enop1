@@ -253,6 +253,31 @@
         <p class="how-note" data-i18n="how.note3"></p>
         <div class="manage" id="reg-manage" hidden></div>
       </details>
+      <!-- 改善のご要望（WhatsApp で送ってもらう） -->
+      <section class="card feedback" id="feedback-card" data-fold="feedback" hidden>
+        <h2 class="step">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="feedback-body">
+            <span class="step-no feedback-no" aria-hidden="true">✎</span>
+            <span class="fold-title" data-i18n="feedback.title">改善のご要望</span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="feedback-body">
+          <p class="hint" data-i18n="feedback.hint"></p>
+          <textarea
+            id="feedback-text"
+            class="text-input feedback-text"
+            rows="4"
+            maxlength="500"
+            data-i18n-aria="feedback.aria.text"
+          ></textarea>
+          <button type="button" class="feedback-send" id="feedback-send" data-i18n="feedback.send">
+            WhatsApp で送る
+          </button>
+          <p class="feedback-note" data-i18n="feedback.note"></p>
+        </div>
+      </section>
+
       <footer class="footer">
         <p class="footer-row">
           <span class="footer-by" data-i18n="footer.by">提供</span>

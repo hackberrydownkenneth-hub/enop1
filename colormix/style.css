@@ -248,6 +248,39 @@ body {
   font-weight: 700;
 }
 
+/* 改善のご要望 */
+.feedback-no {
+  background: var(--ox);
+  color: var(--card);
+}
+
+.feedback-text {
+  width: 100%;
+  min-height: 96px;
+  resize: vertical;
+  font: inherit;
+}
+
+.feedback-send {
+  width: 100%;
+  min-height: 50px;
+  margin-top: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: #25d366;
+  color: #08331b;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.feedback-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 /* 折りたたみできるカードの見出し */
 .fold-head {
   display: flex;
