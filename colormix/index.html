@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#7c3aed" />
+
+    <!-- リンクを共有したときのプレビュー。JS は実行されないので、
+         ここは主な利用者に合わせて繁體中文で固定する。
+         URL を変えたら og:url と og:image も直すこと -->
+    <meta
+      name="description"
+      content="輸入總份量與雙氧奶比例，自動計算每支染膏的克數。DRIVE BLUE HONG KONG 為髮型師提供的免費工具，支援繁體中文及日本語。"
+    />
+    <title>染髮劑計算機 | DRIVE BLUE HONG KONG</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="DRIVE BLUE HONG KONG" />
+    <meta property="og:title" content="染髮劑計算機 | DRIVE BLUE HONG KONG" />
+    <meta
+      property="og:description"
+      content="輸入總份量與雙氧奶比例，自動計算每支染膏的克數。免費，無需安裝。"
+    />
+    <meta property="og:url" content="https://hair-color-calc.pages.dev/" />
+    <meta property="og:image" content="https://hair-color-calc.pages.dev/ogp.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="zh_HK" />
+    <meta property="og:locale:alternate" content="ja_JP" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- ホーム画面に追加したときのアイコンと名前。
+         1ファイル版では build.js がこの範囲を data URI の favicon に置き換える -->
+    <!-- icons:start -->
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <!-- icons:end -->
+    <meta name="apple-mobile-web-app-title" content="染髮劑計算機" />
+    <meta name="application-name" content="染髮劑計算機" />
+  </head>
+  <body>
+    <header class="header">
+      <p class="brand">
+        <a class="brand-logo" id="brand-link" role="img" aria-label="DRIVE BLUE HONG KONG"></a>
+      </p>
+      <h1 data-i18n="app.title">🎨 カラー剤 計算機</h1>
+      <p data-i18n="app.tagline">タップするだけ。1剤のグラム数を自動で出します。</p>
+      <div class="lang" id="lang-switch" role="group" data-i18n-aria="lang.aria"></div>
+    </header>
+
+    <main class="main">
+      <!-- 計算のむき -->
+      <div class="tabs" role="tablist" data-i18n-aria="tabs.aria">
+        <button class="tab" role="tab" data-mode="total" aria-selected="true">
+          <strong data-i18n="tab.total.title">合計量からきめる</strong>
+          <small data-i18n="tab.total.sub">ぜんぶで◯g つくりたい</small>
+        </button>
+        <button class="tab" role="tab" data-mode="base" aria-selected="false">
+          <strong data-i18n="tab.base.title">1剤の量からきめる</strong>
+          <small data-i18n="tab.base.sub">1剤を◯g 使いたい</small>
+        </button>
+      </div>
+
+      <!-- STEP 1 -->
+      <section class="card" data-fold="ratio">
+        <h2 class="step">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="ratio-body">
+            <span class="step-no">1</span><span class="fold-title" data-i18n="step1.title">2剤のわりあい</span>
+            <span class="fold-sum" id="fold-sum-ratio"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="ratio-body">
+        <p class="hint" data-i18n="step1.hint">1剤 1 に対して、2剤（オキシ）を何倍いれる？</p>
+        <div class="chips" id="ratio-chips"></div>
+        <div class="custom-row">
+          <label for="ratio-custom" data-i18n="step1.custom">その他の倍率</label>
+          <div class="stepper">
+            <button type="button" class="round" data-act="ratio-minus" data-i18n-aria="step1.aria.minus">−</button>
+            <input
+              id="ratio-custom"
+              class="num-input"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="0.5"
+              data-i18n-aria="step1.aria.input"
+            />
+            <button type="button" class="round" data-act="ratio-plus" data-i18n-aria="step1.aria.plus">＋</button>
+          </div>
+        </div>
+        <p class="ratio-view">
+          <span data-i18n="step1.ratioLabel">1剤 : 2剤 ＝ </span><b id="ratio-view">1 : 1</b>
+        </p>
+        </div>
+      </section>
+
+      <!-- STEP 2（合計量モードのみ） -->
+      <section class="card" id="total-card" data-fold="total">
+        <h2 class="step">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="total-body">
+            <span class="step-no">2</span><span class="fold-title" data-i18n="step2.title">ぜんぶで何g つくる？</span>
+            <span class="fold-sum" id="fold-sum-total"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="total-body">
+        <p class="hint" data-i18n="step2.hint">1剤と2剤をまぜたあとの合計量です。</p>
+        <div class="chips" id="total-chips"></div>
+        <div class="custom-row">
+          <label for="total-input" data-i18n="step2.label">合計量</label>
+          <div class="stepper">
+            <button type="button" class="round" data-act="total-minus" data-i18n-aria="step2.aria.minus">−</button>
+            <input
+              id="total-input"
+              class="num-input big"
+              type="number"
+              inputmode="decimal"
+              min="0"
+              step="10"
+              data-i18n-aria="step2.aria.input"
+            />
+            <span class="unit">g</span>
+            <button type="button" class="round" data-act="total-plus" data-i18n-aria="step2.aria.plus">＋</button>
+          </div>
+        </div>
+        </div>
+      </section>
+
+      <!-- STEP 3 -->
+      <section class="card" data-fold="items">
+        <h2 class="step">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="items-body">
+            <span class="step-no" id="items-step-no">3</span><span class="fold-title" id="items-title">1剤のミックス</span>
+            <span class="fold-sum" id="fold-sum-items"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="items-body">
+        <p class="hint" id="items-hint">
+          まぜる1剤の「わりあい」を入れてください（例 2 : 1）。1種類だけならそのままでOK。
+        </p>
+        <div id="items"></div>
+        <button type="button" class="add-btn" id="add-item" data-i18n="items.add">＋ 1剤をふやす</button>
+        </div>
+      </section>
+
+      <!-- けっか -->
+      <section class="card result" id="result-card" aria-live="polite" data-fold="result">
+        <h2 class="result-title">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="result-fold">
+            <span class="fold-title" data-i18n="result.title">はかる量</span>
+            <span class="fold-sum" id="fold-sum-result"></span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="result-fold">
+          <div id="result-body"></div>
+        </div>
+      </section>
+
+      <!-- 追い足し（計量とは別枠。ボタンを押したときだけ開く） -->
+      <section class="card addon" id="addon-card">
+        <button
+          type="button"
+          class="addon-open"
+          id="addon-open"
+          aria-expanded="false"
+          aria-controls="addon-panel"
+        >
+          <span class="addon-icon" aria-hidden="true">＋</span>
+          <span data-i18n="addon.title">追い足しオプション</span>
+          <span class="addon-caret" aria-hidden="true">▾</span>
+        </button>
+
+        <div class="addon-panel" id="addon-panel" hidden>
+          <p class="hint" data-i18n="addon.hint"></p>
+
+          <div class="custom-row">
+            <label for="addon-remain" data-i18n="addon.remain">残っている量</label>
+            <div class="stepper">
+              <button type="button" class="round" data-act="remain-minus" data-i18n-aria="addon.aria.remainMinus">−</button>
+              <input
+                id="addon-remain"
+                class="num-input big"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="10"
+                data-i18n-aria="addon.aria.remain"
+              />
+              <span class="unit">g</span>
+              <button type="button" class="round" data-act="remain-plus" data-i18n-aria="addon.aria.remainPlus">＋</button>
+            </div>
+          </div>
+
+          <p class="addon-label" data-i18n="addon.percent">追い足す割合</p>
+          <div class="chips" id="addon-chips" data-i18n-aria="addon.aria.group" role="group"></div>
+          <div class="custom-row">
+            <label for="addon-input" data-i18n="addon.custom">その他の％</label>
+            <div class="stepper">
+              <button type="button" class="round" data-act="addon-minus" data-i18n-aria="addon.aria.minus">−</button>
+              <input
+                id="addon-input"
+                class="num-input"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                max="100"
+                step="1"
+                data-i18n-aria="addon.aria.input"
+              />
+              <span class="unit">%</span>
+              <button type="button" class="round" data-act="addon-plus" data-i18n-aria="addon.aria.plus">＋</button>
+            </div>
+          </div>
+
+          <!-- 追い足し専用の計量枠 -->
+          <div class="addon-result" aria-live="polite">
+            <h3 class="result-title" data-i18n="addon.resultTitle">追い足しの計量</h3>
+            <div id="addon-body"></div>
+          </div>
+
+          <p class="addon-example" data-i18n="addon.example"></p>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button type="button" class="action" id="copy-btn" data-i18n="action.copy">📋 コピー</button>
+        <button type="button" class="action" id="save-btn" data-i18n="action.save">⭐ レシピ保存</button>
+        <button type="button" class="action" id="reset-btn" data-i18n="action.reset">↺ リセット</button>
+      </div>
+
+      <section class="card recipes" id="recipes-card" hidden>
+        <h2 class="step">
+          <span class="step-no">★</span><span data-i18n="recipes.title">保存したレシピ</span>
+        </h2>
+        <p class="hint" data-i18n="recipes.note"></p>
+        <div id="recipes"></div>
+      </section>
+
+      <details class="card how">
+        <summary data-i18n="how.summary">つかいかた・計算のしくみ</summary>
+        <ol>
+          <li data-i18n="how.step1"></li>
+          <li data-i18n="how.step2"></li>
+          <li data-i18n="how.step3"></li>
+        </ol>
+        <p class="how-math" data-i18n="how.math"></p>
+        <p class="how-note" data-i18n="how.note1"></p>
+        <p class="how-note" data-i18n="how.note2"></p>
+        <p class="how-note" data-i18n="how.note3"></p>
+        <div class="manage" id="reg-manage" hidden></div>
+      </details>
+      <!-- 改善のご要望（WhatsApp で送ってもらう） -->
+      <section class="card feedback" id="feedback-card" data-fold="feedback" hidden>
+        <h2 class="step">
+          <button type="button" class="fold-head" aria-expanded="true" aria-controls="feedback-body">
+            <span class="step-no feedback-no" aria-hidden="true">✎</span>
+            <span class="fold-title" data-i18n="feedback.title">改善のご要望</span>
+            <span class="fold-caret" aria-hidden="true">▾</span>
+          </button>
+        </h2>
+        <div class="fold-body" id="feedback-body">
+          <p class="hint" id="feedback-hint"></p>
+          <textarea
+            id="feedback-text"
+            class="text-input feedback-text"
+            rows="4"
+            maxlength="500"
+            data-i18n-aria="feedback.aria.text"
+          ></textarea>
+          <button type="button" class="feedback-send" id="feedback-send" data-i18n="feedback.send">
+            WhatsApp で送る
+          </button>
+          <p class="feedback-note" id="feedback-note"></p>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p class="footer-row">
+          <span class="footer-by" data-i18n="footer.by">提供</span>
+          <span class="brand brand-footer">
+            <span class="brand-logo" role="img" aria-label="DRIVE BLUE HONG KONG"></span>
+          </span>
+        </p>
+        <p class="footer-lead" id="footer-lead" data-i18n="footer.lead"></p>
+        <div class="footer-links" id="footer-links"></div>
+      </footer>
+    </main>
+
+    <div class="sticky-bar" id="sticky-bar" hidden>
+      <span><small data-i18n="sticky.base">1剤</small><b id="sticky-base">-</b></span>
+      <span><small data-i18n="sticky.ox">2剤</small><b id="sticky-ox">-</b></span>
+      <span class="sticky-total"><small data-i18n="sticky.total">合計</small><b id="sticky-total">-</b></span>
+    </div>
+
+    <script src="i18n.js"></script>
+    <script src="calc.js"></script>
+    <script src="profile.js"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+    <script src="register.js"></script>
+  </body>
+</html>

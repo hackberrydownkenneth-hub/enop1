@@ -1,0 +1,488 @@
+/**
+ * 画面の文言（日本語 / 繁體中文・書面語）。
+ *
+ * ブラウザ: script タグで読み込むと window.ColorMixI18N から参照できる
+ *
+ * ・{name} は置換用のプレースホルダ
+ * ・**強調** は <b> になる（innerHTML は使わない）
+ */
+(function (root, factory) {
+  var api = factory();
+  if (typeof module === "object" && module.exports) {
+    module.exports = api;
+  } else {
+    root.ColorMixI18N = api;
+  }
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+  "use strict";
+
+  var ja = {
+    "lang.tag": "ja",
+    "lang.name": "日本語",
+    "app.title": "🎨 カラー剤 計算機",
+    "app.docTitle": "カラー剤 計算機 | DRIVE BLUE HONG KONG",
+    "app.tagline": "タップするだけ。1剤のグラム数を自動で計算します。",
+    "lang.aria": "言語",
+
+    "tabs.aria": "計算方法",
+    "tab.total.title": "合計量から決める",
+    "tab.total.sub": "合計 ◯g を作りたい",
+    "tab.base.title": "1剤の量から決める",
+    "tab.base.sub": "1剤を◯g 使いたい",
+
+    "step1.title": "2剤の割合",
+    "step1.hint": "1剤 1 に対して、2剤（オキシ）を何倍入れる？",
+    "step1.custom": "その他の倍率",
+    "step1.aria.input": "2剤の倍率",
+    "step1.aria.minus": "倍率を減らす",
+    "step1.aria.plus": "倍率を増やす",
+    "step1.ratioLabel": "1剤 : 2剤 ＝ ",
+
+    "step2.title": "合計で何g 作る？",
+    "step2.hint": "1剤と2剤を混ぜた後の合計量です。",
+    "step2.label": "合計量",
+    "step2.aria.input": "合計量（g）",
+    "step2.aria.minus": "10g 減らす",
+    "step2.aria.plus": "10g 増やす",
+
+    "items.title.total": "1剤のミックス",
+    "items.title.base": "使う1剤の量",
+    "items.hint.total":
+      "混ぜる1剤の「割合」を入力してください（例 2 : 1）。1種類だけの場合はそのままでOK。",
+    "items.hint.base":
+      "実際に量る1剤のグラム数を入力してください。2剤と合計量を計算します。",
+    "items.add": "＋ 1剤を追加",
+    "item.placeholder": "1剤 {n}（例 ブラウン6）",
+    "item.fallback": "1剤 {n}",
+    "item.aria.name": "{n}番目の1剤の名前",
+    "item.aria.del": "{n}番目の1剤を削除",
+    "item.aria.value": "{n}番目の{label}",
+    "item.aria.minus": "減らす",
+    "item.aria.plus": "増やす",
+    "label.parts": "割合",
+    "label.grams": "使う量",
+    "fold.items": "{n}種類",
+
+    "addon.title": "追い足しオプション",
+    "addon.hint":
+      "残ったカラー剤に、あとから1剤を足すときや総量の剤に処理剤（ケラチン、ACID、プレックス）を足す時の計算です。上の計量とは別枠なので、残っている量を入れるだけで使えます。",
+    "addon.aria.open": "追い足しオプションを開く・閉じる",
+    "addon.resultTitle": "追い足しの計量",
+    "addon.remain": "残っている量",
+    "addon.aria.remain": "残っている量（g）",
+    "addon.aria.remainMinus": "10g 減らす",
+    "addon.aria.remainPlus": "10g 増やす",
+    "addon.percent": "追い足す割合",
+    "addon.custom": "その他の％",
+    "addon.aria.group": "追い足しの割合",
+    "addon.aria.input": "追い足しの割合（％）",
+    "addon.aria.minus": "1% 減らす",
+    "addon.aria.plus": "1% 増やす",
+    "addon.result": "追い足す1剤",
+    "addon.resultSub": "残り {remain}g の {pct}%",
+    "addon.after": "追い足し後 {g}g",
+    "addon.example":
+      "例）120g 作って毛先に 80g 使い、残り 40g。5% なら **＋2g** を追い足します。",
+    "err.need_remain": "残っている量を入力してください",
+    "err.need_percent": "追い足す割合を入力してください",
+    "err.remain_too_small": "残っている量が少なすぎます",
+
+    "result.title": "計量",
+    "result.partsSub": "割合 {parts}（全体の {pct}%）",
+    "result.subtotal": "1剤 合計 {g}g",
+    "result.ox": "2剤（オキシ）",
+    "result.oxSub": "1剤の {r} 倍",
+    "result.sum": "合計",
+    "result.notice": "※ {req}g は {step} 刻みに丸めて {got}g で計算しました。",
+    "step.label": "計量の単位",
+    "step.1": "1g刻み",
+    "step.0.1": "0.1g刻み",
+
+    "action.copy": "📋 コピー",
+    "action.save": "⭐ レシピ保存",
+    "action.reset": "↺ リセット",
+
+    "recipes.title": "保存したレシピ",
+    "recipes.note": "保存したレシピはこの端末の中だけに残ります。DRIVE BLUE HONG KONG を含め、第三者に送信されることはありません。",
+    "confirm.overwrite": "「{name}」は既に保存されています。上書きしますか？",
+    "recipe.aria.del": "{name} を削除",
+
+    "how.summary": "使い方・計算方法",
+    "how.step1": "**2剤の割合**を選ぶ（1:1 / 1:2 / 1:3 など）",
+    "how.step2": "**合計で何g** 作るか入力",
+    "how.step3": "混ぜる**1剤の割合**を入力（例 ブラウン 2 : マット 1）",
+    "how.math":
+      "1剤の合計 ＝ 合計量 ÷（1 ＋ 2剤の倍率）\n2剤 ＝ 合計量 − 1剤の合計\n各1剤 ＝ 1剤の合計 × その割合 ÷ 割合の合計",
+    "how.note1":
+      "例）合計 90g で 1:2 のとき → 1剤 30g、2剤 60g。1剤を 2:1 で混ぜるなら 20g と 10g。",
+    "how.note2":
+      "小数が出る場合はグラム数を丸めますが、**合計量は常に一致**するよう調整しています。0.1g 単位で量りたい場合は、結果の下の「0.1g刻み」を選んでください。",
+    "how.note3":
+      "**追い足し計算**は上の計算とは別枠です。残ったカラー剤のグラム数を入れると、その 5〜10% にあたる1剤の量が出ます（例：残り 40g で 5% なら ＋2g）。",
+
+    "footer.by": "提供",
+    "feedback.title": "改善のご要望",
+    "feedback.hint":
+      "使いにくいところ、こんな機能がほしい、というご要望をお聞かせください。WhatsApp が開いて、書いた内容がそのまま入ります。",
+    "feedback.hint.form":
+      "使いにくいところ、こんな機能がほしい、というご要望をお聞かせください。**WhatsApp は使いません**（電話番号は送信されません）。",
+    "feedback.aria.text": "改善のご要望",
+    "feedback.placeholder": "例）0.5g 刻みも選べるようにしてほしい",
+    "feedback.send": "WhatsApp で送る",
+    "feedback.send.form": "送信する",
+    "feedback.sending": "送信中…",
+    "feedback.note": "※ ボタンを押すと WhatsApp が開きます。送信するまでは届きません。",
+    "feedback.note.form": "※ このアプリの中だけで送信が完了します。電話番号は送られません。",
+    "feedback.note.form.ig": "※ このアプリの中だけで送信が完了します。電話番号は送られず、ご登録の Instagram（@{id}）だけを添えて送ります。",
+    "feedback.message": "【カラー剤計算機 ご要望】\n{text}",
+    "toast.feedback_empty": "ご要望を入力してください",
+    "toast.feedback_sent": "送信しました。ありがとうございます！",
+    "toast.feedback_failed": "送信できませんでした。通信環境をご確認ください",
+    "footer.lead": "商品のご購入・お問い合わせはこちら",
+    "footer.site": "公式サイト",
+    "footer.instagram": "Instagram",
+    "footer.aria.site": "DRIVE BLUE HONG KONG の公式サイトを開く",
+    "footer.aria.instagram": "DRIVE BLUE HONG KONG の Instagram を開く",
+    "sticky.base": "1剤",
+    "sticky.ox": "2剤",
+    "sticky.total": "合計",
+
+    "err.need_total": "作る合計量を入力してください",
+    "err.need_ratio": "2剤の倍率を入力してください",
+    "err.need_item": "1剤を1つ以上追加してください",
+    "err.need_parts": "1剤の配合比を入力してください",
+    "err.total_too_small": "合計量が少なすぎます",
+    "err.base_too_small": "合計量が少なすぎて1剤を量れません",
+    "err.need_grams": "1剤の量を入力してください",
+
+    "toast.copied": "コピーしました",
+    "toast.copy_failed": "コピーできませんでした",
+    "toast.need_input": "先に入力してください",
+    "toast.saved": "保存しました",
+    "toast.loaded": "呼び出しました",
+
+    "prompt.save": "レシピの名前を付けてください",
+    "confirm.reset": "入力をリセットしますか？（保存したレシピは消えません）",
+
+    "copy.header": "【カラーレシピ】",
+    "copy.ratio": "1剤 : 2剤 ＝ ",
+    "copy.subtotal": "1剤 合計",
+    "copy.ox": "2剤",
+    "copy.total": "合計",
+
+    "reg.title": "始める前に",
+    "reg.lead":
+      "DRIVE BLUE HONG KONG がお届けする、美容師さん向けの無料の専門計算機です。初めて使うときだけ登録をお願いします（次回からは表示されません）。",
+    "reg.q1": "お仕事のスタイル",
+    "reg.opt.salon": "サロン所属",
+    "reg.opt.salon.sub": "お店に勤めている",
+    "reg.opt.freelance": "フリーランス",
+    "reg.opt.freelance.sub": "面貸し・独立・業務委託",
+    "reg.salonName": "サロン名（必須）",
+    "reg.salonName.ph": "例）SALON TOKYO",
+    "reg.q2": "Instagram アカウント",
+    "reg.q2.hint":
+      "@ の後のIDを入力してください。プロフィールのURLを貼ってもOK。実在するアカウントのみ有効です。",
+    "reg.q2.check": "@{id} を開いて確認",
+    "reg.instagram.ph": "your_id",
+    "reg.consent": "上記の利用目的に同意します",
+    "reg.purpose.collect":
+      "いただいた情報（区分・サロン名・Instagram）は、運営者である DRIVE BLUE HONG KONG が、サービス改善・ご連絡・お知らせの配信のために使います。第三者には渡しません。",
+    "reg.purpose.local":
+      "※ プレビュー版です。入力した内容はこの端末の中だけに保存され、どこにも送信されません。",
+    "reg.contact": "お問い合わせ: {contact}",
+    "reg.submit": "同意して始める",
+    "reg.submitting": "送信中…",
+    "reg.err.affiliation": "お仕事のスタイルを選んでください",
+    "reg.err.salon": "サロン名を入力してください",
+    "reg.err.instagram": "Instagram の ID を入力してください",
+    "reg.err.instagram_format": "使えるのは半角英数字と . _ です（30文字まで）",
+    "reg.err.instagram_fake": "実在する Instagram の ID を入力してください",
+    "reg.err.consent": "同意にチェックを入れてください",
+    "reg.warn.offline": "現在は送信できませんでした。後ほど自動的に再送します。",
+    "reg.manage.title": "登録情報",
+    "reg.aff.salon": "サロン所属",
+    "reg.aff.freelance": "フリーランス",
+    "reg.manage.delete": "この端末から削除",
+    "reg.manage.deleted": "削除しました",
+    "reg.manage.pending": "（未送信・後ほど再送します）",
+
+    "reg.done.title": "ありがとうございます！",
+    "reg.done.lead":
+      "WhatsApp からご注文いただくと、DRIVE BLUE HONG KONG の商品が初回のみ 5% OFF になります。ボタンを押すとメッセージが用意されるので、そのまま送信してください。",
+    "reg.done.note": "※ WhatsApp からのご注文のみ対象。お一人さま初回1回限り。",
+    "reg.done.whatsapp": "GET 5% OFF",
+    "reg.done.start": "計算機を使う",
+    "reg.whatsapp.message":
+      "DRIVE BLUE の初回 5% OFF を利用したいです。Instagram: @{instagram}",
+    "footer.whatsapp": "WhatsApp",
+    "footer.aria.whatsapp": "DRIVE BLUE HONG KONG に WhatsApp で連絡する",
+    "footer.whatsapp.message": "DRIVE BLUE の初回 5% OFF を利用したいです。",
+  };
+
+  var yue = {
+    "lang.tag": "zh-Hant-HK",
+    "lang.name": "繁體中文",
+    "app.title": "🎨 染髮劑計算機",
+    "app.docTitle": "染髮劑計算機 | DRIVE BLUE HONG KONG",
+    "app.tagline": "只需輸入配方比例，即可自動計算染膏及雙氧奶所需用量",
+    "lang.aria": "語言",
+    "tabs.aria": "計算方式",
+    "tab.total.title": "由配方總量計算",
+    "tab.total.sub": "想調配 ◯g",
+    "tab.base.title": "由染膏用量計算",
+    "tab.base.sub": "使用 ◯g 染膏",
+    "step1.title": "雙氧奶的比例",
+    "step1.hint": "染膏 1 份，需加入多少倍的雙氧奶（二劑）？",
+    "step1.custom": "其他倍數",
+    "step1.aria.input": "雙氧奶的倍數",
+    "step1.aria.minus": "減少倍數",
+    "step1.aria.plus": "增加倍數",
+    "step1.ratioLabel": "染膏 : 雙氧奶 ＝ ",
+    "step2.title": "總共需要調配多少克 (g)？",
+    "step2.hint": "即染膏與雙氧奶混合後的總量。",
+    "step2.label": "總份量",
+    "step2.aria.input": "總份量（g）",
+    "step2.aria.minus": "減 10g",
+    "step2.aria.plus": "加 10g",
+    "items.title.total": "染膏配方",
+    "items.title.base": "染膏用量",
+    "items.hint.total": "請輸入每支染膏的比例（例：2:1）如只使用一支染膏，則無需更改。",
+    "items.hint.base": "請輸入實際染膏的用量（克g），系統會計算雙氧奶用量及配方總量。",
+    "items.add": "＋ 新增染膏",
+    "item.placeholder": "染膏 {n}（例：啡色 6）",
+    "item.fallback": "染膏 {n}",
+    "item.aria.name": "第 {n} 支染膏的名稱",
+    "item.aria.del": "刪除第 {n} 支染膏",
+    "item.aria.value": "第 {n} 支的{label}",
+    "item.aria.minus": "減少",
+    "item.aria.plus": "增加",
+    "label.parts": "比例",
+    "label.grams": "份量",
+    "fold.items": "{n} 支",
+    "addon.title": "追加染膏（選用）",
+    "addon.hint": "用於在餘下的染劑中額外加入染膏，或在總量中加入護理劑（角蛋白、ACID、Plex）時的計算。此計算與上方的份量互不影響，只需輸入餘下的份量即可。",
+    "addon.aria.open": "展開或收起追加染膏計算",
+    "addon.resultTitle": "追加染膏的份量",
+    "addon.remain": "餘下份量",
+    "addon.aria.remain": "餘下份量（g）",
+    "addon.aria.remainMinus": "減 10g",
+    "addon.aria.remainPlus": "加 10g",
+    "addon.percent": "追加的百分比",
+    "addon.custom": "其他百分比",
+    "addon.aria.group": "追加的百分比",
+    "addon.aria.input": "追加的百分比（%）",
+    "addon.aria.minus": "減 1%",
+    "addon.aria.plus": "加 1%",
+    "addon.result": "需要追加的染膏",
+    "addon.resultSub": "餘下 {remain}g 的 {pct}%",
+    "addon.after": "追加後 {g}g",
+    "addon.example": "例：調配 120g，髮尾已用 80g，餘下 40g。5% 即需要追加 **＋2g**。",
+    "err.need_remain": "請輸入餘下份量",
+    "err.need_percent": "請輸入追加的百分比",
+    "err.remain_too_small": "餘下份量太少",
+    "result.title": "配方份量",
+    "result.partsSub": "比例 {parts}（佔 {pct}%）",
+    "result.subtotal": "染膏合計 {g}g",
+    "result.ox": "雙氧奶（二劑）",
+    "result.oxSub": "染膏的 {r} 倍",
+    "result.sum": "總共",
+    "result.notice": "※ {req}g 已按 {step} 為單位調整為 {got}g 計算。",
+    "step.label": "秤量精度",
+    "step.1": "1g 為單位",
+    "step.0.1": "0.1g 為單位",
+    "action.copy": "📋 複製",
+    "action.save": "⭐ 儲存配方",
+    "action.reset": "↺ 重設",
+    "recipes.title": "已儲存的配方",
+    "recipes.note": "已儲存的配方只會保留在本機。不會傳送給 DRIVE BLUE HONG KONG 或任何第三方。",
+    "confirm.overwrite": "「{name}」已經儲存過，是否覆蓋？",
+    "recipe.aria.del": "刪除 {name}",
+    "how.summary": "使用方法及計算原理",
+    "how.step1": "選擇**雙氧奶的比例**（1:1 / 1:2 / 1:3 等）",
+    "how.step2": "輸入**總共需要調配多少 g**",
+    "how.step3": "輸入**每支染膏的比例**（例：啡色 2 : 冷色 1）",
+    "how.math": "染膏合計 ＝ 總份量 ÷（1 ＋ 雙氧奶倍數）\n雙氧奶 ＝ 總份量 － 染膏合計\n每支染膏 ＝ 染膏合計 × 該支的比例 ÷ 比例總和",
+    "how.note1": "例：總共 90g、1:2 → 染膏 30g、雙氧奶 60g。染膏以 2:1 混合，即 20g 與 10g。",
+    "how.note2": "出現小數時會四捨五入，但**總份量必定準確**。如需秤量至 0.1g，請於結果下方選擇「0.1g 為單位」。",
+    "how.note3": "**追加染膏計算**是獨立的功能。輸入餘下染劑的克數，即可算出相當於 5〜10% 的染膏用量（例：餘下 40g、5% 即 ＋2g）。",
+    "footer.by": "提供",
+    "feedback.title": "改善建議",
+    "feedback.hint": "如有不便之處或希望增加的功能，歡迎告訴我們。按下按鈕後會開啟 WhatsApp，並自動填入您輸入的內容。",
+    "feedback.hint.form": "如有不便之處或希望增加的功能，歡迎告訴我們。",
+    "feedback.aria.text": "改善建議",
+    "feedback.placeholder": "例：希望可以選擇 0.5g 為單位",
+    "feedback.send": "以 WhatsApp 傳送",
+    "feedback.send.form": "提交",
+    "feedback.sending": "傳送中…",
+    "feedback.note": "※ 按下按鈕只會開啟 WhatsApp，需要您按傳送才會送出。",
+    "feedback.note.form": "※ 於此應用程式內即可完成提交，不會傳送電話號碼。",
+    "feedback.note.form.ig": "※ 於此應用程式內即可完成提交。不會傳送電話號碼，只會附上您登記的 Instagram（@{id}）。",
+    "feedback.message": "【染髮劑計算機 改善建議】\n{text}",
+    "toast.feedback_empty": "請輸入您的建議",
+    "toast.feedback_sent": "已提交，多謝您的意見！",
+    "toast.feedback_failed": "提交失敗，請檢查網絡連線",
+    "footer.lead": "產品查詢及訂購",
+    "footer.site": "官方網站",
+    "footer.instagram": "Instagram",
+    "footer.aria.site": "開啟 DRIVE BLUE HONG KONG 官方網站",
+    "footer.aria.instagram": "開啟 DRIVE BLUE HONG KONG 的 Instagram",
+    "sticky.base": "染膏",
+    "sticky.ox": "雙氧奶",
+    "sticky.total": "總共",
+    "err.need_total": "請輸入總份量",
+    "err.need_ratio": "請輸入雙氧奶倍數",
+    "err.need_item": "最少需要一支染膏",
+    "err.need_parts": "請輸入染膏的比例",
+    "err.total_too_small": "總份量太少",
+    "err.base_too_small": "總份量太少，無法秤量染膏",
+    "err.need_grams": "請輸入染膏份量",
+    "toast.copied": "已複製",
+    "toast.copy_failed": "複製失敗",
+    "toast.need_input": "請先輸入",
+    "toast.saved": "已儲存",
+    "toast.loaded": "已載入",
+    "prompt.save": "請為此配方命名",
+    "confirm.reset": "確定要重設所有輸入？（已儲存的配方不會刪除）",
+    "copy.header": "【染髮配方】",
+    "copy.ratio": "染膏 : 雙氧奶 ＝ ",
+    "copy.subtotal": "染膏合計",
+    "copy.ox": "雙氧奶",
+    "copy.total": "總共",
+    "reg.title": "開始之前",
+    "reg.lead": "DRIVE BLUE HONG KONG 為髮型師提供的免費專業計算機。只需首次使用時登記一次，其後不會再顯示。",
+    "reg.q1": "您的工作形式",
+    "reg.opt.salon": "髮型屋任職",
+    "reg.opt.salon.sub": "受聘於髮型屋",
+    "reg.opt.freelance": "Freelance",
+    "reg.opt.freelance.sub": "",
+    "reg.salonName": "髮型屋名稱（必填）",
+    "reg.salonName.ph": "例：SALON HK",
+    "reg.q2": "Instagram 帳戶",
+    "reg.q2.hint": "請輸入 @ 後面的 ID，亦可貼上個人檔案的網址。必須為真實存在的帳戶。",
+    "reg.q2.check": "開啟 @{id} 確認",
+    "reg.instagram.ph": "your_id",
+    "reg.consent": "本人同意上述用途",
+    "reg.purpose.collect": "您提供的資料（工作形式、髮型屋名稱、Instagram）僅由營運者 DRIVE BLUE HONG KONG 用於改善服務、聯絡及發送最新消息，不會提供予第三方。",
+    "reg.purpose.local": "※ 此為預覽版本。您輸入的資料只會儲存於本機，不會傳送至任何地方。",
+    "reg.contact": "查詢: {contact}",
+    "reg.submit": "同意並開始使用",
+    "reg.submitting": "傳送中…",
+    "reg.err.affiliation": "請選擇工作形式",
+    "reg.err.salon": "請輸入髮型屋名稱",
+    "reg.err.instagram": "請輸入 Instagram ID",
+    "reg.err.instagram_format": "只可使用英文、數字及 . _（最多 30 個字元）",
+    "reg.err.instagram_fake": "請輸入真實的 Instagram 帳戶",
+    "reg.err.consent": "請先剔選同意",
+    "reg.warn.offline": "暫時無法傳送，稍後會自動重試。",
+    "reg.manage.title": "登記資料",
+    "reg.aff.salon": "髮型屋任職",
+    "reg.aff.freelance": "Freelance",
+    "reg.manage.delete": "從本機刪除",
+    "reg.manage.deleted": "已刪除",
+    "reg.manage.pending": "（尚未傳送，稍後重試）",
+    "reg.done.title": "多謝您！",
+    "reg.done.lead": "首次透過 WhatsApp 訂購DRIVE BLUE HONG KONG 的產品即可享 5% 折扣優惠。",
+    "reg.done.note": "※ 只限透過 WhatsApp 訂購，每人只限首次。",
+    "reg.done.whatsapp": "GET 5% OFF",
+    "reg.done.start": "開始使用計算機",
+    "reg.whatsapp.message": "您好，我想使用 DRIVE BLUE 首次購物 5% OFF 優惠。Instagram: @{instagram}",
+    "footer.whatsapp": "WhatsApp",
+    "footer.aria.whatsapp": "以 WhatsApp 聯絡 DRIVE BLUE HONG KONG",
+    "footer.whatsapp.message": "您好，我想使用 DRIVE BLUE 首次購物 5% OFF 優惠。",
+  };
+
+  var dictionaries = { ja: ja, yue: yue };
+  var order = ["ja", "yue"];
+  var LANG_KEY = "colormix.lang.v1";
+  var listeners = [];
+  var currentLang = null;
+
+  /** 端末の言語設定から初期言語を決める */
+  function detect(languages) {
+    var list = languages || [];
+    for (var i = 0; i < list.length; i++) {
+      var tag = String(list[i]).toLowerCase();
+      if (tag.indexOf("yue") === 0 || tag.indexOf("zh") === 0) return "yue";
+      if (tag.indexOf("ja") === 0) return "ja";
+    }
+    return "ja";
+  }
+
+  function has(lang) {
+    return order.indexOf(lang) >= 0;
+  }
+
+  /** キーを引いて {name} を差し替える。未定義キーは日本語 → キー名の順にフォールバック */
+  function translate(lang, key, params) {
+    var dict = dictionaries[has(lang) ? lang : "ja"];
+    var text = dict[key];
+    if (text === undefined) text = ja[key];
+    if (text === undefined) return key;
+    if (!params) return text;
+    return text.replace(/\{(\w+)\}/g, function (match, name) {
+      return Object.prototype.hasOwnProperty.call(params, name)
+        ? String(params[name])
+        : match;
+    });
+  }
+
+  function readStored() {
+    try {
+      return JSON.parse(localStorage.getItem(LANG_KEY));
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /** いま使う言語。保存済み → 端末の言語設定 → 日本語 の順に決まる */
+  function current() {
+    if (currentLang) return currentLang;
+    var saved = readStored();
+    currentLang = has(saved)
+      ? saved
+      : detect(
+          (typeof navigator !== "undefined" &&
+            (navigator.languages || [navigator.language])) ||
+            []
+        );
+    return currentLang;
+  }
+
+  /** 言語を切り替えて、購読側（画面・登録フォーム）に知らせる */
+  function set(lang) {
+    if (!has(lang) || lang === current()) return;
+    currentLang = lang;
+    try {
+      localStorage.setItem(LANG_KEY, JSON.stringify(lang));
+    } catch (e) {
+      /* 保存できなくても切り替えは効く */
+    }
+    listeners.forEach(function (fn) {
+      fn(currentLang);
+    });
+  }
+
+  function onChange(fn) {
+    listeners.push(fn);
+  }
+
+  /** その言語で引く t() を作る */
+  function scoped(getLang) {
+    return function (key, params) {
+      return translate(getLang(), key, params);
+    };
+  }
+
+  return {
+    LANGS: order,
+    dictionaries: dictionaries,
+    detect: detect,
+    has: has,
+    translate: translate,
+    current: current,
+    set: set,
+    onChange: onChange,
+    scoped: scoped,
+  };
+});

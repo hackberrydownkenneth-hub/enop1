@@ -127,3 +127,31 @@ python -m pytest
   データベースや Web フレームワークに依存しないため、単体テストが容易です。
 - **状態遷移の検証** — 直近の打刻から現在の状態を判定し、不正な打刻を防ぎます。
 - **データ整合性** — 退勤打刻漏れなど区間が閉じていない場合は警告(`warnings`)として表示します。
+
+---
+
+## 同梱ツール: 🎨 カラー剤 計算機 (`colormix/`)
+
+美容師向けのヘアカラー調合計算アプリを同梱しています。合計量と 2 剤の倍率
+(1:1 / 1:2 / 1:3 など)を選ぶだけで、ミックスする 1 剤それぞれのグラム数を
+自動計算します。日本語と繁体字中国語(香港・書面語)の切り替えに対応。
+タイムカードシステムとは独立しており、サーバー不要で
+`colormix/index.html` をブラウザで開くだけで動作します。
+
+詳細は [`colormix/README.md`](colormix/README.md) を参照してください。
+
+公開して使ってもらう場合は、はじめての人にだけ登録画面(サロン所属 / フリーランス
+の選択と Instagram アカウント)を出し、登録者を集められます。送信先は Google フォームか、
+同梱の [`colormix_server/`](colormix_server)(SQLite + 管理画面)から選べます。
+
+一般公開は Cloudflare Pages を想定しています。`node colormix/build.js` が公開用の
+`_site/` を組み立てるので、ビルドコマンドにこれ、公開フォルダに `_site` を指定するだけです。
+
+```bash
+# 計算ロジック・入力チェックのテスト
+node --test colormix/calc.test.js colormix/profile.test.js colormix/i18n.test.js
+
+# 公開サーバー(計算機の配信 + 登録API + 管理画面)
+export COLORMIX_ADMIN_TOKEN="長めの合言葉"
+python run_colormix.py     # http://127.0.0.1:5001 / 登録者一覧は /admin?token=...
+```

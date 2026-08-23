@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>登録者一覧 — カラー剤 計算機</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        padding: 24px 16px 48px;
+        background: #f6f4f9;
+        color: #241f2e;
+        font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", system-ui, sans-serif;
+        line-height: 1.6;
+      }
+      @media (prefers-color-scheme: dark) {
+        body { background: #17141d; color: #f3f0f8; }
+        .card, tbody tr { background: #221e2b; }
+        th { background: #2e2540; }
+        td, th { border-color: #362f45; }
+      }
+      .wrap { max-width: 900px; margin: 0 auto; }
+      h1 { font-size: 20px; margin: 0 0 16px; }
+      .cards { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+      .card {
+        flex: 1 1 140px;
+        padding: 12px 14px;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(36, 31, 46, 0.08);
+      }
+      .card small { display: block; font-size: 12px; opacity: 0.7; }
+      .card b { font-size: 26px; font-variant-numeric: tabular-nums; }
+      .actions { margin-bottom: 16px; }
+      .btn {
+        display: inline-block;
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: #7c3aed;
+        color: #fff;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; }
+      th, td { padding: 8px 10px; border-bottom: 1px solid #e4e0ec; text-align: left; white-space: nowrap; }
+      th { background: #f0e9ff; font-size: 12px; }
+      td.salon { white-space: normal; }
+      .empty { padding: 24px; text-align: center; opacity: 0.7; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <h1>登録者一覧</h1>
+
+      <div class="cards">
+        <div class="card"><small>合計</small><b>{{ counts.get('total', 0) }}</b></div>
+        <div class="card"><small>サロン所属</small><b>{{ counts.get('salon', 0) }}</b></div>
+        <div class="card"><small>フリーランス</small><b>{{ counts.get('freelance', 0) }}</b></div>
+      </div>
+
+      <p class="actions">
+        <a class="btn" href="{{ url_for('admin_csv', token=token) }}">CSV でダウンロード</a>
+      </p>
+
+      {% if rows %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Instagram</th><th>区分</th><th>サロン名</th><th>言語</th><th>登録日時 (UTC)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rows %}
+            <tr>
+              <td><a href="https://www.instagram.com/{{ row.instagram }}/" rel="noopener noreferrer" target="_blank">@{{ row.instagram }}</a></td>
+              <td>{{ 'サロン所属' if row.affiliation == 'salon' else 'フリーランス' }}</td>
+              <td class="salon">{{ row.salon }}</td>
+              <td>{{ row.lang }}</td>
+              <td>{{ row.created_at }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <p class="empty">まだ登録はありません。</p>
+      {% endif %}
+    </div>
+  </body>
+</html>
