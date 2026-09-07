@@ -17,7 +17,7 @@
 <section class="hero {{ 'status-in_range' if payback.recovered else 'status-below' }}">
   <div class="hero-head">
     <div>
-      <span class="hero-label">通算損益(累計利益 − オープンコスト)</span>
+      <span class="hero-label">通算損益(累計利益 − {{ basis_label }})</span>
       <span class="hero-value {{ 'text-bad' if payback.position < 0 }}">{{ payback.position|money }}</span>
     </div>
     <div class="hero-side">
@@ -30,7 +30,7 @@
   </div>
   <div class="progress"><div class="progress-bar" style="width: {{ payback.recovery_rate if payback.recovery_rate <= 100 else 100 }}%"></div></div>
   <p class="hero-note">
-    オープンコスト {{ investment|money }} に対して 回収 {{ payback.recovery_rate }}%
+    {{ basis_label }} {{ basis|money }} に対して 回収 {{ payback.recovery_rate }}%
     {%- if payback.recovered %} ・ <strong>{{ payback.payback_month }} に回収完了</strong> ・ 以降の積み上がり {{ payback.surplus|money }}
     {%- else %} ・ 残り <strong>{{ payback.remaining|money }}</strong>{% endif %}
     {%- if payback.first_profitable_month %} ・ 初めて単月黒字になったのは {{ payback.first_profitable_month }}{% endif %}
@@ -54,8 +54,8 @@
     <div class="kpi-main"><span class="kpi-value {{ 'text-bad' if payback.worst_position < 0 }}">{{ payback.worst_position|money }}</span></div>
     <ul class="kpi-list">
       <li><span class="k">底を打った月</span><span class="v">{{ payback.worst_month or '—' }}</span></li>
-      <li><span class="k">オープンコスト</span><span class="v">{{ investment|money }}</span></li>
-      <li><span class="k">回収済み</span><span class="v">{{ (investment - payback.remaining)|money }}</span></li>
+      <li><span class="k">{{ basis_label }}</span><span class="v">{{ basis|money }}</span></li>
+      <li><span class="k">回収済み</span><span class="v">{{ (basis - payback.remaining)|money }}</span></li>
     </ul>
     <p class="kpi-foot">通算損益が最も落ち込んだ時点。ここが資金繰りの底です。</p>
   </div>
@@ -70,6 +70,76 @@
     </ul>
     <p class="kpi-foot">現金から運転資金を引いた、次の一手に回せる額です。</p>
   </div>
+</div>
+
+{# ---- 資本金(出資)---- #}
+<h2>資本金(個人口座 → 会社口座) <small>予定 {{ funding.planned|money }}</small></h2>
+<div class="hero" style="margin-bottom:1rem;">
+  <div class="hero-head">
+    <div>
+      <span class="hero-label">投入済みの自己資金({{ month }} 時点)</span>
+      <span class="hero-value">{{ funding.invested|money }}</span>
+    </div>
+    <div class="hero-side">
+      <span class="badge badge-{{ 'in_range' if funding.remaining == 0 else 'above' }}">{{ funding.progress }}% 投入</span>
+      <span class="hero-range">
+        {% if funding.remaining > 0 %}予定まで残り {{ funding.remaining|money }}
+        {% elif funding.over_plan > 0 %}予定を {{ funding.over_plan|money }} 超過
+        {% else %}予定どおり投入済み{% endif %}
+      </span>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" style="width: {{ funding.progress if funding.progress <= 100 else 100 }}%"></div></div>
+  <p class="hero-note">
+    出資 {{ funding.count }} 回
+    {%- if funding.first_month %} ・ {{ funding.first_month }} 〜 {{ funding.last_month }}
+      ・ 1 回あたり平均 {{ funding.average|money }}{% endif %}
+    ・ この累計が BS の「資本金」として自動計上され、回収の分母になります。
+  </p>
+</div>
+
+<table class="data-table">
+  <thead><tr><th>入金月</th><th class="num">金額</th><th class="num">累計</th><th>メモ</th><th></th></tr></thead>
+  <tbody>
+    {% for injection in funding.injections %}
+    <tr>
+      <td>{{ injection.month }}</td>
+      <td class="num">{{ injection.amount|money }}</td>
+      <td class="num">{{ injection.cumulative|money }}</td>
+      <td class="memo">{{ injection.memo }}</td>
+      <td class="num">
+        <form method="post" action="{{ url_for('delete_capital_form', capital_id=injection.id) }}">
+          <input type="hidden" name="month" value="{{ month }}">
+          <button class="btn btn-ghost btn-sm" title="削除">×</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">まだ出資が登録されていません。個人口座から会社口座へ移した分をここに記録します。</td></tr>
+    {% endfor %}
+  </tbody>
+  {% if funding.injections %}
+  <tfoot><tr><td>合計</td><td class="num">{{ funding.invested|money }}</td><td colspan="3"></td></tr></tfoot>
+  {% endif %}
+</table>
+
+<div class="panel" style="margin-top:1rem;">
+  <form method="post" action="{{ url_for('add_capital_form') }}" class="inline-form">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label>入金月 <input type="month" name="capital_month" value="{{ month }}"></label>
+    <label>金額(HKD) <input type="text" name="amount" placeholder="200000" required></label>
+    <label>メモ <input type="text" name="memo" placeholder="個人口座から"></label>
+    <button class="btn">出資を記録</button>
+  </form>
+  <form method="post" action="{{ url_for('set_planned_capital_form') }}" class="inline-form" style="margin-top:0.7rem;">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label>予定している出資総額(HKD) <input type="text" name="planned" value="{{ (funding.planned / 100)|round(2) }}"></label>
+    <button class="btn btn-ghost">予定額を保存</button>
+  </form>
+  <p class="note">
+    少しずつ移す形でも、その都度ここに記録すれば「今いくら入れたか」「予定 {{ funding.planned|money }} のうち何%か」が積み上がります。
+    BS の資本金は手入力せず、この履歴から自動計上されます。
+  </p>
 </div>
 
 {# ---- 回収の予測 ---- #}
@@ -96,7 +166,7 @@
 {# ---- 累計の推移 ---- #}
 <h2>通算損益の推移 <small>実績 {{ cycle.history|length }} か月 + 予測 {{ cycle.forecast|length }} か月</small></h2>
 <div class="chart-card">
-  <h3>オープンコストを含む通算損益</h3>
+  <h3>{{ basis_label }}を含む通算損益</h3>
   <p class="chart-sub">月次 / HKD ・ 0 を上回った時点で投資回収 ・ 薄い棒は直近ペースの予測</p>
   <div class="chart">
     <svg viewBox="{{ position_chart.view_box }}" role="img" aria-label="開店からの通算損益の推移">
@@ -115,7 +185,7 @@
       {% endfor %}
     </svg>
   </div>
-  <p class="kpi-foot">赤い棒はまだオープンコストを回収できていない状態です。</p>
+  <p class="kpi-foot">赤い棒はまだ{{ basis_label }}を回収できていない状態です。</p>
 </div>
 
 <table class="data-table">
@@ -177,7 +247,10 @@
 </div>
 
 {# ---- オープンコスト ---- #}
-<h2>オープンコスト(初期投資) <small>合計 {{ investment|money }}</small></h2>
+<h2>オープンコスト(初期投資) <small>合計 {{ investment|money }}
+  {%- if investment %} ・ 回収 {{ cost_payback.recovery_rate }}%
+  {%- if cost_payback.payback_month %}({{ cost_payback.payback_month }} 完了)
+  {%- else %}(残り {{ cost_payback.remaining|money }}){% endif %}{% endif %}</small></h2>
 <table class="data-table">
   <thead><tr><th>項目</th><th class="num">金額</th><th>支出月</th><th>備考</th><th></th></tr></thead>
   <tbody>

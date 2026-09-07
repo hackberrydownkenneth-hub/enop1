@@ -57,6 +57,22 @@ CREATE TABLE IF NOT EXISTS plans (
     memo       TEXT,
     created_at TEXT    NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS capital_injections (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    month      TEXT    NOT NULL,           -- 入金した月 YYYY-MM
+    amount     INTEGER NOT NULL,           -- 金額(セント)
+    memo       TEXT,                       -- 個人口座から / 追加出資 など
+    created_at TEXT    NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_capital_month ON capital_injections (month);
+
+CREATE TABLE IF NOT EXISTS settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
 """
 
 
@@ -296,3 +312,71 @@ def delete_plan(conn: sqlite3.Connection, plan_id: int) -> None:
 
 def list_plans(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     return conn.execute("SELECT * FROM plans ORDER BY amount").fetchall()
+
+
+# ---- 出資(個人口座 → 会社口座)-------------------------------------------
+
+def add_capital(
+    conn: sqlite3.Connection, month: str, amount: int, memo: str | None = None
+) -> int:
+    """出資(資本金の払い込み)を 1 件記録する。"""
+    now = datetime.now().isoformat(timespec="seconds")
+    cur = conn.execute(
+        "INSERT INTO capital_injections (month, amount, memo, created_at) "
+        "VALUES (?, ?, ?, ?)",
+        (month, amount, memo, now),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def get_capital(conn: sqlite3.Connection, capital_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM capital_injections WHERE id = ?", (capital_id,)
+    ).fetchone()
+
+
+def delete_capital(conn: sqlite3.Connection, capital_id: int) -> None:
+    conn.execute("DELETE FROM capital_injections WHERE id = ?", (capital_id,))
+    conn.commit()
+
+
+def list_capital(
+    conn: sqlite3.Connection, until_month: str | None = None
+) -> list[sqlite3.Row]:
+    """出資の履歴。until_month を渡すとその月までの分に絞る。"""
+    sql = "SELECT * FROM capital_injections"
+    params: list[object] = []
+    if until_month:
+        sql += " WHERE month <= ?"
+        params.append(until_month)
+    sql += " ORDER BY month, id"
+    return conn.execute(sql, params).fetchall()
+
+
+def total_capital(conn: sqlite3.Connection, until_month: str | None = None) -> int:
+    """出資の累計(セント)。"""
+    sql = "SELECT COALESCE(SUM(amount), 0) AS total FROM capital_injections"
+    params: list[object] = []
+    if until_month:
+        sql += " WHERE month <= ?"
+        params.append(until_month)
+    return int(conn.execute(sql, params).fetchone()["total"])
+
+
+# ---- 設定 ------------------------------------------------------------------
+
+def get_setting(conn: sqlite3.Connection, key: str) -> str | None:
+    row = conn.execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
+    return row["value"] if row else None
+
+
+def set_setting(conn: sqlite3.Connection, key: str, value: str) -> None:
+    now = datetime.now().isoformat(timespec="seconds")
+    conn.execute(
+        "INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value, "
+        "updated_at = excluded.updated_at",
+        (key, value, now),
+    )
+    conn.commit()

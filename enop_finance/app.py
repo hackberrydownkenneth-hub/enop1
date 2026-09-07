@@ -65,6 +65,10 @@ def create_app(db_path: str | None = None) -> Flask:
     app.config["RESERVE_MONTHS"] = int(
         _env_float("ENOP_RESERVE_MONTHS", lifecycle.DEFAULT_RESERVE_MONTHS)
     )
+    # 予定している出資総額(個人口座から会社口座へ移す総額の目安)
+    app.config["PLANNED_CAPITAL"] = _env_cents(
+        "ENOP_PLANNED_CAPITAL", lifecycle.DEFAULT_PLANNED_CAPITAL
+    )
 
     # テンプレートで金額を HK$1,234.56 形式に整形するフィルタ
     app.jinja_env.filters["money"] = calc.format_money
@@ -101,6 +105,8 @@ def create_app(db_path: str | None = None) -> Flask:
             target=metrics.target,
             payback=cycle["cycle"].payback,
             investment=cycle["investment"],
+            funding=cycle["funding"],
+            basis_label=cycle["basis_label"],
             capacity=cycle["cycle"].capacity,
             cycle_finish=next(
                 (s.finish_month for s in cycle["cycle"].scenarios if s.finish_month), None
@@ -134,6 +140,11 @@ def create_app(db_path: str | None = None) -> Flask:
             payback=data["cycle"].payback,
             costs=data["costs"],
             investment=data["investment"],
+            funding=data["funding"],
+            invested=data["invested"],
+            basis=data["basis"],
+            basis_label=data["basis_label"],
+            cost_payback=data["cost_payback"],
             position_chart=chart.bar_chart(
                 [(p.month[2:], p.position) for p in points],
                 forecast_from=len(data["cycle"].history),
@@ -159,6 +170,36 @@ def create_app(db_path: str | None = None) -> Flask:
         conn = get_db()
         db.delete_startup_cost(conn, cost_id)
         return redirect(url_for("lifecycle_view", month=_month_arg(request.form.get("month"))))
+
+    @app.route("/capital", methods=["POST"])
+    def add_capital_form():
+        conn = get_db()
+        month = _month_arg(request.form.get("month"))
+        try:
+            capital_month, amount, memo = _capital_input(request.form)
+        except ValueError as exc:
+            flash(str(exc), "error")
+        else:
+            db.add_capital(conn, capital_month, amount, memo)
+        return redirect(url_for("lifecycle_view", month=month))
+
+    @app.route("/capital/<int:capital_id>/delete", methods=["POST"])
+    def delete_capital_form(capital_id: int):
+        conn = get_db()
+        db.delete_capital(conn, capital_id)
+        return redirect(url_for("lifecycle_view", month=_month_arg(request.form.get("month"))))
+
+    @app.route("/capital/planned", methods=["POST"])
+    def set_planned_capital_form():
+        conn = get_db()
+        month = _month_arg(request.form.get("month"))
+        try:
+            planned = calc.parse_amount(request.form.get("planned"))
+        except ValueError as exc:
+            flash(str(exc), "error")
+        else:
+            db.set_setting(conn, "planned_capital", str(planned))
+        return redirect(url_for("lifecycle_view", month=month))
 
     @app.route("/plans", methods=["POST"])
     def add_plan_form():
@@ -390,6 +431,44 @@ def create_app(db_path: str | None = None) -> Flask:
         db.delete_startup_cost(conn, cost_id)
         return jsonify({"deleted": cost_id})
 
+    @app.post("/api/capital")
+    def api_add_capital():
+        conn = get_db()
+        data = request.get_json(silent=True) or {}
+        try:
+            capital_month, amount, memo = _capital_input(data)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        capital_id = db.add_capital(conn, capital_month, amount, memo)
+        return jsonify(
+            {
+                "id": capital_id,
+                "month": capital_month,
+                "amount": calc.to_dollars(amount),
+                "memo": memo or "",
+                "invested": calc.to_dollars(db.total_capital(conn)),
+            }
+        ), 201
+
+    @app.delete("/api/capital/<int:capital_id>")
+    def api_delete_capital(capital_id: int):
+        conn = get_db()
+        if db.get_capital(conn, capital_id) is None:
+            return jsonify({"error": "出資の記録が見つかりません。"}), 404
+        db.delete_capital(conn, capital_id)
+        return jsonify({"deleted": capital_id})
+
+    @app.put("/api/capital/planned")
+    def api_set_planned_capital():
+        conn = get_db()
+        data = request.get_json(silent=True) or {}
+        try:
+            planned = calc.parse_amount(data.get("planned"))
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        db.set_setting(conn, "planned_capital", str(planned))
+        return jsonify({"planned": calc.to_dollars(planned)})
+
     @app.post("/api/plans")
     def api_add_plan():
         conn = get_db()
@@ -542,11 +621,29 @@ def create_app(db_path: str | None = None) -> Flask:
             return app.config["TARGET_MIN"], app.config["TARGET_MAX"]
         return row["target_min"], row["target_max"]
 
+    def _capital_entry(conn, month: str) -> calc.Entry | None:
+        """その月までの出資累計を BS の資本金として自動計上する。"""
+        invested = db.total_capital(conn, month)
+        if invested <= 0:
+            return None
+        count = len(db.list_capital(conn, month))
+        return calc.Entry(
+            category="equity",
+            item="資本金(出資累計)",
+            amount=invested,
+            memo=f"出資 {count} 件({month} 時点)",
+            source=calc.SOURCE_CAPITAL,
+        )
+
     def _statements(conn, month: str) -> dict:
         """対象月の PL・BS・目標達成状況を組み立てる。"""
         entries = db.list_entries(conn, month)
         pl = calc.compute_pl([e for e in entries if e.statement == "pl"], month)
-        bs = calc.compute_bs([e for e in entries if e.statement == "bs"], month)
+        bs_entries = [e for e in entries if e.statement == "bs"]
+        capital = _capital_entry(conn, month)
+        if capital is not None:
+            bs_entries.append(capital)
+        bs = calc.compute_bs(bs_entries, month)
         target_min, target_max = _target_range(conn, month)
         basis = app.config["TARGET_BASIS"]
         target = calc.evaluate_target(pl.profit(basis), target_min, target_max, basis)
@@ -608,6 +705,16 @@ def create_app(db_path: str | None = None) -> Flask:
         memo = str(source.get("memo") or "").strip() or None
         return item, amount, cost_month, memo
 
+    def _capital_input(source) -> tuple[str, int, str | None]:
+        """出資の入力値を取り出して検証する。"""
+        raw_month = str(source.get("capital_month") or source.get("month") or "").strip()
+        capital_month = raw_month if calc.is_valid_month(raw_month) else _month_arg()
+        amount = calc.parse_amount(source.get("amount"))
+        if amount <= 0:
+            raise ValueError("出資額は 0 より大きい金額で入力してください。")
+        memo = str(source.get("memo") or "").strip() or None
+        return capital_month, amount, memo
+
     def _plan_input(source) -> tuple[str, int, str | None]:
         """「次にやれること」の入力値を取り出して検証する。"""
         name = str(source.get("name") or "").strip()
@@ -642,11 +749,30 @@ def create_app(db_path: str | None = None) -> Flask:
             cursor = calc.month_shift(cursor, 1)
         return results
 
+    def _planned_capital(conn) -> int:
+        stored = db.get_setting(conn, "planned_capital")
+        if stored is None:
+            return app.config["PLANNED_CAPITAL"]
+        try:
+            return int(stored)
+        except ValueError:
+            return app.config["PLANNED_CAPITAL"]
+
     def _lifecycle(conn, month: str) -> dict:
         """開店からの累計・回収・予測・投資余力をまとめる。"""
         months = _history(conn, month)
         investment = db.total_startup_cost(conn)
-        payback = lifecycle.evaluate_payback(months, investment)
+        funding = lifecycle.evaluate_funding(
+            [(row["id"], row["month"], row["amount"], row["memo"] or "")
+             for row in db.list_capital(conn, month)],
+            _planned_capital(conn),
+        )
+        # 回収の分母は「実際に入れた自己資金(出資累計)」。
+        # 出資が未登録のときはオープンコストを分母にする。
+        invested = funding.invested
+        basis = invested if invested > 0 else investment
+        payback = lifecycle.evaluate_payback(months, basis)
+        cost_payback = lifecycle.evaluate_payback(months, investment)
         target_min, target_max = _target_range(conn, month)
         metrics = _kpi(conn, month)
 
@@ -665,7 +791,7 @@ def create_app(db_path: str | None = None) -> Flask:
         cycle = lifecycle.Lifecycle(
             payback=payback,
             history=lifecycle.build_history(
-                [m for m in months if m.has_activity], investment
+                [m for m in months if m.has_activity], basis
             ),
             forecast=lifecycle.project(
                 payback,
@@ -679,6 +805,11 @@ def create_app(db_path: str | None = None) -> Flask:
         return {
             "cycle": cycle,
             "investment": investment,
+            "invested": invested,
+            "basis": basis,
+            "basis_label": "出資累計" if invested > 0 else "オープンコスト",
+            "funding": funding,
+            "cost_payback": cost_payback,
             "costs": db.list_startup_costs(conn),
         }
 
@@ -686,10 +817,41 @@ def create_app(db_path: str | None = None) -> Flask:
         cycle = data["cycle"]
         payback = cycle.payback
         usd = calc.to_dollars
+        funding = data["funding"]
         return {
             "month": month,
             "currency": calc.CURRENCY_CODE,
             "investment": usd(data["investment"]),
+            "invested_capital": usd(data["invested"]),
+            "recovery_basis": data["basis_label"],
+            "funding": {
+                "planned": usd(funding.planned),
+                "invested": usd(funding.invested),
+                "remaining": usd(funding.remaining),
+                "over_plan": usd(funding.over_plan),
+                "progress": funding.progress,
+                "count": funding.count,
+                "average": usd(funding.average),
+                "first_month": funding.first_month,
+                "last_month": funding.last_month,
+                "injections": [
+                    {
+                        "id": i.id,
+                        "month": i.month,
+                        "amount": usd(i.amount),
+                        "memo": i.memo,
+                        "cumulative": usd(i.cumulative),
+                    }
+                    for i in funding.injections
+                ],
+            },
+            "startup_cost_payback": {
+                "investment": usd(data["cost_payback"].investment),
+                "recovered": data["cost_payback"].recovered,
+                "recovery_rate": data["cost_payback"].recovery_rate,
+                "remaining": usd(data["cost_payback"].remaining),
+                "payback_month": data["cost_payback"].payback_month,
+            },
             "payback": {
                 "phase": payback.phase,
                 "phase_label": payback.phase_label,

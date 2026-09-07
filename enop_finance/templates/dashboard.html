@@ -113,13 +113,14 @@
     </div>
     <ul class="kpi-list">
       <li><span class="k">累計利益</span><span class="v">{{ payback.cumulative_profit|money }}</span></li>
+      <li><span class="k">投入した自己資金</span><span class="v">{{ funding.invested|money }} / {{ funding.planned|money }}</span></li>
       <li><span class="k">オープンコスト</span><span class="v">{{ investment|money }}</span></li>
       <li><span class="k">開店から</span><span class="v">{{ payback.months_elapsed }} か月(黒字 {{ payback.profitable_months }})</span></li>
     </ul>
   </div>
   <div class="kpi-card">
     <h3>投資回収</h3>
-    <div class="kpi-main"><span class="kpi-value">{{ payback.recovery_rate }}%</span><span class="kpi-unit">回収済み</span></div>
+    <div class="kpi-main"><span class="kpi-value">{{ payback.recovery_rate }}%</span><span class="kpi-unit">{{ basis_label }}を回収</span></div>
     <div class="progress-sm"><div style="width: {{ payback.recovery_rate if payback.recovery_rate <= 100 else 100 }}%"></div></div>
     <ul class="kpi-list">
       <li><span class="k">残り</span><span class="v">{% if payback.recovered %}<span class="text-good">回収完了</span>{% else %}{{ payback.remaining|money }}{% endif %}</span></li>

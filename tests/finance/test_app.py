@@ -565,3 +565,145 @@ def test_dashboard_shows_cumulative_summary(client):
     assert "通算損益(オープンコスト込み)" in body
     assert "投資回収" in body
     assert "回収中(単月黒字)" in body
+
+
+# ---- 資本金(出資)----------------------------------------------------------
+
+def _seed_capital(client):
+    """個人口座から 3 回に分けて計 HK$1,100,000 を入金。"""
+    for capital_month, amount, memo in [
+        ("2026-01", 400_000, "設立時 個人口座から"),
+        ("2026-03", 500_000, "内装費用"),
+        ("2026-06", 200_000, "運転資金"),
+    ]:
+        resp = client.post(
+            "/api/capital",
+            json={"capital_month": capital_month, "amount": amount, "memo": memo},
+        )
+        assert resp.status_code == 201, resp.data
+
+
+def test_capital_api_accumulates(client):
+    _seed_capital(client)
+    funding = client.get("/api/lifecycle?month=2026-06").get_json()["funding"]
+    assert funding["invested"] == 1_100_000
+    assert funding["planned"] == 1_200_000        # 既定の予定額
+    assert funding["remaining"] == 100_000
+    assert funding["progress"] == 91.7
+    assert funding["count"] == 3
+    assert [i["cumulative"] for i in funding["injections"]] == [
+        400_000, 900_000, 1_100_000
+    ]
+
+
+def test_capital_is_counted_only_up_to_the_month(client):
+    _seed_capital(client)
+    assert client.get("/api/lifecycle?month=2026-02").get_json()["funding"]["invested"] == 400_000
+    assert client.get("/api/lifecycle?month=2026-04").get_json()["funding"]["invested"] == 900_000
+
+
+def test_capital_becomes_equity_on_the_balance_sheet(client):
+    _seed_capital(client)
+    bs = client.get("/api/statements?month=2026-06").get_json()["bs"]
+    equity = [s for s in bs["sections"] if s["category"] == "equity"][0]
+    assert equity["total"] == 1_100_000
+    assert equity["lines"][0]["source"] == calc.SOURCE_CAPITAL
+    assert equity["lines"][0]["item"] == "資本金(出資累計)"
+    # 月をさかのぼるとその時点の累計になる
+    early = client.get("/api/statements?month=2026-01").get_json()["bs"]
+    assert [s for s in early["sections"] if s["category"] == "equity"][0]["total"] == 400_000
+
+
+def test_recovery_uses_invested_capital_when_registered(client):
+    _seed_opening(client)      # オープンコスト $360,000 + 3 か月の実績
+    _seed_capital(client)
+    data = client.get("/api/lifecycle?month=2026-06").get_json()
+    assert data["recovery_basis"] == "出資累計"
+    assert data["invested_capital"] == 1_100_000
+    # 通算損益は自己資金ベース
+    assert data["payback"]["position"] == 21_680 - 1_100_000
+    # オープンコストの回収も別に見える
+    assert data["startup_cost_payback"]["investment"] == 360_000
+    assert data["startup_cost_payback"]["recovery_rate"] == 6.0
+
+
+def test_recovery_falls_back_to_startup_cost(client):
+    _seed_opening(client)
+    data = client.get("/api/lifecycle?month=2026-06").get_json()
+    assert data["recovery_basis"] == "オープンコスト"
+    assert data["invested_capital"] == 0
+    assert data["payback"]["position"] == 21_680 - 360_000
+
+
+def test_capital_api_delete(client):
+    _seed_capital(client)
+    injections = client.get("/api/lifecycle?month=2026-06").get_json()["funding"]["injections"]
+    assert client.delete(f"/api/capital/{injections[0]['id']}").status_code == 200
+    assert client.delete(f"/api/capital/{injections[0]['id']}").status_code == 404
+    assert client.get("/api/lifecycle?month=2026-06").get_json()["funding"]["invested"] == 700_000
+
+
+def test_capital_api_validates(client):
+    assert client.post("/api/capital", json={"amount": 0}).status_code == 400
+    assert client.post("/api/capital", json={"amount": "たくさん"}).status_code == 400
+
+
+def test_planned_capital_can_be_changed(client):
+    assert client.put("/api/capital/planned", json={"planned": 1_500_000}).status_code == 200
+    funding = client.get("/api/lifecycle").get_json()["funding"]
+    assert funding["planned"] == 1_500_000
+
+
+def test_capital_form_add_and_delete(client):
+    resp = client.post(
+        "/capital",
+        data={"month": MONTH, "capital_month": "2026-01", "amount": "400,000",
+              "memo": "個人口座から"},
+        follow_redirects=True,
+    )
+    body = resp.data.decode()
+    assert "HK$400,000.00" in body
+    assert "個人口座から" in body
+
+    injection = client.get("/api/lifecycle").get_json()["funding"]["injections"][0]
+    client.post(f"/capital/{injection['id']}/delete", data={"month": MONTH})
+    assert client.get("/api/lifecycle").get_json()["funding"]["invested"] == 0
+
+
+def test_planned_capital_form(client):
+    client.post(
+        "/capital/planned", data={"month": MONTH, "planned": "1,500,000"},
+        follow_redirects=True,
+    )
+    assert client.get("/api/lifecycle").get_json()["funding"]["planned"] == 1_500_000
+
+
+def test_lifecycle_page_shows_capital(client):
+    _seed_capital(client)
+    body = client.get("/lifecycle?month=2026-06").data.decode()
+    assert "資本金(個人口座 → 会社口座)" in body
+    assert "HK$1,100,000.00" in body       # 投入済み
+    assert "HK$1,200,000.00" in body       # 予定
+    assert "91.7% 投入" in body
+    assert "運転資金" in body
+
+
+def test_lifecycle_page_without_capital(client):
+    body = client.get("/lifecycle").data.decode()
+    assert "まだ出資が登録されていません" in body
+
+
+def test_history_and_forecast_share_the_same_basis(client):
+    # 累計テーブルとグラフ・予測が同じ分母(出資累計)で並ぶこと
+    _seed_opening(client)
+    _seed_capital(client)
+    data = client.get("/api/lifecycle?month=2026-06").get_json()
+    last_history = data["history"][-1]
+    first_forecast = data["forecast"][0]
+    assert last_history["position"] == data["payback"]["position"]
+    # 予測は直近平均のぶんだけ前月から増える(段差ができない)
+    step = first_forecast["position"] - last_history["position"]
+    assert step == pytest.approx(data["payback"]["recent_average_profit"])
+    assert data["history"][0]["position"] == pytest.approx(
+        data["history"][0]["profit"] - 1_100_000
+    )

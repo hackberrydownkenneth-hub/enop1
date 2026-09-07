@@ -112,13 +112,17 @@
         <tr class="section-row"><td colspan="3">{{ section.label }}</td></tr>
         {% for line in section.lines %}
         <tr>
-          <td class="indent">{{ line.item }}{% if line.memo %} <span class="memo">{{ line.memo }}</span>{% endif %}</td>
+          <td class="indent">{{ line.item }}
+            {%- if line.automatic %} <span class="tag-import">自動計上</span>{% endif %}
+            {%- if line.memo %} <span class="memo">{{ line.memo }}</span>{% endif %}</td>
           <td class="num">{{ line.amount|money }}</td>
           <td class="num">
+            {% if not line.automatic %}
             <form method="post" action="{{ url_for('delete_entry_form', entry_id=line.id) }}">
               <input type="hidden" name="month" value="{{ month }}">
               <button class="btn btn-ghost btn-sm" title="削除">×</button>
             </form>
+            {% endif %}
           </td>
         </tr>
         {% else %}

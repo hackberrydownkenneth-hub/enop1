@@ -16,6 +16,8 @@ from .calc import month_shift
 RECENT_MONTHS = 3
 # 手元に残しておく運転資金の月数(投資余力の計算に使う)
 DEFAULT_RESERVE_MONTHS = 3
+# 予定している出資総額(HK$)。個人口座から会社口座へ移す総額の目安。
+DEFAULT_PLANNED_CAPITAL = 1_200_000 * 100  # セント
 
 # 回収フェーズ
 PHASE_PRE_OPEN = "pre_open"    # 開店前(実績なし)
@@ -28,6 +30,66 @@ PHASE_LABELS = {
     PHASE_EARNING: "回収中(単月黒字)",
     PHASE_RECOVERED: "投資回収済み",
 }
+
+
+@dataclass
+class Injection:
+    """出資(個人口座 → 会社口座)1 件。"""
+
+    month: str
+    amount: int
+    memo: str = ""
+    id: int | None = None
+    cumulative: int = 0     # その時点までの出資累計
+
+
+@dataclass
+class Funding:
+    """資本金(出資)の投入状況。"""
+
+    planned: int = DEFAULT_PLANNED_CAPITAL
+    injections: list["Injection"] = field(default_factory=list)
+
+    @property
+    def invested(self) -> int:
+        """投入済みの累計。"""
+        return sum(i.amount for i in self.injections)
+
+    @property
+    def count(self) -> int:
+        return len(self.injections)
+
+    @property
+    def remaining(self) -> int:
+        """予定額まであといくら。予定を超えていれば 0。"""
+        return max(0, self.planned - self.invested)
+
+    @property
+    def over_plan(self) -> int:
+        """予定額を超えて投入した額。"""
+        return max(0, self.invested - self.planned)
+
+    @property
+    def progress(self) -> float:
+        """予定額に対する投入率(%)。"""
+        if self.planned <= 0:
+            return 0.0
+        return round(self.invested / self.planned * 100, 1)
+
+    @property
+    def first_month(self) -> str | None:
+        return self.injections[0].month if self.injections else None
+
+    @property
+    def last_month(self) -> str | None:
+        return self.injections[-1].month if self.injections else None
+
+    @property
+    def average(self) -> int:
+        """1 回あたりの平均出資額。"""
+        if not self.injections:
+            return 0
+        return _round_cents(Decimal(self.invested) / len(self.injections))
 
 
 @dataclass
@@ -223,6 +285,31 @@ class Lifecycle:
     def points(self) -> list[CumulativePoint]:
         """実績 + 予測。"""
         return self.history + self.forecast
+
+
+def evaluate_funding(
+    injections: list[tuple[int | None, str, int, str]],
+    planned: int = DEFAULT_PLANNED_CAPITAL,
+) -> Funding:
+    """出資の履歴(月・金額)から投入状況を組み立てる。
+
+    履歴は月の昇順に並べ替え、各時点の累計を持たせる。
+    """
+    ordered = sorted(injections, key=lambda row: (row[1], row[0] or 0))
+    funding = Funding(planned=planned)
+    cumulative = 0
+    for injection_id, month, amount, memo in ordered:
+        cumulative += amount
+        funding.injections.append(
+            Injection(
+                id=injection_id,
+                month=month,
+                amount=amount,
+                memo=memo,
+                cumulative=cumulative,
+            )
+        )
+    return funding
 
 
 def build_history(months: list[MonthResult], investment: int) -> list[CumulativePoint]:

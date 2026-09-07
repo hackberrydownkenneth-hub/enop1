@@ -76,6 +76,7 @@ FIXED_COST_CATEGORIES = ("labor", "opex")
 
 SOURCE_MANUAL = "manual"      # 手入力
 SOURCE_IMPORT = "import"      # 給与 CSV などから取り込み
+SOURCE_CAPITAL = "capital"    # 出資履歴から自動計上
 
 
 @dataclass(frozen=True)
@@ -97,6 +98,11 @@ class Entry:
     def imported(self) -> bool:
         """給与 CSV などから取り込んだ明細か。"""
         return self.source == SOURCE_IMPORT
+
+    @property
+    def automatic(self) -> bool:
+        """手入力ではなく、他の登録から自動生成された明細か。"""
+        return self.source != SOURCE_MANUAL
 
 
 @dataclass

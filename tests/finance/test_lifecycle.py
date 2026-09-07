@@ -212,3 +212,73 @@ def test_plan_unreachable_without_profit():
     )
     assert plans[0].months_needed is None
     assert plans[0].ready_month is None
+
+
+# ---- 資本金(出資)----------------------------------------------------------
+
+def _injections(*rows):
+    """(id, 月, 金額 HK$, メモ)の並びを作る。"""
+    return [(index + 1, month, amount * 100, memo)
+            for index, (month, amount, memo) in enumerate(rows)]
+
+
+def test_funding_accumulates_in_month_order():
+    funding = lifecycle.evaluate_funding(
+        _injections(("2026-03", 500_000, "内装費用"),
+                    ("2026-01", 400_000, "設立時"),
+                    ("2026-06", 200_000, "運転資金")),
+        planned=1_200_000 * 100,
+    )
+    assert [i.month for i in funding.injections] == ["2026-01", "2026-03", "2026-06"]
+    assert [i.cumulative for i in funding.injections] == [
+        40_000_000, 90_000_000, 110_000_000
+    ]
+    assert funding.invested == 110_000_000
+    assert funding.count == 3
+    assert funding.first_month == "2026-01"
+    assert funding.last_month == "2026-06"
+
+
+def test_funding_progress_against_the_plan():
+    funding = lifecycle.evaluate_funding(
+        _injections(("2026-01", 900_000, "")), planned=1_200_000 * 100
+    )
+    assert funding.progress == 75.0
+    assert funding.remaining == 30_000_000
+    assert funding.over_plan == 0
+
+
+def test_funding_over_the_plan():
+    funding = lifecycle.evaluate_funding(
+        _injections(("2026-01", 1_400_000, "")), planned=1_200_000 * 100
+    )
+    assert funding.progress == 116.7
+    assert funding.remaining == 0
+    assert funding.over_plan == 20_000_000
+
+
+def test_funding_average_and_empty_state():
+    funding = lifecycle.evaluate_funding(
+        _injections(("2026-01", 400_000, ""), ("2026-02", 500_000, ""))
+    )
+    assert funding.average == 45_000_000
+    empty = lifecycle.evaluate_funding([])
+    assert empty.invested == 0
+    assert empty.average == 0
+    assert empty.progress == 0.0
+    assert empty.first_month is None
+    assert empty.remaining == lifecycle.DEFAULT_PLANNED_CAPITAL
+
+
+def test_default_planned_capital_is_1_2m():
+    assert lifecycle.DEFAULT_PLANNED_CAPITAL == 120_000_000   # HK$1,200,000
+
+
+def test_payback_against_invested_capital():
+    # 自己資金 HK$1,100,000 に対して累計利益 HK$25,000 → 回収 2.3%
+    payback = lifecycle.evaluate_payback(
+        [_m("2026-04", 118_000, 25_000)], 1_100_000 * 100
+    )
+    assert payback.recovery_rate == 2.3
+    assert payback.remaining == 107_500_000
+    assert payback.position == -107_500_000
