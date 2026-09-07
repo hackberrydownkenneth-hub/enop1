@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}PL・BS 管理{% endblock %}
+{% block content %}
+<h1>PL・BS 管理 <small>{{ month }}</small></h1>
+
+<div class="toolbar">
+  <form method="get" class="inline-form">
+    <label>対象月 <input type="month" name="month" value="{{ month }}"></label>
+    <button class="btn btn-primary">表示</button>
+  </form>
+  <form method="post" action="{{ url_for('copy_fin_entries_form') }}" class="inline-form">
+    <input type="hidden" name="month" value="{{ month }}">
+    <input type="hidden" name="from_month" value="{{ prev_month }}">
+    <button class="btn btn-ghost">前月({{ prev_month }})の明細を複製</button>
+  </form>
+  <a class="btn btn-primary" href="{{ url_for('finance_csv', month=month) }}">CSV ダウンロード</a>
+</div>
+
+{# ---- 目標達成状況 ---- #}
+<section class="target-panel target-{{ target.status }}">
+  <div class="target-head">
+    <div>
+      <span class="stat-label">{{ target.basis_label }}({{ month }})</span>
+      <span class="target-profit">{{ target.profit|usd }}</span>
+    </div>
+    <div class="target-verdict">
+      <span class="badge badge-{{ target.status }}">{{ target.label }}</span>
+      <span class="target-range">目標 {{ target.target_min|usd }} 〜 {{ target.target_max|usd }} / 月</span>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" style="width: {{ target.progress }}%"></div></div>
+  <p class="target-note">
+    達成率 {{ target.achievement_rate }}%(下限基準)
+    {%- if target.gap_to_min > 0 %} ・ 目標まであと <strong>{{ target.gap_to_min|usd }}</strong>
+    {%- elif target.surplus_over_max > 0 %} ・ 上限を {{ target.surplus_over_max|usd }} 超過
+    {%- else %} ・ 上限まで {{ target.gap_to_max|usd }} の余地
+    {%- endif %} ・ 年間換算 {{ target.annual_run_rate|usd }}
+  </p>
+  <div class="summary-row">
+    <div class="stat"><span class="stat-label">損益分岐点売上</span>
+      <span class="stat-value">{{ breakeven|usd if breakeven is not none else "—" }}</span></div>
+    <div class="stat"><span class="stat-label">目標達成に必要な売上</span>
+      <span class="stat-value">{{ needed_revenue|usd if needed_revenue is not none else "—" }}</span></div>
+    <div class="stat"><span class="stat-label">実績売上</span>
+      <span class="stat-value">{{ pl.revenue|usd }}</span></div>
+  </div>
+  <form method="post" action="{{ url_for('set_fin_target_form') }}" class="inline-form target-form">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label>この月の目標 下限 <input name="target_min" type="text" value="{{ (target.target_min / 100)|round(2) }}"></label>
+    <label>上限 <input name="target_max" type="text" value="{{ (target.target_max / 100)|round(2) }}"></label>
+    <button class="btn btn-ghost">目標を保存</button>
+  </form>
+</section>
+
+{# ---- PL ---- #}
+<h2>損益計算書(PL)</h2>
+<table class="data-table fin-table">
+  <thead>
+    <tr><th>科目</th><th class="num">金額</th><th class="num">前月</th><th>備考</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for code, label in pl_sections %}
+      {% set section = pl.sections[code] %}
+      <tr class="section-row"><td colspan="5">{{ label }}</td></tr>
+      {% for line in section.lines %}
+      <tr>
+        <td class="indent">{{ line.item }}
+          {%- if line.source == 'timecard' %} <span class="tag-auto">自動連携</span>{% endif %}</td>
+        <td class="num">{{ line.amount|usd }}</td>
+        <td class="num muted"></td>
+        <td class="memo">{{ line.memo }}</td>
+        <td class="num">
+          {% if line.editable %}
+          <form method="post" action="{{ url_for('delete_fin_entry_form', entry_id=line.id) }}">
+            <input type="hidden" name="month" value="{{ month }}">
+            <button class="btn btn-ghost btn-sm" title="削除">×</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr><td class="indent muted" colspan="5">明細なし</td></tr>
+      {% endfor %}
+      <tr class="subtotal-row">
+        <td class="indent">{{ label }} 小計</td>
+        <td class="num">{{ section.total|usd }}</td>
+        <td class="num muted">{{ prev_pl.sections[code].total|usd }}</td>
+        <td colspan="2"></td>
+      </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr><td>売上総利益</td><td class="num">{{ pl.gross_profit|usd }}</td>
+        <td class="num muted">{{ prev_pl.gross_profit|usd }}</td>
+        <td colspan="2">粗利率 {{ pl.gross_margin }}%</td></tr>
+    <tr class="row-strong"><td>営業利益</td><td class="num">{{ pl.operating_income|usd }}</td>
+        <td class="num muted">{{ prev_pl.operating_income|usd }}</td>
+        <td colspan="2">営業利益率 {{ pl.operating_margin }}%</td></tr>
+    <tr><td>経常利益</td><td class="num">{{ pl.ordinary_income|usd }}</td>
+        <td class="num muted">{{ prev_pl.ordinary_income|usd }}</td><td colspan="2"></td></tr>
+    <tr class="row-strong"><td>当期純利益</td><td class="num">{{ pl.net_income|usd }}</td>
+        <td class="num muted">{{ prev_pl.net_income|usd }}</td>
+        <td colspan="2">純利益率 {{ pl.net_margin }}%</td></tr>
+  </tfoot>
+</table>
+{% if link_payroll %}
+<p class="note">人件費にはタイムカードの給与計算結果を自動で取り込んでいます(換算レート {{ jpy_per_usd }} 円/$)。</p>
+{% endif %}
+
+{# ---- BS ---- #}
+<h2>貸借対照表(BS)<small> {{ month }} 月末</small></h2>
+{% if not bs.balanced %}
+<div class="flash flash-error">貸借差額 {{ bs.difference|usd }} — 資産と「負債+純資産」が一致していません。</div>
+{% endif %}
+<div class="bs-grid">
+  {% for group, title in [(asset_categories, '資産の部'), (liability_categories + ('equity',), '負債・純資産の部')] %}
+  <table class="data-table fin-table">
+    <thead><tr><th>{{ title }}</th><th class="num">金額</th><th></th></tr></thead>
+    <tbody>
+      {% for code in group %}
+        {% set section = bs.sections[code] %}
+        <tr class="section-row"><td colspan="3">{{ section.label }}</td></tr>
+        {% for line in section.lines %}
+        <tr>
+          <td class="indent">{{ line.item }}{% if line.memo %} <span class="memo">{{ line.memo }}</span>{% endif %}</td>
+          <td class="num">{{ line.amount|usd }}</td>
+          <td class="num">
+            <form method="post" action="{{ url_for('delete_fin_entry_form', entry_id=line.id) }}">
+              <input type="hidden" name="month" value="{{ month }}">
+              <button class="btn btn-ghost btn-sm" title="削除">×</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td class="indent muted" colspan="3">明細なし</td></tr>
+        {% endfor %}
+        <tr class="subtotal-row"><td class="indent">{{ section.label }} 小計</td>
+            <td class="num">{{ section.total|usd }}</td><td></td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      {% if loop.first %}
+      <tr class="row-strong"><td>資産合計</td><td class="num">{{ bs.total_assets|usd }}</td><td></td></tr>
+      {% else %}
+      <tr class="row-strong"><td>負債・純資産合計</td>
+          <td class="num">{{ bs.total_liabilities_and_equity|usd }}</td><td></td></tr>
+      {% endif %}
+    </tfoot>
+  </table>
+  {% endfor %}
+</div>
+<div class="summary-row">
+  <div class="stat"><span class="stat-label">運転資本</span><span class="stat-value">{{ bs.working_capital|usd }}</span></div>
+  <div class="stat"><span class="stat-label">流動比率</span><span class="stat-value">{{ bs.current_ratio }}%</span></div>
+  <div class="stat"><span class="stat-label">自己資本比率</span><span class="stat-value">{{ bs.equity_ratio }}%</span></div>
+</div>
+
+{# ---- 明細の追加 ---- #}
+<h2>明細を追加</h2>
+<div class="panel">
+  <form method="post" action="{{ url_for('add_fin_entry_form') }}" class="inline-form">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label>区分
+      <select name="category">
+        <optgroup label="PL(損益計算書)">
+          {% for code, label in pl_sections %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+        </optgroup>
+        <optgroup label="BS(貸借対照表)">
+          {% for code, label in bs_sections %}<option value="{{ code }}">{{ label }}</option>{% endfor %}
+        </optgroup>
+      </select>
+    </label>
+    <label>科目 <input name="item" type="text" placeholder="例: フード売上 / 家賃" required></label>
+    <label>金額(USD) <input name="amount" type="text" placeholder="12345.67" required></label>
+    <label>備考 <input name="memo" type="text" placeholder="任意"></label>
+    <button class="btn btn-primary">追加</button>
+  </form>
+  <p class="note">
+    費用・負債・純資産もプラスの金額で入力します(区分ごとに符号を判定)。
+    マイナス入力は返金・控除などの調整に使えます。
+  </p>
+</div>
+
+{% if months %}
+<p class="note">登録済みの月: {% for m in months %}<a href="{{ url_for('finance_view', month=m) }}">{{ m }}</a>{% if not loop.last %} / {% endif %}{% endfor %}</p>
+{% endif %}
+{% endblock %}
