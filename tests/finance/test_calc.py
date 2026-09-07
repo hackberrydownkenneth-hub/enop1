@@ -1,9 +1,9 @@
-"""PL・BS の計算ロジックのユニットテスト。"""
+"""PL・BS の計算ロジック(calc)のユニットテスト。"""
 
 import pytest
 
-from timecard import finance
-from timecard.finance import Entry
+from enop_finance import calc
+from enop_finance.calc import Entry
 
 
 def _pl(**by_category):
@@ -11,7 +11,7 @@ def _pl(**by_category):
         Entry(category=category, item=category, amount=amount)
         for category, amount in by_category.items()
     ]
-    return finance.compute_pl(entries, "2026-09")
+    return calc.compute_pl(entries, "2026-09")
 
 
 def _bs(**by_category):
@@ -19,7 +19,7 @@ def _bs(**by_category):
         Entry(category=category, item=category, amount=amount)
         for category, amount in by_category.items()
     ]
-    return finance.compute_bs(entries, "2026-09")
+    return calc.compute_bs(entries, "2026-09")
 
 
 # ---- PL --------------------------------------------------------------------
@@ -69,19 +69,19 @@ def test_pl_ignores_bs_categories():
         Entry(category="revenue", item="売上", amount=1_000_000),
         Entry(category="current_asset", item="現金", amount=9_000_000),
     ]
-    pl = finance.compute_pl(entries)
+    pl = calc.compute_pl(entries)
     assert pl.revenue == 1_000_000
-    assert all(section.category in finance.PL_CATEGORIES for section in pl.sections.values())
+    assert all(section.category in calc.PL_CATEGORIES for section in pl.sections.values())
 
 
 def test_pl_profit_basis():
     pl = _pl(revenue=10_000_000, opex=2_000_000, tax=1_000_000)
-    assert pl.profit(finance.BASIS_OPERATING) == 8_000_000
-    assert pl.profit(finance.BASIS_NET) == 7_000_000
+    assert pl.profit(calc.BASIS_OPERATING) == 8_000_000
+    assert pl.profit(calc.BASIS_NET) == 7_000_000
 
 
 def test_empty_pl():
-    pl = finance.compute_pl([], "2026-09")
+    pl = calc.compute_pl([], "2026-09")
     assert pl.is_empty
     assert pl.operating_income == 0
 
@@ -130,13 +130,13 @@ def test_bs_ratios_without_liabilities():
 # ---- 目標利益 --------------------------------------------------------------
 
 def test_default_target_is_30k_to_50k():
-    assert finance.TARGET_MIN == 3_000_000
-    assert finance.TARGET_MAX == 5_000_000
+    assert calc.TARGET_MIN == 3_000_000
+    assert calc.TARGET_MAX == 5_000_000
 
 
 def test_target_below():
-    status = finance.evaluate_target(2_000_000)  # $20,000
-    assert status.status == finance.STATUS_BELOW
+    status = calc.evaluate_target(2_000_000)  # $20,000
+    assert status.status == calc.STATUS_BELOW
     assert status.label == "未達"
     assert not status.achieved
     assert status.gap_to_min == 1_000_000       # $10,000 不足
@@ -144,8 +144,8 @@ def test_target_below():
 
 
 def test_target_in_range():
-    status = finance.evaluate_target(4_000_000)  # $40,000
-    assert status.status == finance.STATUS_IN_RANGE
+    status = calc.evaluate_target(4_000_000)  # $40,000
+    assert status.status == calc.STATUS_IN_RANGE
     assert status.achieved
     assert status.gap_to_min == 0
     assert status.gap_to_max == 1_000_000
@@ -153,26 +153,26 @@ def test_target_in_range():
 
 
 def test_target_boundaries_are_inclusive():
-    assert finance.evaluate_target(3_000_000).status == finance.STATUS_IN_RANGE
-    assert finance.evaluate_target(5_000_000).status == finance.STATUS_IN_RANGE
+    assert calc.evaluate_target(3_000_000).status == calc.STATUS_IN_RANGE
+    assert calc.evaluate_target(5_000_000).status == calc.STATUS_IN_RANGE
 
 
 def test_target_above():
-    status = finance.evaluate_target(6_000_000)  # $60,000
-    assert status.status == finance.STATUS_ABOVE
+    status = calc.evaluate_target(6_000_000)  # $60,000
+    assert status.status == calc.STATUS_ABOVE
     assert status.surplus_over_max == 1_000_000
     assert status.annual_run_rate == 72_000_000
 
 
 def test_target_loss_month():
-    status = finance.evaluate_target(-500_000)
-    assert status.status == finance.STATUS_BELOW
+    status = calc.evaluate_target(-500_000)
+    assert status.status == calc.STATUS_BELOW
     assert status.gap_to_min == 3_500_000
     assert status.progress == 0.0
 
 
 def test_target_custom_range_is_normalized():
-    status = finance.evaluate_target(3_500_000, target_min=5_000_000, target_max=3_000_000)
+    status = calc.evaluate_target(3_500_000, target_min=5_000_000, target_max=3_000_000)
     assert status.target_min == 3_000_000
     assert status.target_max == 5_000_000
     assert status.achieved
@@ -183,26 +183,26 @@ def test_target_custom_range_is_normalized():
 def test_breakeven_revenue():
     # 変動費率 30%、固定費 $70,000 → 損益分岐点 $100,000
     pl = _pl(revenue=10_000_000, cogs=3_000_000, labor=4_000_000, opex=3_000_000)
-    assert finance.variable_cost_ratio(pl) == 0.3
-    assert finance.fixed_cost(pl) == 7_000_000
-    assert finance.breakeven_revenue(pl) == 10_000_000
+    assert calc.variable_cost_ratio(pl) == 0.3
+    assert calc.fixed_cost(pl) == 7_000_000
+    assert calc.breakeven_revenue(pl) == 10_000_000
 
 
 def test_revenue_needed_for_target():
     # 固定費 $70,000・変動費率 30% で $30,000 の利益を出すには売上 $142,857.14
     pl = _pl(revenue=10_000_000, cogs=3_000_000, labor=4_000_000, opex=3_000_000)
-    assert finance.revenue_needed_for_target(pl, finance.TARGET_MIN) == 14_285_714
+    assert calc.revenue_needed_for_target(pl, calc.TARGET_MIN) == 14_285_714
 
 
 def test_required_revenue_unavailable_when_cost_exceeds_sales():
     # 原価率 100% 以上では必要売上を算出できない
-    assert finance.required_revenue(1_000_000, 1.0, 3_000_000) is None
-    assert finance.required_revenue(1_000_000, 1.4, 3_000_000) is None
+    assert calc.required_revenue(1_000_000, 1.0, 3_000_000) is None
+    assert calc.required_revenue(1_000_000, 1.4, 3_000_000) is None
 
 
 def test_breakeven_without_revenue_returns_fixed_cost():
     pl = _pl(opex=2_500_000)
-    assert finance.breakeven_revenue(pl) == 2_500_000
+    assert calc.breakeven_revenue(pl) == 2_500_000
 
 
 # ---- 金額・月のユーティリティ ---------------------------------------------
@@ -213,54 +213,54 @@ def test_breakeven_without_revenue_returns_fixed_cost():
      (1234.5, 123_450), ("-500", -50_000), ("0.005", 1)],
 )
 def test_parse_amount(raw, cents):
-    assert finance.parse_amount(raw) == cents
+    assert calc.parse_amount(raw) == cents
 
 
 @pytest.mark.parametrize("raw", ["", "   ", None, "abc"])
 def test_parse_amount_rejects_invalid(raw):
     with pytest.raises(ValueError):
-        finance.parse_amount(raw)
+        calc.parse_amount(raw)
 
 
 def test_format_usd():
-    assert finance.format_usd(123_456) == "$1,234.56"
-    assert finance.format_usd(-123_456) == "-$1,234.56"
-    assert finance.format_usd(0) == "$0.00"
+    assert calc.format_usd(123_456) == "$1,234.56"
+    assert calc.format_usd(-123_456) == "-$1,234.56"
+    assert calc.format_usd(0) == "$0.00"
 
 
 def test_month_shift():
-    assert finance.month_shift("2026-09", 1) == "2026-10"
-    assert finance.month_shift("2026-01", -1) == "2025-12"
-    assert finance.month_shift("2026-12", 2) == "2027-02"
+    assert calc.month_shift("2026-09", 1) == "2026-10"
+    assert calc.month_shift("2026-01", -1) == "2025-12"
+    assert calc.month_shift("2026-12", 2) == "2027-02"
 
 
 def test_is_valid_month():
-    assert finance.is_valid_month("2026-09")
-    assert not finance.is_valid_month("2026-13")
-    assert not finance.is_valid_month("2026-9")
-    assert not finance.is_valid_month("")
+    assert calc.is_valid_month("2026-09")
+    assert not calc.is_valid_month("2026-13")
+    assert not calc.is_valid_month("2026-9")
+    assert not calc.is_valid_month("")
 
 
 def test_validate_category():
-    assert finance.validate_category("revenue") == "revenue"
-    assert finance.validate_category("equity", "bs") == "equity"
+    assert calc.validate_category("revenue") == "revenue"
+    assert calc.validate_category("equity", "bs") == "equity"
     with pytest.raises(ValueError):
-        finance.validate_category("unknown")
+        calc.validate_category("unknown")
     with pytest.raises(ValueError):
-        finance.validate_category("revenue", "bs")
+        calc.validate_category("revenue", "bs")
 
 
 def test_yen_to_cents():
     # 1,500,000 円 ÷ 150 円/$ = $10,000
-    assert finance.yen_to_cents(1_500_000, 150) == 1_000_000
+    assert calc.yen_to_cents(1_500_000, 150) == 1_000_000
     with pytest.raises(ValueError):
-        finance.yen_to_cents(1000, 0)
+        calc.yen_to_cents(1000, 0)
 
 
-def test_entry_statement_and_editable():
+def test_entry_statement_and_source():
     manual = Entry(category="revenue", item="売上", amount=100)
-    auto = Entry(category="labor", item="給与", amount=100, source=finance.SOURCE_TIMECARD)
+    imported = Entry(category="labor", item="給与", amount=100, source=calc.SOURCE_IMPORT)
     assert manual.statement == "pl"
-    assert manual.editable
+    assert not manual.imported
     assert Entry(category="equity", item="資本金", amount=100).statement == "bs"
-    assert not auto.editable
+    assert imported.imported

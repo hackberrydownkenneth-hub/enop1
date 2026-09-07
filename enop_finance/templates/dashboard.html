@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}経営ダッシュボード{% endblock %}
+{% block content %}
+<h1>経営ダッシュボード <small>{{ month }}</small></h1>
+
+<div class="toolbar">
+  <form method="get" class="inline-form">
+    <label>対象月 <input type="month" name="month" value="{{ month }}"></label>
+    <button class="btn">表示</button>
+  </form>
+  <a class="btn btn-ghost" href="{{ url_for('statements', month=month) }}">PL・BS を入力</a>
+  <a class="btn btn-ghost" href="{{ url_for('report_csv', month=month) }}">CSV ダウンロード</a>
+</div>
+
+{# ---- 目標達成状況 ---- #}
+<section class="hero status-{{ target.status }}">
+  <div class="hero-head">
+    <div>
+      <span class="hero-label">{{ target.basis_label }}({{ month }})</span>
+      <span class="hero-value">{{ target.profit|usd }}</span>
+    </div>
+    <div class="hero-side">
+      <span class="badge badge-{{ target.status }}">{{ target.label }}</span>
+      <span class="hero-range">目標 {{ target.target_min|usd }} 〜 {{ target.target_max|usd }} / 月</span>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" style="width: {{ target.progress }}%"></div></div>
+  <p class="hero-note">
+    達成率 {{ target.achievement_rate }}%(下限基準)
+    {%- if target.gap_to_min > 0 %} ・ 目標まであと <strong>{{ target.gap_to_min|usd }}</strong>
+    {%- elif target.surplus_over_max > 0 %} ・ 上限を {{ target.surplus_over_max|usd }} 超過
+    {%- else %} ・ 上限まで {{ target.gap_to_max|usd }} の余地
+    {%- endif %} ・ 年間換算 {{ target.annual_run_rate|usd }} ・
+    前月 {{ prev.target.profit|usd }}
+    {%- set diff = target.profit - prev.target.profit %}
+    <span class="{{ 'text-good' if diff >= 0 else 'text-bad' }}">({{ '+' if diff >= 0 }}{{ diff|usd }})</span>
+  </p>
+</section>
+
+{# ---- 指標カード ---- #}
+<h2>今月の指標</h2>
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <h3>売上・客数・客単価</h3>
+    <div class="kpi-main">
+      <span class="kpi-value">{{ kpi.revenue|usd }}</span>
+      <span class="kpi-unit">売上高</span>
+    </div>
+    <ul class="kpi-list">
+      <li><span class="k">客数</span><span class="v">{% if kpi.customers %}{{ "{:,}".format(kpi.customers) }} 人{% else %}<span class="kpi-none">未入力</span>{% endif %}</span></li>
+      <li><span class="k">客単価</span><span class="v">{% if kpi.average_spend is not none %}{{ kpi.average_spend|usd }}{% else %}<span class="kpi-none">—</span>{% endif %}</span></li>
+      <li><span class="k">日商({{ kpi.inputs.open_days or '—' }} 営業日)</span><span class="v">{% if kpi.daily_sales is not none %}{{ kpi.daily_sales|usd }}{% else %}<span class="kpi-none">—</span>{% endif %}</span></li>
+      <li><span class="k">1 日あたり客数</span><span class="v">{% if kpi.daily_customers is not none %}{{ kpi.daily_customers }} 人{% else %}<span class="kpi-none">—</span>{% endif %}</span></li>
+    </ul>
+    <p class="kpi-foot">前月売上 {{ prev.revenue|usd }}</p>
+  </div>
+
+  <div class="kpi-card">
+    <h3>原価率・人件費率(FL 比率)</h3>
+    <div class="kpi-main">
+      <span class="kpi-value">{{ kpi.fl_ratio }}%</span>
+      <span class="badge badge-{{ kpi.fl_level }}">{{ level_labels[kpi.fl_level] }}</span>
+    </div>
+    <ul class="kpi-list">
+      <li><span class="k">原価率(F)</span><span class="v">{{ kpi.food_ratio }}%</span></li>
+      <li><span class="k">人件費率(L)</span><span class="v">{{ kpi.labor_ratio }}%</span></li>
+      <li><span class="k">その他販管費率</span><span class="v">{{ kpi.rent_ratio }}%</span></li>
+      <li><span class="k">前月 FL</span><span class="v">{{ prev.fl_ratio }}%</span></li>
+    </ul>
+    <p class="kpi-foot">目安: {{ fl_good }}% 以下=良好 / {{ fl_warn }}% 以下=注意</p>
+  </div>
+
+  <div class="kpi-card">
+    <h3>現金・ランウェイ</h3>
+    <div class="kpi-main">
+      <span class="kpi-value">{{ kpi.cash|usd }}</span>
+      <span class="kpi-unit">現金残高</span>
+    </div>
+    <ul class="kpi-list">
+      <li><span class="k">月次の赤字</span><span class="v">{% if kpi.monthly_burn %}{{ kpi.monthly_burn|usd }}{% else %}<span class="text-good">なし(黒字)</span>{% endif %}</span></li>
+      <li><span class="k">ランウェイ</span><span class="v">{% if kpi.runway_months is not none %}{{ kpi.runway_months }} か月{% else %}<span class="kpi-none">—</span>{% endif %}</span></li>
+      <li><span class="k">運転資本</span><span class="v">{{ kpi.bs.working_capital|usd }}</span></li>
+    </ul>
+    <p class="kpi-foot">
+      {%- if kpi.cash_is_estimated %}BS の流動資産(現金・預金)から集計。手入力で上書きできます。
+      {%- else %}手入力の残高を表示しています。{% endif %}
+    </p>
+  </div>
+
+  <div class="kpi-card">
+    <h3>目標達成に必要な売上</h3>
+    <div class="kpi-main">
+      <span class="kpi-value">{% if kpi.needed_revenue is not none %}{{ kpi.needed_revenue|usd }}{% else %}—{% endif %}</span>
+    </div>
+    <ul class="kpi-list">
+      <li><span class="k">損益分岐点</span><span class="v">{% if kpi.breakeven_revenue is not none %}{{ kpi.breakeven_revenue|usd }}{% else %}<span class="kpi-none">—</span>{% endif %}</span></li>
+      <li><span class="k">実績との差</span><span class="v">{% if kpi.revenue_gap %}<span class="text-bad">あと {{ kpi.revenue_gap|usd }}</span>{% else %}<span class="text-good">達成済み</span>{% endif %}</span></li>
+      <li><span class="k">必要な日商</span><span class="v">{% if kpi.needed_daily_sales is not none %}{{ kpi.needed_daily_sales|usd }}{% else %}<span class="kpi-none">—</span>{% endif %}</span></li>
+      <li><span class="k">必要な客数</span><span class="v">{% if kpi.needed_customers is not none %}{{ "{:,}".format(kpi.needed_customers) }} 人{% else %}<span class="kpi-none">—</span>{% endif %}</span></li>
+    </ul>
+    <p class="kpi-foot">今の原価率・固定費・客単価が続いた場合の必要水準です。</p>
+  </div>
+</div>
+
+{# ---- 推移 ---- #}
+<h2>推移 <small>直近 {{ trend|length }} か月</small></h2>
+<div class="chart-grid">
+  <div class="chart-card">
+    <h3>売上高</h3>
+    <p class="chart-sub">月次 / USD</p>
+    <div class="chart">
+      <svg viewBox="{{ revenue_chart.view_box }}" role="img" aria-label="月次売上高の推移">
+        {% for tick in revenue_chart.ticks %}
+        <line class="grid-line" x1="{{ revenue_chart.plot_left }}" y1="{{ tick.y }}" x2="{{ revenue_chart.plot_right }}" y2="{{ tick.y }}"></line>
+        <text class="axis-text" x="{{ revenue_chart.plot_left - 8 }}" y="{{ tick.y + 3 }}" text-anchor="end">{{ tick.label }}</text>
+        {% endfor %}
+        {% for bar in revenue_chart.bars %}
+        <g>
+          <title>{{ bar.label }} {{ bar.value|usd }}</title>
+          <rect class="bar" x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" rx="{{ bar.radius }}"></rect>
+        </g>
+        <text class="axis-text" x="{{ bar.label_x }}" y="{{ revenue_chart.height - 8 }}" text-anchor="middle">{{ bar.label }}</text>
+        {% if loop.last and bar.height > 0 %}
+        <text class="bar-label" x="{{ bar.label_x }}" y="{{ bar.y - 6 }}">{{ bar.value|usd }}</text>
+        {% endif %}
+        {% endfor %}
+      </svg>
+    </div>
+  </div>
+
+  <div class="chart-card">
+    <h3>営業利益</h3>
+    <p class="chart-sub">月次 / USD ・ 横線は目標下限 {{ target.target_min|usd }}</p>
+    <div class="chart">
+      <svg viewBox="{{ profit_chart.view_box }}" role="img" aria-label="月次営業利益の推移">
+        {% for tick in profit_chart.ticks %}
+        <line class="grid-line" x1="{{ profit_chart.plot_left }}" y1="{{ tick.y }}" x2="{{ profit_chart.plot_right }}" y2="{{ tick.y }}"></line>
+        <text class="axis-text" x="{{ profit_chart.plot_left - 8 }}" y="{{ tick.y + 3 }}" text-anchor="end">{{ tick.label }}</text>
+        {% endfor %}
+        {% if profit_chart.reference_y is not none %}
+        <line class="ref-line" x1="{{ profit_chart.plot_left }}" y1="{{ profit_chart.reference_y }}" x2="{{ profit_chart.plot_right }}" y2="{{ profit_chart.reference_y }}"></line>
+        <text class="ref-text" x="{{ profit_chart.plot_left + 4 }}" y="{{ profit_chart.reference_y - 5 }}">目標 {{ profit_chart.reference_label }}</text>
+        {% endif %}
+        <line class="baseline" x1="{{ profit_chart.plot_left }}" y1="{{ profit_chart.baseline_y }}" x2="{{ profit_chart.plot_right }}" y2="{{ profit_chart.baseline_y }}"></line>
+        {% for bar in profit_chart.bars %}
+        <g>
+          <title>{{ bar.label }} {{ bar.value|usd }}</title>
+          <rect class="bar {{ 'bar-negative' if bar.negative }}" x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" rx="{{ bar.radius }}"></rect>
+        </g>
+        <text class="axis-text" x="{{ bar.label_x }}" y="{{ profit_chart.height - 8 }}" text-anchor="middle">{{ bar.label }}</text>
+        {% if loop.last and bar.height > 0 %}
+        <text class="bar-label" x="{{ bar.label_x }}" y="{{ (bar.y - 6) if not bar.negative else (bar.y + bar.height + 13) }}">{{ bar.value|usd }}</text>
+        {% endif %}
+        {% endfor %}
+      </svg>
+    </div>
+    <p class="kpi-foot">赤い棒は営業赤字の月です。</p>
+  </div>
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr><th>月</th><th class="num">売上高</th><th class="num">営業利益</th><th class="num">当期純利益</th><th class="num">FL 比率</th><th>目標</th></tr>
+  </thead>
+  <tbody>
+    {% for point in trend %}
+    <tr>
+      <td>{{ point.month }}</td>
+      <td class="num">{{ point.revenue|usd }}</td>
+      <td class="num">{{ point.operating_income|usd }}</td>
+      <td class="num">{{ point.net_income|usd }}</td>
+      <td class="num">{{ point.fl_ratio }}%</td>
+      <td>{% if point.achieved %}<span class="badge badge-good">達成</span>{% elif point.revenue or point.operating_income %}<span class="badge badge-below">未達</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="6">
+        実績のある {{ summary.months }} か月のうち <strong>{{ summary.achieved_months }} か月</strong>が目標達成 ・
+        平均営業利益 {{ summary.average_profit|usd }}
+        {%- if summary.best_month %} ・ 最高は {{ summary.best_month }}{% endif %}
+      </td>
+    </tr>
+  </tfoot>
+</table>
+
+{# ---- 手入力 ---- #}
+<h2>月次データの入力 <small>{{ month }}</small></h2>
+<div class="panel">
+  <form method="post" action="{{ url_for('save_kpi_form') }}" class="inline-form">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label>客数 <input type="number" name="customers" min="0" value="{{ kpi.inputs.customers or '' }}" placeholder="人"></label>
+    <label>営業日数 <input type="number" name="open_days" min="0" max="31" value="{{ kpi.inputs.open_days or '' }}" placeholder="日"></label>
+    <label>現金残高(USD) <input type="text" name="cash_balance" value="{{ (kpi.inputs.cash_balance / 100)|round(2) if kpi.inputs.cash_balance is not none else '' }}" placeholder="BS から自動集計"></label>
+    <button class="btn">保存</button>
+  </form>
+  <p class="note">客数・営業日数・現金残高は PL・BS に出てこない指標です。ここで入力すると客単価・日商・ランウェイを計算します。</p>
+</div>
+
+<h2>この月の目標</h2>
+<div class="panel">
+  <form method="post" action="{{ url_for('set_target_form') }}" class="inline-form">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label>下限(USD) <input type="text" name="target_min" value="{{ (target.target_min / 100)|round(2) }}"></label>
+    <label>上限(USD) <input type="text" name="target_max" value="{{ (target.target_max / 100)|round(2) }}"></label>
+    <button class="btn">目標を保存</button>
+  </form>
+  <p class="note">既定はエノップ開店後の目標「月次 {{ target.basis_label }} $30,000〜$50,000」です。</p>
+</div>
+
+{% if months %}
+<p class="note">登録済みの月: {% for m in months %}<a href="{{ url_for('dashboard', month=m) }}">{{ m }}</a>{% if not loop.last %} / {% endif %}{% endfor %}</p>
+{% endif %}
+{% endblock %}

@@ -2,7 +2,7 @@
 
 エノップの月次数字はすべてここで計算する。金額は丸め誤差を避けるため
 「セント(1 ドルの 1/100)」の整数で保持し、表示時にドルへ戻す。
-データベースや Web フレームワークには依存しない。
+データベースや Web フレームワーク、タイムカードシステムには依存しない。
 """
 
 from __future__ import annotations
@@ -68,7 +68,7 @@ STATEMENT_OF.update({code: "bs" for code in BS_CATEGORIES})
 FIXED_COST_CATEGORIES = ("labor", "opex")
 
 SOURCE_MANUAL = "manual"      # 手入力
-SOURCE_TIMECARD = "timecard"  # 打刻・給与計算から自動連携
+SOURCE_IMPORT = "import"      # 給与 CSV などから取り込み
 
 
 @dataclass(frozen=True)
@@ -87,8 +87,9 @@ class Entry:
         return STATEMENT_OF.get(self.category, "")
 
     @property
-    def editable(self) -> bool:
-        return self.source == SOURCE_MANUAL
+    def imported(self) -> bool:
+        """給与 CSV などから取り込んだ明細か。"""
+        return self.source == SOURCE_IMPORT
 
 
 @dataclass
@@ -465,7 +466,7 @@ def _round_cents(amount: Decimal) -> int:
 
 
 def yen_to_cents(yen: int, jpy_per_usd: float) -> int:
-    """円建ての金額をドル建てのセントに換算する(給与→人件費の取り込み用)。"""
+    """円建ての金額をドル建てのセントに換算する(給与 CSV の取り込み用)。"""
     if jpy_per_usd <= 0:
         raise ValueError("為替レートは正の数で指定してください。")
     return _round_cents(Decimal(yen) * 100 / Decimal(str(jpy_per_usd)))
