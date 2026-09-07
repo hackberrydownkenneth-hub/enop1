@@ -16,12 +16,12 @@
   <div class="stat"><span class="stat-label">出勤日数</span><span class="stat-value">{{ pay.work_days }}日</span></div>
   <div class="stat"><span class="stat-label">合計実働</span><span class="stat-value">{{ pay.work_hours }}h</span></div>
   <div class="stat"><span class="stat-label">合計残業</span><span class="stat-value">{{ pay.overtime_hours }}h</span></div>
-  <div class="stat"><span class="stat-label">時給</span><span class="stat-value">¥{{ "{:,}".format(pay.hourly_wage) }}</span></div>
-  <div class="stat stat-total"><span class="stat-label">支給額合計</span><span class="stat-value">¥{{ "{:,}".format(pay.total_pay) }}</span></div>
+  <div class="stat"><span class="stat-label">時給</span><span class="stat-value">HK${{ "{:,}".format(pay.hourly_wage) }}</span></div>
+  <div class="stat stat-total"><span class="stat-label">支給額合計</span><span class="stat-value">HK${{ "{:,}".format(pay.total_pay) }}</span></div>
 </div>
 
 <div class="pay-breakdown">
-  基本給 ¥{{ "{:,}".format(pay.base_pay) }} + 残業手当 ¥{{ "{:,}".format(pay.overtime_pay) }}
+  基本給 HK${{ "{:,}".format(pay.base_pay) }} + 残業手当 HK${{ "{:,}".format(pay.overtime_pay) }}
   (残業割増率 {{ pay.overtime_rate }}倍)
   {% if pay.has_incomplete %}<span class="warn-text">※ 打刻漏れの日があります。金額は暫定です。</span>{% endif %}
 </div>

@@ -1,7 +1,7 @@
 """給与計算のドメインロジック(純粋関数)。
 
 勤怠集計(attendance.DaySummary)と時給から月次の支給額を算出する。
-データベースや Web に依存しない。
+金額は香港ドル(HK$)。データベースや Web に依存しない。
 """
 
 from __future__ import annotations
@@ -23,7 +23,7 @@ class MonthlyPay:
     work_minutes: int = 0         # 実労働時間(合計)
     overtime_minutes: int = 0     # 残業時間(合計)
     regular_minutes: int = 0      # 通常労働時間(実労働 - 残業)
-    hourly_wage: int = 0          # 時給(円)
+    hourly_wage: int = 0          # 時給(HK$)
     overtime_rate: float = DEFAULT_OVERTIME_RATE
     base_pay: int = 0             # 基本給(通常時間分)
     overtime_pay: int = 0         # 残業手当(割増込み)
@@ -52,7 +52,7 @@ def compute_monthly_pay(
 
     - 通常時間分 = (実労働 - 残業) を時給で支給
     - 残業時間分 = 残業を時給 × 割増率 で支給
-    金額は円未満を四捨五入して整数化する。
+    金額は HK$1 未満を四捨五入して整数化する。
     """
     pay = MonthlyPay(hourly_wage=hourly_wage, overtime_rate=overtime_rate)
 
@@ -71,12 +71,12 @@ def compute_monthly_pay(
     base = wage * Decimal(pay.regular_minutes) / Decimal(60)
     overtime = wage * Decimal(str(overtime_rate)) * Decimal(pay.overtime_minutes) / Decimal(60)
 
-    pay.base_pay = _to_yen(base)
-    pay.overtime_pay = _to_yen(overtime)
+    pay.base_pay = _to_dollars(base)
+    pay.overtime_pay = _to_dollars(overtime)
     pay.total_pay = pay.base_pay + pay.overtime_pay
     return pay
 
 
-def _to_yen(amount: Decimal) -> int:
-    """円未満を四捨五入して整数の円に変換する。"""
+def _to_dollars(amount: Decimal) -> int:
+    """HK$1 未満を四捨五入して整数の HK$ に変換する。"""
     return int(amount.quantize(Decimal("1"), rounding=ROUND_HALF_UP))

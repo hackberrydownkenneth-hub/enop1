@@ -13,7 +13,7 @@
 
 <div class="summary-row">
   <div class="stat"><span class="stat-label">社員数</span><span class="stat-value">{{ report|length }}名</span></div>
-  <div class="stat stat-total"><span class="stat-label">支給額合計(全社員)</span><span class="stat-value">¥{{ "{:,}".format(grand_total) }}</span></div>
+  <div class="stat stat-total"><span class="stat-label">支給額合計(全社員)</span><span class="stat-value">HK${{ "{:,}".format(grand_total) }}</span></div>
 </div>
 
 {% if not report %}
@@ -36,10 +36,10 @@
       <td>{{ pay.work_days }}日</td>
       <td>{{ pay.work_hours }}h</td>
       <td>{{ pay.overtime_hours }}h</td>
-      <td>¥{{ "{:,}".format(pay.hourly_wage) }}</td>
-      <td>¥{{ "{:,}".format(pay.base_pay) }}</td>
-      <td>¥{{ "{:,}".format(pay.overtime_pay) }}</td>
-      <td class="cell-total">¥{{ "{:,}".format(pay.total_pay) }}</td>
+      <td>HK${{ "{:,}".format(pay.hourly_wage) }}</td>
+      <td>HK${{ "{:,}".format(pay.base_pay) }}</td>
+      <td>HK${{ "{:,}".format(pay.overtime_pay) }}</td>
+      <td class="cell-total">HK${{ "{:,}".format(pay.total_pay) }}</td>
       <td>
         <form method="post" action="{{ url_for('update_wage_form', employee_id=emp.id) }}" class="wage-form">
           <input name="hourly_wage" type="number" min="0" value="{{ emp.hourly_wage }}">
@@ -52,7 +52,7 @@
   <tfoot>
     <tr>
       <td colspan="8" style="text-align:right;font-weight:700;">合計</td>
-      <td class="cell-total">¥{{ "{:,}".format(grand_total) }}</td>
+      <td class="cell-total">HK${{ "{:,}".format(grand_total) }}</td>
       <td></td>
     </tr>
   </tfoot>

@@ -50,8 +50,9 @@ def create_app(db_path: str | None = None) -> Flask:
         basis if basis in (calc.BASIS_OPERATING, calc.BASIS_NET)
         else calc.DEFAULT_TARGET_BASIS
     )
-    # 給与 CSV(円)を人件費(ドル)に取り込むときの為替レート
-    app.config["JPY_PER_USD"] = _env_float("ENOP_JPY_PER_USD", 150.0)
+    # 給与 CSV の金額を HK$ に換算するレート(HK$1 あたりの元通貨額。
+    # 給与も HK$ 建てなら 1.0 のままでよい)
+    app.config["PAYROLL_RATE"] = _env_float("ENOP_PAYROLL_RATE", 1.0)
     # ダッシュボードに表示する推移の月数
     app.config["TREND_MONTHS"] = int(
         _env_float("ENOP_TREND_MONTHS", DEFAULT_TREND_MONTHS)
@@ -65,8 +66,8 @@ def create_app(db_path: str | None = None) -> Flask:
         _env_float("ENOP_RESERVE_MONTHS", lifecycle.DEFAULT_RESERVE_MONTHS)
     )
 
-    # テンプレートで金額を $1,234.56 形式に整形するフィルタ
-    app.jinja_env.filters["usd"] = calc.format_usd
+    # テンプレートで金額を HK$1,234.56 形式に整形するフィルタ
+    app.jinja_env.filters["money"] = calc.format_money
 
     def get_db() -> sqlite3.Connection:
         if "db" not in g:
@@ -196,7 +197,7 @@ def create_app(db_path: str | None = None) -> Flask:
             asset_categories=calc.ASSET_CATEGORIES,
             liability_categories=calc.LIABILITY_CATEGORIES,
             months=db.list_months(conn),
-            jpy_per_usd=app.config["JPY_PER_USD"],
+            payroll_rate=app.config["PAYROLL_RATE"],
         )
 
     # ---- フォーム操作 ------------------------------------------------------
@@ -276,8 +277,8 @@ def create_app(db_path: str | None = None) -> Flask:
             flash(f"給与 CSV を取り込めませんでした: {exc}", "error")
         else:
             flash(
-                f"{result['employees']} 名分の給与 ¥{result['total_yen']:,} を "
-                f"人件費 {calc.format_usd(result['amount'])} として取り込みました。",
+                f"{result['employees']} 名分の給与を "
+                f"人件費 {calc.format_money(result['amount'])} として取り込みました。",
                 "info",
             )
         return redirect(url_for("statements", month=month))
@@ -294,7 +295,7 @@ def create_app(db_path: str | None = None) -> Flask:
         writer = csv.writer(buf)
         writer.writerow(["対象月", month])
         writer.writerow([])
-        writer.writerow(["区分", "カテゴリ", "科目", "金額(USD)", "備考"])
+        writer.writerow(["区分", "カテゴリ", "科目", f"金額({calc.CURRENCY_CODE})", "備考"])
         for section in pl.sections.values():
             for line in section.lines:
                 writer.writerow(
@@ -333,7 +334,7 @@ def create_app(db_path: str | None = None) -> Flask:
         return jsonify(
             {
                 "month": month,
-                "currency": "USD",
+                "currency": calc.CURRENCY_CODE,
                 **_kpi_json(metrics),
                 "trend": [
                     {
@@ -497,9 +498,9 @@ def create_app(db_path: str | None = None) -> Flask:
             {
                 "month": month,
                 "employees": result["employees"],
-                "total_yen": result["total_yen"],
+                "total_amount": result["total_amount"],
                 "amount": calc.to_dollars(result["amount"]),
-                "jpy_per_usd": app.config["JPY_PER_USD"],
+                "payroll_rate": app.config["PAYROLL_RATE"],
             }
         ), 201
 
@@ -579,7 +580,7 @@ def create_app(db_path: str | None = None) -> Flask:
     def _import_payroll(conn, month: str, text: str) -> dict:
         """給与 CSV を人件費として取り込む(同じ月の取り込み分は入れ替え)。"""
         result = payroll_import.parse_payroll_csv(text)
-        amount = calc.yen_to_cents(result.total_yen, app.config["JPY_PER_USD"])
+        amount = calc.to_hkd_cents(result.total_amount, app.config["PAYROLL_RATE"])
         db.delete_entries_by_source(conn, month, calc.SOURCE_IMPORT)
         db.add_entry(
             conn,
@@ -587,13 +588,12 @@ def create_app(db_path: str | None = None) -> Flask:
             "labor",
             "人件費(給与 CSV 取り込み)",
             amount,
-            f"{result.employees} 名 / ¥{result.total_yen:,} ÷ "
-            f"{app.config['JPY_PER_USD']:g} 円/$",
+            _import_memo(result, app.config["PAYROLL_RATE"]),
             source=calc.SOURCE_IMPORT,
         )
         return {
             "employees": result.employees,
-            "total_yen": result.total_yen,
+            "total_amount": result.total_amount,
             "amount": amount,
         }
 
@@ -688,7 +688,7 @@ def create_app(db_path: str | None = None) -> Flask:
         usd = calc.to_dollars
         return {
             "month": month,
-            "currency": "USD",
+            "currency": calc.CURRENCY_CODE,
             "investment": usd(data["investment"]),
             "payback": {
                 "phase": payback.phase,
@@ -749,7 +749,7 @@ def create_app(db_path: str | None = None) -> Flask:
         usd = calc.to_dollars
         return {
             "month": month,
-            "currency": "USD",
+            "currency": calc.CURRENCY_CODE,
             "pl": {
                 "sections": _sections_json(pl.sections),
                 "totals": {key: usd(value) for key, _label, value in _pl_totals(pl)},
@@ -841,19 +841,19 @@ def _kpi_json(metrics) -> dict:
 def _kpi_rows(metrics, target) -> list[tuple[str, object, str]]:
     """CSV 出力用に主要指標を並べる。"""
     return [
-        (f"{target.basis_label}", calc.to_dollars(target.profit), "USD"),
+        (f"{target.basis_label}", calc.to_dollars(target.profit), calc.CURRENCY_CODE),
         ("目標達成率", target.achievement_rate, "%"),
-        ("目標までの不足額", calc.to_dollars(target.gap_to_min), "USD"),
-        ("売上高", calc.to_dollars(metrics.revenue), "USD"),
+        ("目標までの不足額", calc.to_dollars(target.gap_to_min), calc.CURRENCY_CODE),
+        ("売上高", calc.to_dollars(metrics.revenue), calc.CURRENCY_CODE),
         ("客数", metrics.customers, "人"),
-        ("客単価", _opt_usd(metrics.average_spend), "USD"),
-        ("日商", _opt_usd(metrics.daily_sales), "USD"),
+        ("客単価", _opt_usd(metrics.average_spend), calc.CURRENCY_CODE),
+        ("日商", _opt_usd(metrics.daily_sales), calc.CURRENCY_CODE),
         ("原価率(F)", metrics.food_ratio, "%"),
         ("人件費率(L)", metrics.labor_ratio, "%"),
         ("FL 比率", metrics.fl_ratio, "%"),
-        ("現金残高", calc.to_dollars(metrics.cash), "USD"),
-        ("損益分岐点売上", _opt_usd(metrics.breakeven_revenue), "USD"),
-        ("目標達成に必要な売上", _opt_usd(metrics.needed_revenue), "USD"),
+        ("現金残高", calc.to_dollars(metrics.cash), calc.CURRENCY_CODE),
+        ("損益分岐点売上", _opt_usd(metrics.breakeven_revenue), calc.CURRENCY_CODE),
+        ("目標達成に必要な売上", _opt_usd(metrics.needed_revenue), calc.CURRENCY_CODE),
         ("ランウェイ", metrics.runway_months, "か月"),
     ]
 
@@ -911,6 +911,14 @@ def _sections_json(sections) -> list[dict]:
         }
         for section in sections.values()
     ]
+
+
+def _import_memo(result, rate: float) -> str:
+    """給与取り込み明細の備考。"""
+    base = f"{result.employees} 名分の給与 CSV"
+    if rate == 1.0:
+        return f"{base}(合計 {calc.format_money(result.total_amount * 100)})"
+    return f"{base}(合計 {result.total_amount:,} ÷ {rate:g} = HK$ 換算)"
 
 
 def _opt_usd(value: int | None) -> float | None:

@@ -14,13 +14,13 @@ CSV = (
 def test_parse_payroll_csv():
     result = payroll_import.parse_payroll_csv(CSV)
     assert result.employees == 2
-    assert result.total_yen == 599_200
+    assert result.total_amount == 599_200
     assert result.names == ["山田太郎", "鈴木花子"]
 
 
 def test_parse_payroll_csv_with_bom():
     result = payroll_import.parse_payroll_csv("﻿" + CSV)
-    assert result.total_yen == 599_200
+    assert result.total_amount == 599_200
 
 
 def test_parse_payroll_csv_skips_blank_rows():

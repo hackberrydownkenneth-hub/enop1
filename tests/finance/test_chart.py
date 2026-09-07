@@ -55,8 +55,8 @@ def test_radius_never_exceeds_half_the_bar():
 
 
 def test_format_compact():
-    assert chart.format_compact(0) == "$0"
-    assert chart.format_compact(50_000) == "$500"
-    assert chart.format_compact(24_000_000) == "$240k"
-    assert chart.format_compact(150_000_000) == "$1.5M"
-    assert chart.format_compact(-500_000) == "-$5k"
+    assert chart.format_compact(0) == "HK$0"
+    assert chart.format_compact(50_000) == "HK$500"
+    assert chart.format_compact(24_000_000) == "HK$240k"
+    assert chart.format_compact(150_000_000) == "HK$1.5M"
+    assert chart.format_compact(-500_000) == "-HK$5k"

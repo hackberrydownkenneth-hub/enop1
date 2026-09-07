@@ -187,17 +187,25 @@ def test_kpi_inputs_api_validates(client):
 
 # ---- 給与 CSV の取り込み ---------------------------------------------------
 
-def test_payroll_csv_import_api(app, client):
-    app.config["JPY_PER_USD"] = 150.0
+def test_payroll_csv_import_api(client):
+    # 給与も HK$ 建てなので換算せずそのまま人件費に計上する
     resp = client.post("/api/import/payroll", json={"month": MONTH, "csv": PAYROLL_CSV})
     assert resp.status_code == 201
     body = resp.get_json()
     assert body["employees"] == 2
-    assert body["total_yen"] == 599_200
-    assert body["amount"] == 3_994.67          # ¥599,200 ÷ 150
+    assert body["total_amount"] == 599_200
+    assert body["amount"] == 599_200
+    assert body["payroll_rate"] == 1.0
 
     totals = client.get(f"/api/statements?month={MONTH}").get_json()["pl"]["totals"]
-    assert totals["labor_cost"] == 3_994.67
+    assert totals["labor_cost"] == 599_200
+
+
+def test_payroll_csv_import_converts_other_currencies(app, client):
+    # CSV が別通貨のときは HK$1 あたりのレートで換算する
+    app.config["PAYROLL_RATE"] = 20.0
+    resp = client.post("/api/import/payroll", json={"month": MONTH, "csv": PAYROLL_CSV})
+    assert resp.get_json()["amount"] == 29_960.0
 
 
 def test_payroll_csv_import_replaces_previous_import(client):
@@ -254,9 +262,9 @@ def test_dashboard_renders_all_indicator_groups(client):
     client.put("/api/kpi-inputs", json={"month": MONTH, "customers": 4_800, "open_days": 25})
 
     body = client.get(f"/?month={MONTH}").data.decode()
-    assert "$75,000.00" in body            # 営業利益
+    assert "HK$75,000.00" in body          # 営業利益
     assert "目標超過" in body
-    assert "客単価" in body and "$50.00" in body
+    assert "客単価" in body and "HK$50.00" in body
     assert "FL 比率" in body and "55.0%" in body
     assert "ランウェイ" in body
     assert "推移" in body
@@ -274,7 +282,7 @@ def test_statements_page_renders(client):
     assert "損益計算書" in body
     assert "貸借対照表" in body
     assert "フード売上" in body
-    assert "$75,000.00" in body
+    assert "HK$75,000.00" in body
 
 
 def test_statements_page_flags_unbalanced_sheet(client):
@@ -363,7 +371,7 @@ def test_report_csv_includes_statements_and_kpi(client):
     assert "フード売上" in body
     assert "営業利益,,75000.0" in body
     assert "現金預金" in body
-    assert "客単価,50.0,USD" in body
+    assert "客単価,50.0,HKD" in body
     assert "FL 比率,55.0,%" in body
 
 
@@ -503,8 +511,8 @@ def test_lifecycle_page_renders(client):
     client.post("/api/plans", json={"name": "2 号店の出店", "amount": 300_000})
     body = client.get("/lifecycle?month=2026-06").data.decode()
     assert "通算損益" in body
-    assert "-$338,320.00" in body            # 通算損益
-    assert "オープンコスト" in body and "$360,000.00" in body
+    assert "-HK$338,320.00" in body          # 通算損益
+    assert "オープンコスト" in body and "HK$360,000.00" in body
     assert "回収はいつ終わるか" in body
     assert "2 号店の出店" in body
     assert "内装工事" in body

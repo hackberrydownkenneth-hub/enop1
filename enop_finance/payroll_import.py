@@ -1,7 +1,8 @@
 """タイムカードシステムが出力する給与 CSV の取り込み(純粋関数)。
 
 タイムカードとはデータベースを分けているため、人件費はエクスポートした
-CSV(`/admin/payroll.csv`)を経由して PL に取り込む。
+CSV(`/admin/payroll.csv`)を経由して PL に取り込む。金額は CSV に書かれた
+まま(既定では HK$)集計し、換算は呼び出し側で行う。
 """
 
 from __future__ import annotations
@@ -16,15 +17,15 @@ NAME_COLUMN = "氏名"
 
 @dataclass
 class PayrollImport:
-    """給与 CSV の集計結果。金額は円。"""
+    """給与 CSV の集計結果。金額は CSV の通貨単位のまま。"""
 
-    total_yen: int = 0
+    total_amount: int = 0
     employees: int = 0
     names: list[str] = field(default_factory=list)
 
 
 def parse_payroll_csv(text: str) -> PayrollImport:
-    """給与 CSV を読み、支給額合計(円)を集計する。
+    """給与 CSV を読み、支給額合計を集計する。
 
     タイムカード側の CSV は BOM 付き UTF-8 で出力されるため、BOM を取り除いて読む。
     """
@@ -36,14 +37,14 @@ def parse_payroll_csv(text: str) -> PayrollImport:
 
     result = PayrollImport()
     for row in reader:
-        raw = (row.get(TOTAL_COLUMN) or "").strip().replace(",", "").replace("¥", "")
+        raw = (row.get(TOTAL_COLUMN) or "").strip().replace(",", "").replace("HK$", "").replace("$", "")
         if not raw:
             continue
         try:
             amount = int(round(float(raw)))
         except ValueError as exc:
             raise ValueError(f"支給額として読めない値があります: {raw!r}") from exc
-        result.total_yen += amount
+        result.total_amount += amount
         result.employees += 1
         name = (row.get(NAME_COLUMN) or "").strip()
         if name:

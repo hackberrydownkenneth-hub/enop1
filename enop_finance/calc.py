@@ -1,7 +1,8 @@
 """PL(損益計算書)・BS(貸借対照表)のドメインロジック(純粋関数)。
 
-エノップの月次数字はすべてここで計算する。金額は丸め誤差を避けるため
-「セント(1 ドルの 1/100)」の整数で保持し、表示時にドルへ戻す。
+エノップの月次数字はすべてここで計算する。通貨は **香港ドル(HKD)** で統一し、
+金額は丸め誤差を避けるため「セント(HK$1 の 1/100)」の整数で保持して、
+表示時に HK$ に戻す。
 データベースや Web フレームワーク、タイムカードシステムには依存しない。
 """
 
@@ -10,13 +11,19 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 
+# ---- 通貨 ------------------------------------------------------------------
+
+# 金額はすべて香港ドル。内部ではセント(HK$1 の 1/100)の整数で持つ。
+CURRENCY_CODE = "HKD"
+CURRENCY_SYMBOL = "HK$"
+
 # ---- 目標利益 --------------------------------------------------------------
 
-# エノップ開店後の月次目標利益(ドル)。毎月この帯に着地させることが目標。
-TARGET_MIN_USD = 30_000
-TARGET_MAX_USD = 50_000
-TARGET_MIN = TARGET_MIN_USD * 100  # セント
-TARGET_MAX = TARGET_MAX_USD * 100  # セント
+# エノップ開店後の月次目標利益(HK$)。毎月この帯に着地させることが目標。
+TARGET_MIN_HKD = 30_000
+TARGET_MAX_HKD = 50_000
+TARGET_MIN = TARGET_MIN_HKD * 100  # セント
+TARGET_MAX = TARGET_MAX_HKD * 100  # セント
 
 # 目標達成を判定する利益の種類
 BASIS_OPERATING = "operating"  # 営業利益
@@ -260,7 +267,7 @@ class BalanceSheet:
 
 @dataclass
 class TargetStatus:
-    """月次目標(既定 $30,000〜$50,000)に対する到達状況。"""
+    """月次目標(既定 HK$30,000〜HK$50,000)に対する到達状況。"""
 
     profit: int
     target_min: int = TARGET_MIN
@@ -285,7 +292,7 @@ class TargetStatus:
 
     @property
     def achieved(self) -> bool:
-        """下限(既定 $30,000)に到達しているか。"""
+        """下限(既定 HK$30,000)に到達しているか。"""
         return self.profit >= self.target_min
 
     @property
@@ -388,10 +395,12 @@ def revenue_needed_for_target(
 # ---- 金額・月のユーティリティ ---------------------------------------------
 
 def parse_amount(value: object) -> int:
-    """ドル表記("1,234.56" や 1234.56)をセントの整数に変換する。"""
+    """HK$ 表記("1,234.56" や "HK$1,234.56")をセントの整数に変換する。"""
     if value is None:
         raise ValueError("金額が入力されていません。")
-    text = str(value).strip().replace(",", "").replace("$", "").replace("¥", "")
+    text = (
+        str(value).strip().replace(",", "").replace("HK$", "").replace("$", "")
+    )
     if not text:
         raise ValueError("金額が入力されていません。")
     try:
@@ -400,15 +409,15 @@ def parse_amount(value: object) -> int:
         raise ValueError(f"金額として解釈できません: {value!r}") from exc
 
 
-def format_usd(cents: int, symbol: str = "$") -> str:
-    """セントを表示用のドル文字列にする。"""
+def format_money(cents: int, symbol: str = CURRENCY_SYMBOL) -> str:
+    """セントを表示用の金額文字列(HK$1,234.56)にする。"""
     sign = "-" if cents < 0 else ""
     dollars = Decimal(abs(int(cents))) / 100
     return f"{sign}{symbol}{dollars:,.2f}"
 
 
 def to_dollars(cents: int) -> float:
-    """セントをドル(float)に変換する。JSON 出力用。"""
+    """セントを HK$(float)に変換する。JSON 出力用。"""
     return round(cents / 100, 2)
 
 
@@ -465,8 +474,11 @@ def _round_cents(amount: Decimal) -> int:
     return int(amount.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
 
 
-def yen_to_cents(yen: int, jpy_per_usd: float) -> int:
-    """円建ての金額をドル建てのセントに換算する(給与 CSV の取り込み用)。"""
-    if jpy_per_usd <= 0:
+def to_hkd_cents(amount: int, units_per_hkd: float = 1.0) -> int:
+    """外部データの金額を HK$ のセントに換算する(給与 CSV の取り込み用)。
+
+    units_per_hkd は「HK$1 あたりの元通貨の額」。給与も HK$ 建てなら 1.0。
+    """
+    if units_per_hkd <= 0:
         raise ValueError("為替レートは正の数で指定してください。")
-    return _round_cents(Decimal(yen) * 100 / Decimal(str(jpy_per_usd)))
+    return _round_cents(Decimal(amount) * 100 / Decimal(str(units_per_hkd)))

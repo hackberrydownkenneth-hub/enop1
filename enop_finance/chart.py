@@ -9,6 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
 
+from .calc import CURRENCY_SYMBOL
+
 # 棒の仕様(marks: 24px 以下・データ側の角は 4px・棒どうしは 2px 空ける)
 MAX_BAR_WIDTH = 24.0
 BAR_RADIUS = 4.0
@@ -147,15 +149,15 @@ def bar_chart(
 
 
 def format_compact(cents: int) -> str:
-    """軸ラベル用に金額を短く整形する($240k / $1.2M)。"""
+    """軸ラベル用に金額を短く整形する(HK$240k / HK$1.2M)。"""
     dollars = cents / 100
     sign = "-" if dollars < 0 else ""
     value = abs(dollars)
     if value >= 1_000_000:
-        return f"{sign}${value / 1_000_000:.1f}M".replace(".0M", "M")
+        return f"{sign}{CURRENCY_SYMBOL}{value / 1_000_000:.1f}M".replace(".0M", "M")
     if value >= 1_000:
-        return f"{sign}${value / 1_000:.0f}k"
-    return f"{sign}${value:,.0f}"
+        return f"{sign}{CURRENCY_SYMBOL}{value / 1_000:.0f}k"
+    return f"{sign}{CURRENCY_SYMBOL}{value:,.0f}"
 
 
 def _nice_ceiling(value: int) -> int:

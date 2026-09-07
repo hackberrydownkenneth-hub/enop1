@@ -129,9 +129,14 @@ def test_bs_ratios_without_liabilities():
 
 # ---- 目標利益 --------------------------------------------------------------
 
+def test_currency_is_hong_kong_dollars():
+    assert calc.CURRENCY_CODE == "HKD"
+    assert calc.CURRENCY_SYMBOL == "HK$"
+
+
 def test_default_target_is_30k_to_50k():
-    assert calc.TARGET_MIN == 3_000_000
-    assert calc.TARGET_MAX == 5_000_000
+    assert calc.TARGET_MIN == 3_000_000     # HK$30,000
+    assert calc.TARGET_MAX == 5_000_000     # HK$50,000
 
 
 def test_target_below():
@@ -209,8 +214,8 @@ def test_breakeven_without_revenue_returns_fixed_cost():
 
 @pytest.mark.parametrize(
     "raw,cents",
-    [("1234.56", 123_456), ("1,234.56", 123_456), ("$30,000", 3_000_000),
-     (1234.5, 123_450), ("-500", -50_000), ("0.005", 1)],
+    [("1234.56", 123_456), ("1,234.56", 123_456), ("HK$30,000", 3_000_000),
+     ("$30,000", 3_000_000), (1234.5, 123_450), ("-500", -50_000), ("0.005", 1)],
 )
 def test_parse_amount(raw, cents):
     assert calc.parse_amount(raw) == cents
@@ -222,10 +227,10 @@ def test_parse_amount_rejects_invalid(raw):
         calc.parse_amount(raw)
 
 
-def test_format_usd():
-    assert calc.format_usd(123_456) == "$1,234.56"
-    assert calc.format_usd(-123_456) == "-$1,234.56"
-    assert calc.format_usd(0) == "$0.00"
+def test_format_money():
+    assert calc.format_money(123_456) == "HK$1,234.56"
+    assert calc.format_money(-123_456) == "-HK$1,234.56"
+    assert calc.format_money(0) == "HK$0.00"
 
 
 def test_month_shift():
@@ -250,11 +255,13 @@ def test_validate_category():
         calc.validate_category("revenue", "bs")
 
 
-def test_yen_to_cents():
-    # 1,500,000 円 ÷ 150 円/$ = $10,000
-    assert calc.yen_to_cents(1_500_000, 150) == 1_000_000
+def test_to_hkd_cents():
+    # 給与も HK$ 建てなら換算不要(既定 1.0)
+    assert calc.to_hkd_cents(10_000) == 1_000_000
+    # 別通貨の CSV は HK$1 あたりのレートで割る
+    assert calc.to_hkd_cents(1_500_000, 150) == 1_000_000
     with pytest.raises(ValueError):
-        calc.yen_to_cents(1000, 0)
+        calc.to_hkd_cents(1000, 0)
 
 
 def test_entry_statement_and_source():

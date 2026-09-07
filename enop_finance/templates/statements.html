@@ -21,11 +21,11 @@
   <div class="hero-head">
     <div>
       <span class="hero-label">{{ target.basis_label }}({{ month }})</span>
-      <span class="hero-value">{{ target.profit|usd }}</span>
+      <span class="hero-value">{{ target.profit|money }}</span>
     </div>
     <div class="hero-side">
       <span class="badge badge-{{ target.status }}">{{ target.label }}</span>
-      <span class="hero-range">目標 {{ target.target_min|usd }} 〜 {{ target.target_max|usd }} / 月</span>
+      <span class="hero-range">目標 {{ target.target_min|money }} 〜 {{ target.target_max|money }} / 月</span>
     </div>
   </div>
   <p class="hero-note">
@@ -47,7 +47,7 @@
       <tr>
         <td class="indent">{{ line.item }}
           {%- if line.imported %} <span class="tag-import">CSV 取り込み</span>{% endif %}</td>
-        <td class="num">{{ line.amount|usd }}</td>
+        <td class="num">{{ line.amount|money }}</td>
         <td class="num muted"></td>
         <td class="memo">{{ line.memo }}</td>
         <td class="num">
@@ -62,23 +62,23 @@
       {% endfor %}
       <tr class="subtotal-row">
         <td class="indent">{{ label }} 小計</td>
-        <td class="num">{{ section.total|usd }}</td>
-        <td class="num muted">{{ prev_pl.sections[code].total|usd }}</td>
+        <td class="num">{{ section.total|money }}</td>
+        <td class="num muted">{{ prev_pl.sections[code].total|money }}</td>
         <td colspan="2"></td>
       </tr>
     {% endfor %}
   </tbody>
   <tfoot>
-    <tr><td>売上総利益</td><td class="num">{{ pl.gross_profit|usd }}</td>
-        <td class="num muted">{{ prev_pl.gross_profit|usd }}</td>
+    <tr><td>売上総利益</td><td class="num">{{ pl.gross_profit|money }}</td>
+        <td class="num muted">{{ prev_pl.gross_profit|money }}</td>
         <td colspan="2">粗利率 {{ pl.gross_margin }}%</td></tr>
-    <tr class="row-strong"><td>営業利益</td><td class="num">{{ pl.operating_income|usd }}</td>
-        <td class="num muted">{{ prev_pl.operating_income|usd }}</td>
+    <tr class="row-strong"><td>営業利益</td><td class="num">{{ pl.operating_income|money }}</td>
+        <td class="num muted">{{ prev_pl.operating_income|money }}</td>
         <td colspan="2">営業利益率 {{ pl.operating_margin }}%</td></tr>
-    <tr><td>経常利益</td><td class="num">{{ pl.ordinary_income|usd }}</td>
-        <td class="num muted">{{ prev_pl.ordinary_income|usd }}</td><td colspan="2"></td></tr>
-    <tr class="row-strong"><td>当期純利益</td><td class="num">{{ pl.net_income|usd }}</td>
-        <td class="num muted">{{ prev_pl.net_income|usd }}</td>
+    <tr><td>経常利益</td><td class="num">{{ pl.ordinary_income|money }}</td>
+        <td class="num muted">{{ prev_pl.ordinary_income|money }}</td><td colspan="2"></td></tr>
+    <tr class="row-strong"><td>当期純利益</td><td class="num">{{ pl.net_income|money }}</td>
+        <td class="num muted">{{ prev_pl.net_income|money }}</td>
         <td colspan="2">純利益率 {{ pl.net_margin }}%</td></tr>
   </tfoot>
 </table>
@@ -89,14 +89,18 @@
       <input type="file" name="payroll_csv" accept=".csv,text/csv" required></label>
     <button class="btn btn-ghost">人件費として取り込む</button>
   </form>
-  <p class="note">支給額合計(円)を {{ jpy_per_usd }} 円/$ で換算して人件費に計上します。
+  <p class="note">
+    支給額合計を人件費(HK$)に計上します。
+    {% if payroll_rate != 1.0 %}CSV の金額は {{ payroll_rate }} で割って HK$ に換算します。
+    {% else %}給与も HK$ 建てとして扱います(別通貨の場合は <code>ENOP_PAYROLL_RATE</code> を設定)。
+    {% endif %}
     同じ月に取り込み済みの明細があれば置き換えます。</p>
 </div>
 
 {# ---- BS ---- #}
 <h2>貸借対照表(BS)<small> {{ month }} 月末</small></h2>
 {% if not bs.balanced %}
-<div class="flash flash-error">貸借差額 {{ bs.difference|usd }} — 資産と「負債+純資産」が一致していません。</div>
+<div class="flash flash-error">貸借差額 {{ bs.difference|money }} — 資産と「負債+純資産」が一致していません。</div>
 {% endif %}
 <div class="bs-grid">
   {% for group, title in [(asset_categories, '資産の部'), (liability_categories + ('equity',), '負債・純資産の部')] %}
@@ -109,7 +113,7 @@
         {% for line in section.lines %}
         <tr>
           <td class="indent">{{ line.item }}{% if line.memo %} <span class="memo">{{ line.memo }}</span>{% endif %}</td>
-          <td class="num">{{ line.amount|usd }}</td>
+          <td class="num">{{ line.amount|money }}</td>
           <td class="num">
             <form method="post" action="{{ url_for('delete_entry_form', entry_id=line.id) }}">
               <input type="hidden" name="month" value="{{ month }}">
@@ -121,22 +125,22 @@
         <tr><td class="indent muted" colspan="3">明細なし</td></tr>
         {% endfor %}
         <tr class="subtotal-row"><td class="indent">{{ section.label }} 小計</td>
-            <td class="num">{{ section.total|usd }}</td><td></td></tr>
+            <td class="num">{{ section.total|money }}</td><td></td></tr>
       {% endfor %}
     </tbody>
     <tfoot>
       {% if loop.first %}
-      <tr class="row-strong"><td>資産合計</td><td class="num">{{ bs.total_assets|usd }}</td><td></td></tr>
+      <tr class="row-strong"><td>資産合計</td><td class="num">{{ bs.total_assets|money }}</td><td></td></tr>
       {% else %}
       <tr class="row-strong"><td>負債・純資産合計</td>
-          <td class="num">{{ bs.total_liabilities_and_equity|usd }}</td><td></td></tr>
+          <td class="num">{{ bs.total_liabilities_and_equity|money }}</td><td></td></tr>
       {% endif %}
     </tfoot>
   </table>
   {% endfor %}
 </div>
 <div class="summary-row">
-  <div class="stat"><span class="stat-label">運転資本</span><span class="stat-value">{{ bs.working_capital|usd }}</span></div>
+  <div class="stat"><span class="stat-label">運転資本</span><span class="stat-value">{{ bs.working_capital|money }}</span></div>
   <div class="stat"><span class="stat-label">流動比率</span><span class="stat-value">{{ bs.current_ratio }}%</span></div>
   <div class="stat"><span class="stat-label">自己資本比率</span><span class="stat-value">{{ bs.equity_ratio }}%</span></div>
 </div>
@@ -157,7 +161,7 @@
       </select>
     </label>
     <label>科目 <input name="item" type="text" placeholder="例: フード売上 / 家賃" required></label>
-    <label>金額(USD) <input name="amount" type="text" placeholder="12345.67" required></label>
+    <label>金額(HKD) <input name="amount" type="text" placeholder="12345.67" required></label>
     <label>備考 <input name="memo" type="text" placeholder="任意"></label>
     <button class="btn">追加</button>
   </form>

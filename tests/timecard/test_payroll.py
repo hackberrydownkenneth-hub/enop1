@@ -16,7 +16,7 @@ def _day(in_h, out_h):
 
 
 def test_base_pay_no_overtime():
-    # 8 時間勤務・時給 1000 円 → 8000 円、残業なし
+    # 8 時間勤務・時給 HK$1,000 → HK$8,000、残業なし
     pay = payroll.compute_monthly_pay([_day(9, 17)], hourly_wage=1000)
     assert pay.work_days == 1
     assert pay.work_minutes == 8 * 60
@@ -27,7 +27,7 @@ def test_base_pay_no_overtime():
 
 
 def test_overtime_premium():
-    # 10 時間勤務・時給 1000 円 → 基本 8000 + 残業 2h×1000×1.25=2500 = 10500
+    # 10 時間勤務・時給 HK$1,000 → 基本 8,000 + 残業 2h×1,000×1.25=2,500 = 10,500
     pay = payroll.compute_monthly_pay([_day(9, 19)], hourly_wage=1000)
     assert pay.overtime_minutes == 2 * 60
     assert pay.base_pay == 8000
