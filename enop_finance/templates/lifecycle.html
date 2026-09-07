@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}累計・投資回収{% endblock %}
+{% block content %}
+{% set c = cycle.capacity %}
+<h1>開店からの累計・投資回収 <small>{{ month }} まで</small></h1>
+
+<div class="toolbar">
+  <form method="get" class="inline-form">
+    <label>対象月 <input type="month" name="month" value="{{ month }}"></label>
+    <button class="btn">表示</button>
+  </form>
+  <a class="btn btn-ghost" href="{{ url_for('dashboard', month=month) }}">今月の指標</a>
+  <a class="btn btn-ghost" href="{{ url_for('statements', month=month) }}">PL・BS を入力</a>
+</div>
+
+{# ---- 通算損益 ---- #}
+<section class="hero {{ 'status-in_range' if payback.recovered else 'status-below' }}">
+  <div class="hero-head">
+    <div>
+      <span class="hero-label">通算損益(累計利益 − オープンコスト)</span>
+      <span class="hero-value {{ 'text-bad' if payback.position < 0 }}">{{ payback.position|usd }}</span>
+    </div>
+    <div class="hero-side">
+      <span class="badge phase-badge badge-{{ 'in_range' if payback.recovered else 'below' }}">{{ payback.phase_label }}</span>
+      <span class="hero-range">
+        開店から {{ payback.months_elapsed }} か月
+        {%- if payback.months_elapsed %} ・ うち黒字 {{ payback.profitable_months }} か月{% endif %}
+      </span>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-bar" style="width: {{ payback.recovery_rate if payback.recovery_rate <= 100 else 100 }}%"></div></div>
+  <p class="hero-note">
+    オープンコスト {{ investment|usd }} に対して 回収 {{ payback.recovery_rate }}%
+    {%- if payback.recovered %} ・ <strong>{{ payback.payback_month }} に回収完了</strong> ・ 以降の積み上がり {{ payback.surplus|usd }}
+    {%- else %} ・ 残り <strong>{{ payback.remaining|usd }}</strong>{% endif %}
+    {%- if payback.first_profitable_month %} ・ 初めて単月黒字になったのは {{ payback.first_profitable_month }}{% endif %}
+  </p>
+</section>
+
+<div class="recovery-grid">
+  <div class="kpi-card">
+    <h3>累計でどれだけ稼いだか</h3>
+    <div class="kpi-main"><span class="kpi-value">{{ payback.cumulative_profit|usd }}</span></div>
+    <ul class="kpi-list">
+      <li><span class="k">累計 当期純利益</span><span class="v">{{ payback.cumulative_net_income|usd }}</span></li>
+      <li><span class="k">平均(月)</span><span class="v">{{ payback.average_profit|usd }}</span></li>
+      <li><span class="k">直近 {{ payback.recent_months or '—' }} か月平均</span><span class="v">{{ payback.recent_average_profit|usd }}</span></li>
+    </ul>
+    <p class="kpi-foot">開店からの営業利益の合計です。</p>
+  </div>
+
+  <div class="kpi-card">
+    <h3>どれだけ沈んだか(底)</h3>
+    <div class="kpi-main"><span class="kpi-value {{ 'text-bad' if payback.worst_position < 0 }}">{{ payback.worst_position|usd }}</span></div>
+    <ul class="kpi-list">
+      <li><span class="k">底を打った月</span><span class="v">{{ payback.worst_month or '—' }}</span></li>
+      <li><span class="k">オープンコスト</span><span class="v">{{ investment|usd }}</span></li>
+      <li><span class="k">回収済み</span><span class="v">{{ (investment - payback.remaining)|usd }}</span></li>
+    </ul>
+    <p class="kpi-foot">通算損益が最も落ち込んだ時点。ここが資金繰りの底です。</p>
+  </div>
+
+  <div class="kpi-card">
+    <h3>投資余力(いま動かせるお金)</h3>
+    <div class="kpi-main"><span class="kpi-value">{{ c.available|usd }}</span></div>
+    <ul class="kpi-list">
+      <li><span class="k">現金残高</span><span class="v">{{ c.cash|usd }}</span></li>
+      <li><span class="k">固定費(月)</span><span class="v">{{ c.monthly_fixed_cost|usd }}</span></li>
+      <li><span class="k">残す運転資金({{ c.reserve_months }} か月)</span><span class="v">{{ c.reserve_needed|usd }}</span></li>
+    </ul>
+    <p class="kpi-foot">現金から運転資金を引いた、次の一手に回せる額です。</p>
+  </div>
+</div>
+
+{# ---- 回収の予測 ---- #}
+<h2>回収はいつ終わるか</h2>
+{% if payback.recovered %}
+<p class="empty">オープンコストは {{ payback.payback_month }} に回収済みです。以降の利益はすべて積み上がりになります。</p>
+{% else %}
+<table class="data-table scenario-table">
+  <thead><tr><th>ペース</th><th class="num">月次利益</th><th class="num">残り</th><th class="num">必要月数</th><th>回収完了の見込み</th></tr></thead>
+  <tbody>
+    {% for s in cycle.scenarios %}
+    <tr>
+      <td>{{ s.label }}</td>
+      <td class="num">{{ s.monthly_profit|usd }}</td>
+      <td class="num">{{ payback.remaining|usd }}</td>
+      <td class="num">{% if s.possible %}{{ s.months_needed }} か月{% else %}—{% endif %}</td>
+      <td>{% if s.finish_month %}{{ s.finish_month }}{% elif not s.possible %}<span class="text-bad">この利益ペースでは回収できません</span>{% else %}—{% endif %}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endif %}
+
+{# ---- 累計の推移 ---- #}
+<h2>通算損益の推移 <small>実績 {{ cycle.history|length }} か月 + 予測 {{ cycle.forecast|length }} か月</small></h2>
+<div class="chart-card">
+  <h3>オープンコストを含む通算損益</h3>
+  <p class="chart-sub">月次 / USD ・ 0 を上回った時点で投資回収 ・ 薄い棒は直近ペースの予測</p>
+  <div class="chart">
+    <svg viewBox="{{ position_chart.view_box }}" role="img" aria-label="開店からの通算損益の推移">
+      {% for tick in position_chart.ticks %}
+      <line class="grid-line" x1="{{ position_chart.plot_left }}" y1="{{ tick.y }}" x2="{{ position_chart.plot_right }}" y2="{{ tick.y }}"></line>
+      <text class="axis-text" x="{{ position_chart.plot_left - 8 }}" y="{{ tick.y + 3 }}" text-anchor="end">{{ tick.label }}</text>
+      {% endfor %}
+      <line class="baseline" x1="{{ position_chart.plot_left }}" y1="{{ position_chart.baseline_y }}" x2="{{ position_chart.plot_right }}" y2="{{ position_chart.baseline_y }}"></line>
+      {% for bar in position_chart.bars %}
+      <g>
+        <title>{{ bar.label }} {{ bar.value|usd }}{{ '(予測)' if bar.forecast }}</title>
+        <rect class="bar {{ 'bar-negative' if bar.negative }} {{ 'bar-forecast' if bar.forecast }}"
+              x="{{ bar.x }}" y="{{ bar.y }}" width="{{ bar.width }}" height="{{ bar.height }}" rx="{{ bar.radius }}"></rect>
+      </g>
+      <text class="axis-text" x="{{ bar.label_x }}" y="{{ position_chart.height - 8 }}" text-anchor="middle">{{ bar.label }}</text>
+      {% endfor %}
+    </svg>
+  </div>
+  <p class="kpi-foot">赤い棒はまだオープンコストを回収できていない状態です。</p>
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr><th>月</th><th class="num">売上高</th><th class="num">営業利益</th><th class="num">累計利益</th><th class="num">通算損益</th><th class="num">回収率</th></tr>
+  </thead>
+  <tbody>
+    {% for p in cycle.points %}
+    <tr {% if p.forecast %}class="muted"{% endif %}>
+      <td>{{ p.month }}{% if p.forecast %} <span class="tag-import">予測</span>{% endif %}</td>
+      <td class="num">{% if not p.forecast %}{{ p.revenue|usd }}{% else %}—{% endif %}</td>
+      <td class="num">{{ p.profit|usd }}</td>
+      <td class="num">{{ p.cumulative_profit|usd }}</td>
+      <td class="num {{ 'text-bad' if p.position < 0 else 'text-good' }}">{{ p.position|usd }}</td>
+      <td class="num">{{ p.recovery_rate }}%</td>
+    </tr>
+    {% else %}
+    <tr><td colspan="6" class="muted">まだ実績がありません。PL を入力すると累計が計算されます。</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{# ---- 次にやれること ---- #}
+<h2>次にやれること <small>投資余力 {{ c.available|usd }}</small></h2>
+{% if cycle.plans %}
+<div class="plan-grid">
+  {% for plan in cycle.plans %}
+  <div class="plan-card">
+    <div class="plan-head">
+      <span class="plan-name">{{ plan.name }}</span>
+      <span class="plan-amount">{{ plan.amount|usd }}</span>
+    </div>
+    {% if plan.memo %}<p class="kpi-foot">{{ plan.memo }}</p>{% endif %}
+    <div class="progress-sm"><div style="width: {{ plan.progress }}%"></div></div>
+    <p class="plan-foot">
+      {%- if plan.funded %}<span class="text-good">いま実行できます</span>(余力 {{ c.available|usd }})
+      {%- elif plan.months_needed is not none %}あと {{ plan.shortfall|usd }} ・ 今のペースで <strong>{{ plan.months_needed }} か月</strong>({{ plan.ready_month }} 頃)
+      {%- else %}あと {{ plan.shortfall|usd }} ・ <span class="text-bad">今の利益ペースでは到達しません</span>{% endif %}
+    </p>
+    <form method="post" action="{{ url_for('delete_plan_form', plan_id=plan.id) }}">
+      <input type="hidden" name="month" value="{{ month }}">
+      <button class="btn btn-ghost btn-sm">削除</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<p class="empty">やりたいこと(2 号店・設備更新・人の採用など)と必要額を登録すると、到達時期を計算します。</p>
+{% endif %}
+
+<div class="panel" style="margin-top:1rem;">
+  <form method="post" action="{{ url_for('add_plan_form') }}" class="inline-form">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label>やりたいこと <input type="text" name="name" placeholder="例: 2 号店の出店" required></label>
+    <label>必要額(USD) <input type="text" name="amount" placeholder="250000" required></label>
+    <label>メモ <input type="text" name="memo" placeholder="任意"></label>
+    <button class="btn">追加</button>
+  </form>
+</div>
+
+{# ---- オープンコスト ---- #}
+<h2>オープンコスト(初期投資) <small>合計 {{ investment|usd }}</small></h2>
+<table class="data-table">
+  <thead><tr><th>項目</th><th class="num">金額</th><th>支出月</th><th>備考</th><th></th></tr></thead>
+  <tbody>
+    {% for cost in costs %}
+    <tr>
+      <td>{{ cost.item }}</td>
+      <td class="num">{{ cost.amount|usd }}</td>
+      <td>{{ cost.month or '—' }}</td>
+      <td class="memo">{{ cost.memo or '' }}</td>
+      <td class="num">
+        <form method="post" action="{{ url_for('delete_startup_cost_form', cost_id=cost.id) }}">
+          <input type="hidden" name="month" value="{{ month }}">
+          <button class="btn btn-ghost btn-sm" title="削除">×</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr><td colspan="5" class="muted">オープンコストが未登録です。内装・厨房機器・保証金などを登録すると回収状況を計算します。</td></tr>
+    {% endfor %}
+  </tbody>
+  {% if costs %}
+  <tfoot><tr><td>合計</td><td class="num">{{ investment|usd }}</td><td colspan="3"></td></tr></tfoot>
+  {% endif %}
+</table>
+
+<div class="panel" style="margin-top:1rem;">
+  <form method="post" action="{{ url_for('add_startup_cost_form') }}" class="inline-form">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label>項目 <input type="text" name="item" placeholder="例: 内装工事" required></label>
+    <label>金額(USD) <input type="text" name="amount" placeholder="180000" required></label>
+    <label>支出月 <input type="month" name="cost_month"></label>
+    <label>備考 <input type="text" name="memo" placeholder="任意"></label>
+    <button class="btn">追加</button>
+  </form>
+  <p class="note">
+    オープンコストは PL・BS とは別に登録します(BS の固定資産に計上していても、
+    回収の分母としてここに入れてください)。
+  </p>
+</div>
+{% endblock %}

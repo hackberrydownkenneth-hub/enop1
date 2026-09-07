@@ -365,3 +365,195 @@ def test_report_csv_includes_statements_and_kpi(client):
     assert "現金預金" in body
     assert "客単価,50.0,USD" in body
     assert "FL 比率,55.0,%" in body
+
+
+# ---- 累計・投資回収 --------------------------------------------------------
+
+def _seed_opening(client):
+    """オープンコスト $360,000 と、開店 3 か月分の実績。"""
+    for item, amount in [("内装工事", 180_000), ("厨房機器", 95_000),
+                         ("保証金", 60_000), ("開業前家賃・採用", 25_000)]:
+        resp = client.post("/api/startup-costs", json={"item": item, "amount": amount})
+        assert resp.status_code == 201, resp.data
+    # 2026-04 は赤字、以降は黒字
+    for month, revenue, opex in [("2026-04", 118_000, 45_000),
+                                 ("2026-05", 152_000, 45_000),
+                                 ("2026-06", 181_000, 45_000)]:
+        _add(client, "revenue", "売上", revenue, month)
+        _add(client, "cogs", "原価", round(revenue * 0.32, 2), month)
+        _add(client, "labor", "人件費", 50_000, month)
+        _add(client, "opex", "家賃ほか", opex, month)
+
+
+def test_lifecycle_api_tracks_cumulative_and_payback(client):
+    _seed_opening(client)
+    data = client.get("/api/lifecycle?month=2026-06").get_json()
+
+    assert data["investment"] == 360_000
+    payback = data["payback"]
+    assert payback["months_elapsed"] == 3
+    assert payback["profitable_months"] == 2
+    assert payback["first_profitable_month"] == "2026-05"
+    assert payback["cumulative_profit"] == 21_680
+    assert payback["position"] == -338_320
+    assert payback["remaining"] == 338_320
+    assert payback["recovered"] is False
+    assert payback["payback_month"] is None
+    assert payback["worst_month"] == "2026-04"
+    assert payback["phase"] == "earning"
+
+
+def test_lifecycle_api_history_and_forecast(client):
+    _seed_opening(client)
+    data = client.get("/api/lifecycle?month=2026-06").get_json()
+    assert [p["month"] for p in data["history"]] == ["2026-04", "2026-05", "2026-06"]
+    assert data["history"][0]["position"] == -374_760      # 投資 + 初月の赤字
+    assert data["history"][-1]["position"] == -338_320
+    # 予測は直近ペースで先へ伸びる
+    assert len(data["forecast"]) == 6
+    assert all(p["forecast"] for p in data["forecast"])
+    assert data["forecast"][0]["month"] == "2026-07"
+    assert data["forecast"][-1]["position"] > data["history"][-1]["position"]
+
+
+def test_lifecycle_api_scenarios(client):
+    _seed_opening(client)
+    scenarios = {s["key"]: s for s in client.get(
+        "/api/lifecycle?month=2026-06").get_json()["scenarios"]}
+    # 残り $338,320 を月 $30,000 / $50,000 で
+    assert scenarios["target_min"]["months_needed"] == 12
+    assert scenarios["target_min"]["finish_month"] == "2027-06"
+    assert scenarios["target_max"]["months_needed"] == 7
+    assert scenarios["recent"]["monthly_profit"] == 7_226.67
+
+
+def test_lifecycle_api_reports_recovery(client):
+    _seed_opening(client)
+    _add(client, "revenue", "特別売上", 500_000, "2026-07")
+    data = client.get("/api/lifecycle?month=2026-07").get_json()
+    assert data["payback"]["recovered"] is True
+    assert data["payback"]["payback_month"] == "2026-07"
+    assert data["payback"]["surplus"] > 0
+    assert data["scenarios"][0]["months_needed"] == 0
+
+
+def test_lifecycle_api_capacity_and_plans(client):
+    _seed_opening(client)
+    client.put("/api/kpi-inputs", json={"month": "2026-06", "cash_balance": 400_000})
+    client.post("/api/plans", json={"name": "2 号店の出店", "amount": 300_000})
+
+    data = client.get("/api/lifecycle?month=2026-06").get_json()
+    capacity = data["capacity"]
+    assert capacity["cash"] == 400_000
+    assert capacity["monthly_fixed_cost"] == 95_000        # 人件費 + 販管費
+    assert capacity["reserve_needed"] == 285_000           # 3 か月分
+    assert capacity["available"] == 115_000
+
+    plan = data["plans"][0]
+    assert plan["name"] == "2 号店の出店"
+    assert plan["funded"] is False
+    assert plan["shortfall"] == 185_000
+    assert plan["months_needed"] == 26                     # 直近ペース $7,226.67
+
+
+def test_lifecycle_api_without_any_data(client):
+    data = client.get(f"/api/lifecycle?month={MONTH}").get_json()
+    assert data["investment"] == 0
+    assert data["payback"]["phase"] == "pre_open"
+    assert data["history"] == []
+    assert data["forecast"] == []
+
+
+def test_startup_cost_api_add_and_delete(client):
+    resp = client.post(
+        "/api/startup-costs",
+        json={"item": "内装工事", "amount": 180_000, "cost_month": "2026-03"},
+    )
+    assert resp.status_code == 201
+    cost_id = resp.get_json()["id"]
+    assert client.get("/api/lifecycle").get_json()["investment"] == 180_000
+
+    assert client.delete(f"/api/startup-costs/{cost_id}").status_code == 200
+    assert client.delete(f"/api/startup-costs/{cost_id}").status_code == 404
+    assert client.get("/api/lifecycle").get_json()["investment"] == 0
+
+
+def test_startup_cost_api_validates(client):
+    assert client.post("/api/startup-costs", json={"item": "", "amount": 1}).status_code == 400
+    assert client.post(
+        "/api/startup-costs", json={"item": "内装", "amount": "たくさん"}
+    ).status_code == 400
+
+
+def test_plan_api_add_and_delete(client):
+    resp = client.post("/api/plans", json={"name": "2 号店", "amount": 300_000})
+    assert resp.status_code == 201
+    plan_id = resp.get_json()["id"]
+    assert len(client.get("/api/lifecycle").get_json()["plans"]) == 1
+    assert client.delete(f"/api/plans/{plan_id}").status_code == 200
+    assert client.delete(f"/api/plans/{plan_id}").status_code == 404
+
+
+def test_plan_api_validates(client):
+    assert client.post("/api/plans", json={"name": "", "amount": 1}).status_code == 400
+
+
+def test_lifecycle_page_renders(client):
+    _seed_opening(client)
+    client.post("/api/plans", json={"name": "2 号店の出店", "amount": 300_000})
+    body = client.get("/lifecycle?month=2026-06").data.decode()
+    assert "通算損益" in body
+    assert "-$338,320.00" in body            # 通算損益
+    assert "オープンコスト" in body and "$360,000.00" in body
+    assert "回収はいつ終わるか" in body
+    assert "2 号店の出店" in body
+    assert "内装工事" in body
+
+
+def test_lifecycle_page_without_data(client):
+    body = client.get("/lifecycle").data.decode()
+    assert "オープンコストが未登録です" in body
+    assert "まだ実績がありません" in body
+
+
+def test_startup_cost_form_add_and_delete(client):
+    resp = client.post(
+        "/startup-costs",
+        data={"month": MONTH, "item": "内装工事", "amount": "180,000",
+              "cost_month": "2026-03", "memo": "A 社"},
+        follow_redirects=True,
+    )
+    assert "内装工事" in resp.data.decode()
+    cost_id = client.get("/api/lifecycle").get_json()["investment"]
+    assert cost_id == 180_000
+
+    client.post("/startup-costs/1/delete", data={"month": MONTH})
+    assert client.get("/api/lifecycle").get_json()["investment"] == 0
+
+
+def test_startup_cost_form_rejects_invalid_amount(client):
+    resp = client.post(
+        "/startup-costs",
+        data={"month": MONTH, "item": "内装工事", "amount": "たくさん"},
+        follow_redirects=True,
+    )
+    assert "金額として解釈できません" in resp.data.decode()
+
+
+def test_plan_form_add_and_delete(client):
+    resp = client.post(
+        "/plans",
+        data={"month": MONTH, "name": "2 号店の出店", "amount": "300000", "memo": "駅前"},
+        follow_redirects=True,
+    )
+    assert "2 号店の出店" in resp.data.decode()
+    client.post("/plans/1/delete", data={"month": MONTH})
+    assert client.get("/api/lifecycle").get_json()["plans"] == []
+
+
+def test_dashboard_shows_cumulative_summary(client):
+    _seed_opening(client)
+    body = client.get("/?month=2026-06").data.decode()
+    assert "通算損益(オープンコスト込み)" in body
+    assert "投資回収" in body
+    assert "回収中(単月黒字)" in body

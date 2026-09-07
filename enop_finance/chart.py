@@ -32,6 +32,7 @@ class Bar:
     width: float
     height: float
     negative: bool = False
+    forecast: bool = False
     tooltip: str = ""
 
     @property
@@ -84,10 +85,12 @@ def bar_chart(
     height: float = 180.0,
     reference: int | None = None,
     reference_label: str = "",
+    forecast_from: int | None = None,
 ) -> BarChart:
     """(ラベル, 金額)の並びから棒グラフの座標を組み立てる。
 
     金額がマイナスの月は基準線の下に伸びる。reference を渡すと目標ラインを引く。
+    forecast_from を渡すと、その位置以降の棒を予測(薄い色)として印を付ける。
     """
     chart = BarChart(width=width, height=height, baseline_y=height - PAD_BOTTOM)
     if not points:
@@ -126,6 +129,7 @@ def bar_chart(
             width=bar_width,
             height=abs(chart.baseline_y - y_value),
             negative=value < 0,
+            forecast=forecast_from is not None and index >= forecast_from,
         )
         chart.bars.append(bar)
 

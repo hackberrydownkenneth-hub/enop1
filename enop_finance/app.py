@@ -27,10 +27,13 @@ from flask import (
     url_for,
 )
 
-from . import calc, chart, db, kpi, payroll_import
+from . import calc, chart, db, kpi, lifecycle, payroll_import
 
 DEFAULT_DB = os.environ.get("ENOP_DB", "enop_finance.db")
 DEFAULT_TREND_MONTHS = 12
+DEFAULT_FORECAST_MONTHS = 6
+# 累計を遡る上限(暴走防止)
+MAX_HISTORY_MONTHS = 120
 
 
 def create_app(db_path: str | None = None) -> Flask:
@@ -52,6 +55,14 @@ def create_app(db_path: str | None = None) -> Flask:
     # ダッシュボードに表示する推移の月数
     app.config["TREND_MONTHS"] = int(
         _env_float("ENOP_TREND_MONTHS", DEFAULT_TREND_MONTHS)
+    )
+    # 累計・回収の予測で先まで伸ばす月数
+    app.config["FORECAST_MONTHS"] = int(
+        _env_float("ENOP_FORECAST_MONTHS", DEFAULT_FORECAST_MONTHS)
+    )
+    # 投資余力の計算で手元に残す運転資金の月数
+    app.config["RESERVE_MONTHS"] = int(
+        _env_float("ENOP_RESERVE_MONTHS", lifecycle.DEFAULT_RESERVE_MONTHS)
     )
 
     # テンプレートで金額を $1,234.56 形式に整形するフィルタ
@@ -80,12 +91,19 @@ def create_app(db_path: str | None = None) -> Flask:
         metrics = _kpi(conn, month)
         prev = _kpi(conn, calc.month_shift(month, -1))
         points = _trend(conn, month, app.config["TREND_MONTHS"])
+        cycle = _lifecycle(conn, month)
         return render_template(
             "dashboard.html",
             month=month,
             kpi=metrics,
             prev=prev,
             target=metrics.target,
+            payback=cycle["cycle"].payback,
+            investment=cycle["investment"],
+            capacity=cycle["cycle"].capacity,
+            cycle_finish=next(
+                (s.finish_month for s in cycle["cycle"].scenarios if s.finish_month), None
+            ),
             trend=points,
             revenue_chart=chart.bar_chart(
                 [(p.month[-2:], p.revenue) for p in points]
@@ -101,6 +119,63 @@ def create_app(db_path: str | None = None) -> Flask:
             level_labels=kpi.LEVEL_LABELS,
             months=db.list_months(conn),
         )
+
+    @app.route("/lifecycle")
+    def lifecycle_view():
+        conn = get_db()
+        month = _month_arg()
+        data = _lifecycle(conn, month)
+        points = data["cycle"].points
+        return render_template(
+            "lifecycle.html",
+            month=month,
+            cycle=data["cycle"],
+            payback=data["cycle"].payback,
+            costs=data["costs"],
+            investment=data["investment"],
+            position_chart=chart.bar_chart(
+                [(p.month[2:], p.position) for p in points],
+                forecast_from=len(data["cycle"].history),
+            ),
+            forecast_months=app.config["FORECAST_MONTHS"],
+            months=db.list_months(conn),
+        )
+
+    @app.route("/startup-costs", methods=["POST"])
+    def add_startup_cost_form():
+        conn = get_db()
+        month = _month_arg(request.form.get("month"))
+        try:
+            item, amount, cost_month, memo = _cost_input(request.form)
+        except ValueError as exc:
+            flash(str(exc), "error")
+        else:
+            db.add_startup_cost(conn, item, amount, cost_month, memo)
+        return redirect(url_for("lifecycle_view", month=month))
+
+    @app.route("/startup-costs/<int:cost_id>/delete", methods=["POST"])
+    def delete_startup_cost_form(cost_id: int):
+        conn = get_db()
+        db.delete_startup_cost(conn, cost_id)
+        return redirect(url_for("lifecycle_view", month=_month_arg(request.form.get("month"))))
+
+    @app.route("/plans", methods=["POST"])
+    def add_plan_form():
+        conn = get_db()
+        month = _month_arg(request.form.get("month"))
+        try:
+            name, amount, memo = _plan_input(request.form)
+        except ValueError as exc:
+            flash(str(exc), "error")
+        else:
+            db.add_plan(conn, name, amount, memo)
+        return redirect(url_for("lifecycle_view", month=month))
+
+    @app.route("/plans/<int:plan_id>/delete", methods=["POST"])
+    def delete_plan_form(plan_id: int):
+        conn = get_db()
+        db.delete_plan(conn, plan_id)
+        return redirect(url_for("lifecycle_view", month=_month_arg(request.form.get("month"))))
 
     @app.route("/statements")
     def statements():
@@ -280,6 +355,60 @@ def create_app(db_path: str | None = None) -> Flask:
                 },
             }
         )
+
+    @app.get("/api/lifecycle")
+    def api_lifecycle():
+        conn = get_db()
+        month = _month_arg()
+        return jsonify(_lifecycle_json(_lifecycle(conn, month), month))
+
+    @app.post("/api/startup-costs")
+    def api_add_startup_cost():
+        conn = get_db()
+        data = request.get_json(silent=True) or {}
+        try:
+            item, amount, cost_month, memo = _cost_input(data)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        cost_id = db.add_startup_cost(conn, item, amount, cost_month, memo)
+        return jsonify(
+            {
+                "id": cost_id,
+                "item": item,
+                "amount": calc.to_dollars(amount),
+                "month": cost_month,
+                "memo": memo or "",
+            }
+        ), 201
+
+    @app.delete("/api/startup-costs/<int:cost_id>")
+    def api_delete_startup_cost(cost_id: int):
+        conn = get_db()
+        if db.get_startup_cost(conn, cost_id) is None:
+            return jsonify({"error": "オープンコストが見つかりません。"}), 404
+        db.delete_startup_cost(conn, cost_id)
+        return jsonify({"deleted": cost_id})
+
+    @app.post("/api/plans")
+    def api_add_plan():
+        conn = get_db()
+        data = request.get_json(silent=True) or {}
+        try:
+            name, amount, memo = _plan_input(data)
+        except ValueError as exc:
+            return jsonify({"error": str(exc)}), 400
+        plan_id = db.add_plan(conn, name, amount, memo)
+        return jsonify(
+            {"id": plan_id, "name": name, "amount": calc.to_dollars(amount), "memo": memo or ""}
+        ), 201
+
+    @app.delete("/api/plans/<int:plan_id>")
+    def api_delete_plan(plan_id: int):
+        conn = get_db()
+        if db.get_plan(conn, plan_id) is None:
+            return jsonify({"error": "計画が見つかりません。"}), 404
+        db.delete_plan(conn, plan_id)
+        return jsonify({"deleted": plan_id})
 
     @app.get("/api/statements")
     def api_statements():
@@ -468,6 +597,153 @@ def create_app(db_path: str | None = None) -> Flask:
             "amount": amount,
         }
 
+    def _cost_input(source) -> tuple[str, int, str | None, str | None]:
+        """オープンコストの入力値を取り出して検証する。"""
+        item = str(source.get("item") or "").strip()
+        if not item:
+            raise ValueError("項目名を入力してください。")
+        amount = calc.parse_amount(source.get("amount"))
+        raw_month = str(source.get("cost_month") or "").strip()
+        cost_month = raw_month if calc.is_valid_month(raw_month) else None
+        memo = str(source.get("memo") or "").strip() or None
+        return item, amount, cost_month, memo
+
+    def _plan_input(source) -> tuple[str, int, str | None]:
+        """「次にやれること」の入力値を取り出して検証する。"""
+        name = str(source.get("name") or "").strip()
+        if not name:
+            raise ValueError("やりたいことの名前を入力してください。")
+        amount = calc.parse_amount(source.get("amount"))
+        memo = str(source.get("memo") or "").strip() or None
+        return name, amount, memo
+
+    def _history(conn, month: str) -> list[lifecycle.MonthResult]:
+        """データがある最初の月から対象月までの月次実績。"""
+        recorded = [m for m in db.list_months(conn) if m <= month]
+        if not recorded:
+            return []
+        start = min(recorded)
+        basis = app.config["TARGET_BASIS"]
+        results = []
+        cursor = start
+        for _ in range(MAX_HISTORY_MONTHS):
+            data = _statements(conn, cursor)
+            pl = data["pl"]
+            results.append(
+                lifecycle.MonthResult(
+                    month=cursor,
+                    revenue=pl.revenue,
+                    profit=pl.profit(basis),
+                    net_income=pl.net_income,
+                )
+            )
+            if cursor >= month:
+                break
+            cursor = calc.month_shift(cursor, 1)
+        return results
+
+    def _lifecycle(conn, month: str) -> dict:
+        """開店からの累計・回収・予測・投資余力をまとめる。"""
+        months = _history(conn, month)
+        investment = db.total_startup_cost(conn)
+        payback = lifecycle.evaluate_payback(months, investment)
+        target_min, target_max = _target_range(conn, month)
+        metrics = _kpi(conn, month)
+
+        capacity = lifecycle.investment_capacity(
+            metrics.cash,
+            calc.fixed_cost(metrics.pl),
+            app.config["RESERVE_MONTHS"],
+        )
+        plans = lifecycle.evaluate_plans(
+            [(row["id"], row["name"], row["amount"], row["memo"] or "")
+             for row in db.list_plans(conn)],
+            capacity,
+            payback.recent_average_profit,
+            payback.last_month or month,
+        )
+        cycle = lifecycle.Lifecycle(
+            payback=payback,
+            history=lifecycle.build_history(
+                [m for m in months if m.has_activity], investment
+            ),
+            forecast=lifecycle.project(
+                payback,
+                payback.recent_average_profit,
+                app.config["FORECAST_MONTHS"],
+            ),
+            scenarios=lifecycle.forecast_scenarios(payback, target_min, target_max),
+            capacity=capacity,
+            plans=plans,
+        )
+        return {
+            "cycle": cycle,
+            "investment": investment,
+            "costs": db.list_startup_costs(conn),
+        }
+
+    def _lifecycle_json(data: dict, month: str) -> dict:
+        cycle = data["cycle"]
+        payback = cycle.payback
+        usd = calc.to_dollars
+        return {
+            "month": month,
+            "currency": "USD",
+            "investment": usd(data["investment"]),
+            "payback": {
+                "phase": payback.phase,
+                "phase_label": payback.phase_label,
+                "cumulative_profit": usd(payback.cumulative_profit),
+                "cumulative_net_income": usd(payback.cumulative_net_income),
+                "position": usd(payback.position),
+                "recovered": payback.recovered,
+                "remaining": usd(payback.remaining),
+                "recovery_rate": payback.recovery_rate,
+                "surplus": usd(payback.surplus),
+                "months_elapsed": payback.months_elapsed,
+                "profitable_months": payback.profitable_months,
+                "first_profitable_month": payback.first_profitable_month,
+                "payback_month": payback.payback_month,
+                "worst_position": usd(payback.worst_position),
+                "worst_month": payback.worst_month,
+                "average_profit": usd(payback.average_profit),
+                "recent_average_profit": usd(payback.recent_average_profit),
+            },
+            "history": [_point_json(p) for p in cycle.history],
+            "forecast": [_point_json(p) for p in cycle.forecast],
+            "scenarios": [
+                {
+                    "key": s.key,
+                    "label": s.label,
+                    "monthly_profit": usd(s.monthly_profit),
+                    "months_needed": s.months_needed,
+                    "finish_month": s.finish_month,
+                }
+                for s in cycle.scenarios
+            ],
+            "capacity": {
+                "cash": usd(cycle.capacity.cash),
+                "monthly_fixed_cost": usd(cycle.capacity.monthly_fixed_cost),
+                "reserve_months": cycle.capacity.reserve_months,
+                "reserve_needed": usd(cycle.capacity.reserve_needed),
+                "available": usd(cycle.capacity.available),
+            },
+            "plans": [
+                {
+                    "id": p.id,
+                    "name": p.name,
+                    "amount": usd(p.amount),
+                    "memo": p.memo,
+                    "funded": p.funded,
+                    "shortfall": usd(p.shortfall),
+                    "progress": p.progress,
+                    "months_needed": p.months_needed,
+                    "ready_month": p.ready_month,
+                }
+                for p in cycle.plans
+            ],
+        }
+
     def _statements_json(data: dict, month: str) -> dict:
         pl, bs, target = data["pl"], data["bs"], data["target"]
         usd = calc.to_dollars
@@ -497,6 +773,21 @@ def create_app(db_path: str | None = None) -> Flask:
 
 
 # ---- モジュールレベルのヘルパー --------------------------------------------
+
+def _point_json(point) -> dict:
+    usd = calc.to_dollars
+    return {
+        "month": point.month,
+        "revenue": usd(point.revenue),
+        "profit": usd(point.profit),
+        "net_income": usd(point.net_income),
+        "cumulative_profit": usd(point.cumulative_profit),
+        "position": usd(point.position),
+        "remaining": usd(point.remaining),
+        "recovery_rate": point.recovery_rate,
+        "forecast": point.forecast,
+    }
+
 
 def _target_json(target) -> dict:
     usd = calc.to_dollars

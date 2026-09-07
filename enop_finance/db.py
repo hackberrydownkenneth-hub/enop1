@@ -40,6 +40,23 @@ CREATE TABLE IF NOT EXISTS kpi_inputs (
     cash_balance INTEGER,                     -- 現金残高(セント)。NULL なら BS から推定
     updated_at   TEXT    NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS startup_costs (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    item       TEXT    NOT NULL,           -- 内装工事・厨房機器・保証金 など
+    amount     INTEGER NOT NULL,           -- 金額(セント)
+    month      TEXT,                       -- 支出した月 YYYY-MM(任意)
+    memo       TEXT,
+    created_at TEXT    NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS plans (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL,           -- 2 号店出店・設備更新 など
+    amount     INTEGER NOT NULL,           -- 必要額(セント)
+    memo       TEXT,
+    created_at TEXT    NOT NULL
+);
 """
 
 
@@ -213,3 +230,69 @@ def _to_entry(row: sqlite3.Row) -> Entry:
         memo=row["memo"] or "",
         source=row["source"],
     )
+
+
+# ---- オープンコスト(初期投資) --------------------------------------------
+
+def add_startup_cost(
+    conn: sqlite3.Connection,
+    item: str,
+    amount: int,
+    month: str | None = None,
+    memo: str | None = None,
+) -> int:
+    now = datetime.now().isoformat(timespec="seconds")
+    cur = conn.execute(
+        "INSERT INTO startup_costs (item, amount, month, memo, created_at) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (item, amount, month, memo, now),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def get_startup_cost(conn: sqlite3.Connection, cost_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM startup_costs WHERE id = ?", (cost_id,)
+    ).fetchone()
+
+
+def delete_startup_cost(conn: sqlite3.Connection, cost_id: int) -> None:
+    conn.execute("DELETE FROM startup_costs WHERE id = ?", (cost_id,))
+    conn.commit()
+
+
+def list_startup_costs(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    return conn.execute("SELECT * FROM startup_costs ORDER BY id").fetchall()
+
+
+def total_startup_cost(conn: sqlite3.Connection) -> int:
+    row = conn.execute("SELECT COALESCE(SUM(amount), 0) AS total FROM startup_costs").fetchone()
+    return int(row["total"])
+
+
+# ---- 次にやれること(投資計画) --------------------------------------------
+
+def add_plan(
+    conn: sqlite3.Connection, name: str, amount: int, memo: str | None = None
+) -> int:
+    now = datetime.now().isoformat(timespec="seconds")
+    cur = conn.execute(
+        "INSERT INTO plans (name, amount, memo, created_at) VALUES (?, ?, ?, ?)",
+        (name, amount, memo, now),
+    )
+    conn.commit()
+    return int(cur.lastrowid)
+
+
+def get_plan(conn: sqlite3.Connection, plan_id: int) -> sqlite3.Row | None:
+    return conn.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone()
+
+
+def delete_plan(conn: sqlite3.Connection, plan_id: int) -> None:
+    conn.execute("DELETE FROM plans WHERE id = ?", (plan_id,))
+    conn.commit()
+
+
+def list_plans(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+    return conn.execute("SELECT * FROM plans ORDER BY amount").fetchall()

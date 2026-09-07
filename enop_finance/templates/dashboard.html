@@ -102,6 +102,33 @@
   </div>
 </div>
 
+{# ---- 開店からの累計(詳細は累計・投資回収ページ) ---- #}
+<h2>開店からの累計 <small><a href="{{ url_for('lifecycle_view', month=month) }}">累計・投資回収の詳細 →</a></small></h2>
+<div class="kpi-grid">
+  <div class="kpi-card">
+    <h3>通算損益(オープンコスト込み)</h3>
+    <div class="kpi-main">
+      <span class="kpi-value {{ 'text-bad' if payback.position < 0 }}">{{ payback.position|usd }}</span>
+      <span class="badge phase-badge badge-{{ 'in_range' if payback.recovered else 'below' }}">{{ payback.phase_label }}</span>
+    </div>
+    <ul class="kpi-list">
+      <li><span class="k">累計利益</span><span class="v">{{ payback.cumulative_profit|usd }}</span></li>
+      <li><span class="k">オープンコスト</span><span class="v">{{ investment|usd }}</span></li>
+      <li><span class="k">開店から</span><span class="v">{{ payback.months_elapsed }} か月(黒字 {{ payback.profitable_months }})</span></li>
+    </ul>
+  </div>
+  <div class="kpi-card">
+    <h3>投資回収</h3>
+    <div class="kpi-main"><span class="kpi-value">{{ payback.recovery_rate }}%</span><span class="kpi-unit">回収済み</span></div>
+    <div class="progress-sm"><div style="width: {{ payback.recovery_rate if payback.recovery_rate <= 100 else 100 }}%"></div></div>
+    <ul class="kpi-list">
+      <li><span class="k">残り</span><span class="v">{% if payback.recovered %}<span class="text-good">回収完了</span>{% else %}{{ payback.remaining|usd }}{% endif %}</span></li>
+      <li><span class="k">回収完了</span><span class="v">{{ payback.payback_month or (cycle_finish or '—') }}</span></li>
+      <li><span class="k">投資余力</span><span class="v">{{ capacity.available|usd }}</span></li>
+    </ul>
+  </div>
+</div>
+
 {# ---- 推移 ---- #}
 <h2>推移 <small>直近 {{ trend|length }} か月</small></h2>
 <div class="chart-grid">

@@ -134,6 +134,7 @@ h2 small { color: var(--muted); font-size: 0.85rem; font-weight: 400; }
 .chart svg { width: 100%; height: auto; display: block; }
 .chart .bar { fill: var(--series); }
 .chart .bar-negative { fill: var(--negative); }
+.chart .bar-forecast { opacity: 0.35; }
 .chart .grid-line { stroke: var(--grid); stroke-width: 1; }
 .chart .baseline { stroke: #c3c2b7; stroke-width: 1; }
 .chart .ref-line { stroke: var(--text-2); stroke-width: 1; }
@@ -160,3 +161,16 @@ h2 small { color: var(--muted); font-size: 0.85rem; font-weight: 400; }
 .stat { background: var(--card-bg); border-radius: 10px; padding: 0.8rem 1rem; box-shadow: var(--shadow); flex: 1 1 180px; }
 .stat-label { display: block; font-size: 0.78rem; color: var(--muted); }
 .stat-value { font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* ---- 累計・投資回収 ---- */
+.phase-badge { font-size: 0.8rem; }
+.recovery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1rem; margin-top: 1rem; }
+.scenario-table td.num { font-variant-numeric: tabular-nums; }
+.plan-card { background: var(--card-bg); border-radius: 10px; padding: 1rem; box-shadow: var(--shadow); }
+.plan-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
+.plan-name { font-weight: 700; }
+.plan-amount { font-variant-numeric: tabular-nums; font-weight: 700; }
+.plan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+.plan-foot { margin: 0.5rem 0 0; font-size: 0.85rem; color: var(--text-2); }
+.progress-sm { height: 6px; background: #eeeeea; border-radius: 999px; overflow: hidden; margin: 0.6rem 0 0.2rem; }
+.progress-sm > div { height: 100%; background: var(--primary); border-radius: 999px; }
