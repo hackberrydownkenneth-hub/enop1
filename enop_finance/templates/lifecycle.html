@@ -98,7 +98,7 @@
   </p>
 </div>
 
-<table class="data-table">
+<div class="table-scroll"><table class="data-table">
   <thead><tr><th>入金月</th><th class="num">金額</th><th class="num">累計</th><th>メモ</th><th></th></tr></thead>
   <tbody>
     {% for injection in funding.injections %}
@@ -121,7 +121,7 @@
   {% if funding.injections %}
   <tfoot><tr><td>合計</td><td class="num">{{ funding.invested|money }}</td><td colspan="3"></td></tr></tfoot>
   {% endif %}
-</table>
+</table></div>
 
 <div class="panel" style="margin-top:1rem;">
   <form method="post" action="{{ url_for('add_capital_form') }}" class="inline-form">
@@ -147,7 +147,7 @@
 {% if payback.recovered %}
 <p class="empty">オープンコストは {{ payback.payback_month }} に回収済みです。以降の利益はすべて積み上がりになります。</p>
 {% else %}
-<table class="data-table scenario-table">
+<div class="table-scroll"><table class="data-table scenario-table">
   <thead><tr><th>ペース</th><th class="num">月次利益</th><th class="num">残り</th><th class="num">必要月数</th><th>回収完了の見込み</th></tr></thead>
   <tbody>
     {% for s in cycle.scenarios %}
@@ -160,7 +160,7 @@
     </tr>
     {% endfor %}
   </tbody>
-</table>
+</table></div>
 {% endif %}
 
 {# ---- 累計の推移 ---- #}
@@ -188,7 +188,7 @@
   <p class="kpi-foot">赤い棒はまだ{{ basis_label }}を回収できていない状態です。</p>
 </div>
 
-<table class="data-table">
+<div class="table-scroll"><table class="data-table">
   <thead>
     <tr><th>月</th><th class="num">売上高</th><th class="num">営業利益</th><th class="num">累計利益</th><th class="num">通算損益</th><th class="num">回収率</th></tr>
   </thead>
@@ -206,7 +206,7 @@
     <tr><td colspan="6" class="muted">まだ実績がありません。PL を入力すると累計が計算されます。</td></tr>
     {% endfor %}
   </tbody>
-</table>
+</table></div>
 
 {# ---- 次にやれること ---- #}
 <h2>次にやれること <small>投資余力 {{ c.available|money }}</small></h2>
@@ -251,7 +251,7 @@
   {%- if investment %} ・ 回収 {{ cost_payback.recovery_rate }}%
   {%- if cost_payback.payback_month %}({{ cost_payback.payback_month }} 完了)
   {%- else %}(残り {{ cost_payback.remaining|money }}){% endif %}{% endif %}</small></h2>
-<table class="data-table">
+<div class="table-scroll"><table class="data-table">
   <thead><tr><th>項目</th><th class="num">金額</th><th>支出月</th><th>備考</th><th></th></tr></thead>
   <tbody>
     {% for cost in costs %}
@@ -274,7 +274,7 @@
   {% if costs %}
   <tfoot><tr><td>合計</td><td class="num">{{ investment|money }}</td><td colspan="3"></td></tr></tfoot>
   {% endif %}
-</table>
+</table></div>
 
 <div class="panel" style="margin-top:1rem;">
   <form method="post" action="{{ url_for('add_startup_cost_form') }}" class="inline-form">
